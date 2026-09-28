@@ -2,6 +2,7 @@
   "name": "fewrd",
   "version": "0.2.0",
   "type": "module",
+  "license": "MIT",
   "description": "Finds what recurs in a string, cuts it loose, and gets you the gist in a few words.",
   "keywords": [
     "text",

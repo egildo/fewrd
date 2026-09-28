@@ -13,6 +13,7 @@ few words.**
 ![core: 4 kB gzip](https://img.shields.io/badge/core-4%20kB%20gzip-78C4B6?style=flat-square)
 ![types: strict](https://img.shields.io/badge/types-strict-78C4B6?style=flat-square)
 ![tests: 52 passing](https://img.shields.io/badge/tests-52%20passing-78C4B6?style=flat-square)
+[![license: MIT](https://img.shields.io/badge/license-MIT-78C4B6?style=flat-square)](LICENSE)
 
 </div>
 
@@ -251,3 +252,7 @@ pnpm test        # node --test, type stripping, no build
 pnpm typecheck
 pnpm build       # minified dist/ + types, what npm gets (runs on publish)
 ```
+
+## License
+
+[MIT](LICENSE) © 2026 Egildo Tagliareni
