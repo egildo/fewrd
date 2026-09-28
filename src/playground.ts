@@ -20,7 +20,12 @@ interface CommonOptions {
 export type MountOptions =
   | (CommonOptions & { book: Book })
   /** Book data (e.g. parsed JSON) and its resolvers: the playground shows an editor and recompiles on every edit. */
-  | (CommonOptions & { data: unknown; resolvers?: Readonly<Record<string, Resolver>> });
+  | (CommonOptions & {
+      data: unknown;
+      resolvers?: Readonly<Record<string, Resolver>>;
+      /** Shows a save button: called with the editor's text once it parses as JSON. Reset then returns to what was saved. */
+      save?: (json: string) => unknown;
+    });
 
 /** Distinct entities across a book's recipes, in first-appearance order. */
 export function entities(book: Book): string[] {
@@ -90,7 +95,8 @@ function renderCase(target: Element, text: string, book: Book, fold: Fold) {
 export function mount(el: Element, options: MountOptions): void {
   const { cases } = options;
   const resolvers = 'data' in options ? options.resolvers : undefined;
-  const original = 'data' in options ? JSON.stringify(options.data, null, 2) : '';
+  const save = 'data' in options ? options.save : undefined;
+  let original = 'data' in options ? JSON.stringify(options.data, null, 2) : '';
   let book: Book;
   let errors: CompileError[] = [];
   if ('book' in options) book = options.book;
@@ -121,12 +127,13 @@ export function mount(el: Element, options: MountOptions): void {
       .${id} .fewrd-errors { margin: 6px 0; padding-left: 18px; font-size: 12px; }
       .${id} .fewrd-errors:empty { display: none; }
       .${id} .fewrd-errors, .${id} .fewrd-error { color: #b3261e; }
+      .${id} .fewrd-status { font-size: 12px; opacity: .7; }
       ${entities(book).map((e) => `.${id} [data-entity=${JSON.stringify(e)}] { --h: hsl(${hash(e) % 360}, 70%, 88%); }`).join('\n')}
     `;
   }
 
   const editor = 'data' in options
-    ? `<details class="fewrd-editor" open><summary>recipes <button type="button" class="fewrd-reset">reset</button></summary>
+    ? `<details class="fewrd-editor" open><summary>recipes <button type="button" class="fewrd-reset">reset</button>${save ? ' <button type="button" class="fewrd-save">save</button> <span class="fewrd-status"></span>' : ''}</summary>
         <textarea class="fewrd-book" spellcheck="false"></textarea>
         <ul class="fewrd-errors"></ul>
       </details>`
@@ -206,6 +213,20 @@ export function mount(el: Element, options: MountOptions): void {
       bookInput.value = original;
       edit();
     });
+    const status = el.querySelector<Element>('.fewrd-status');
+    el.querySelector('.fewrd-save')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const text = bookInput.value;
+      try {
+        JSON.parse(text);
+        await save!(text);
+        original = text;
+        status!.textContent = 'saved';
+      } catch (e) {
+        status!.textContent = `not saved: ${message(e)}`;
+      }
+    });
+    bookInput.addEventListener('input', () => status && (status.textContent = ''));
   }
 
   showErrors(errors);

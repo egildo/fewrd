@@ -12,7 +12,7 @@ few words.**
 ![dependencies: 0](https://img.shields.io/badge/dependencies-0-78C4B6?style=flat-square)
 ![core: 4 kB gzip](https://img.shields.io/badge/core-4%20kB%20gzip-78C4B6?style=flat-square)
 ![types: strict](https://img.shields.io/badge/types-strict-78C4B6?style=flat-square)
-![tests: 52 passing](https://img.shields.io/badge/tests-52%20passing-78C4B6?style=flat-square)
+![tests: 59 passing](https://img.shields.io/badge/tests-59%20passing-78C4B6?style=flat-square)
 [![license: MIT](https://img.shields.io/badge/license-MIT-78C4B6?style=flat-square)](LICENSE)
 
 </div>
@@ -205,8 +205,31 @@ nest. Toggle between the full and condensed view with one class:
 
 ## Playground
 
-Try your own book in the browser — the same playground this repo uses, with
-your recipes and your cases:
+Keep a book in a folder next to your code, and open it in the playground with
+one command. `fewrd-play` is a separate dev-only package, so none of it ends up
+in the library your code ships:
+
+```bash
+npm install -D fewrd-play
+```
+```bash
+npx fewrd-play path/to/book --open
+```
+
+```
+path/to/book/
+  book.json          the recipes; the playground's save button writes it back
+  cases.json         sample texts: [{ "name": "refund", "text": "Refund approved - SKU: abc-1234" }]
+  cases.local.json   more texts, e.g. real ones you keep out of git (optional)
+  resolvers.ts       export const resolvers = { upper: (p) => p.value.toUpperCase() } (optional)
+```
+
+`resolvers.ts` is served with its types stripped (Node 22.13+), so it may
+import types, `fewrd` itself and other files in the folder, but no other
+packages. A `resolvers.js` is served as is. The server listens on localhost
+only; `--port` picks the port (default 4747).
+
+Or mount the playground in a page of your own:
 
 ```ts
 import { mount } from 'fewrd/playground';
@@ -217,14 +240,15 @@ mount(document.getElementById('app')!, {
   resolvers,                             // your named resolvers
   cases: [{ name: 'refund', text: 'Refund approved - SKU: abc-1234 - customer notified' }],
   fold: (m) => m.entity === 'sku',       // optional: which entities start folded
+  save: (json) => fetch('/book', { method: 'POST', body: json }),  // optional: a save button
 });
 ```
 
 Every edit recompiles the book and re-reads every case; invalid JSON keeps the
-last good result on screen, and reset brings the original back. Pass
+last good result on screen, and reset brings back the last saved book. Pass
 `book` instead of `data`/`resolvers` for a read-only view of a compiled
 `Book`. The playground injects its own scoped styles, so it needs no
-stylesheet; serve it with whatever dev server you already use.
+stylesheet.
 
 ## Demo books
 

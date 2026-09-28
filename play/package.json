@@ -1,0 +1,18 @@
+{
+  "name": "fewrd-play",
+  "version": "0.1.0",
+  "description": "Open a local fewrd book (book.json, cases.json, resolvers.ts) in the fewrd playground. Dev tooling, kept out of the fewrd library.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": ["fewrd", "playground", "cli", "recipes"],
+  "repository": { "type": "git", "url": "git+https://github.com/egildo/fewrd.git", "directory": "play" },
+  "homepage": "https://github.com/egildo/fewrd/tree/main/play#readme",
+  "bugs": "https://github.com/egildo/fewrd/issues",
+  "bin": { "fewrd-play": "dist/cli.js" },
+  "files": ["dist"],
+  "engines": { "node": ">=22.13" },
+  "peerDependencies": { "fewrd": ">=0.3.0" },
+  "scripts": {
+    "prepublishOnly": "tsc -p tsconfig.json"
+  }
+}

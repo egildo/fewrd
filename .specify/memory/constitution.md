@@ -1,15 +1,15 @@
 <!--
 Sync Impact Report
-- Version change: 2.0.0 → 2.1.0
-- Modified principles: IV. Strict Types, No Escape Hatches — the publish-time build now
-  bundles and minifies the library's public entries with vite (already a devDependency)
-  and emits declarations with tsc; only src/ is published, demo recipe books stay in the
-  repo. Expanded guidance, no principle removed or reversed, hence MINOR.
-- Modified sections: Development Workflow — build description and demo-book location.
+- Version change: 2.1.0 → 2.2.0
+- Modified principles: I. Zero Runtime Dependencies — extended to dev tooling, which ships
+  as its own package (under play/), never inside the library, and depends on nothing but a
+  peer `fewrd`. Expanded guidance, nothing removed or reversed, hence MINOR.
+- Modified sections: Development Workflow — the fewrd-play package and its publish step.
 - Added sections: none
 - Removed sections: none
 - Follow-up TODOs: none
-- Trigger: user request to publish only the minified library as the package (0.2.0).
+- Trigger: GitHub issue #2 (fewrd-play <dir>), with the maintainer's requirement that dev
+  tooling must not clutter the minified library consumers install.
 -->
 
 # fewrd Constitution
@@ -20,6 +20,9 @@ Sync Impact Report
 Every runtime module ships with no npm dependencies; `package.json` `dependencies` stays
 empty. Anything a feature needs is implemented in `src/`, or deferred, never pulled in as
 a package.
+Dev tooling (e.g. `fewrd-play`, the playground server) ships as its own package under
+`play/`, never inside the library package, and declares no `dependencies` either: only a
+peer dependency on `fewrd`.
 Rationale: the library's whole value is being small and auditable enough to read in one
 sitting — pulling in dependencies defeats that and forces every consumer to inherit an
 unbounded transitive graph.
@@ -89,6 +92,8 @@ starting points, not part of the published package.
 Publishing a release runs `pnpm build` (via `prepublishOnly`) to build `dist/`, triggered
 only by `npm publish`/`pnpm publish` — never part of the merge-time gate above. `dist/` is
 never committed to git; it is rebuilt fresh at publish time and stays gitignored.
+`play/` publishes separately (`npm publish` from `play/`, which compiles its TypeScript to
+`play/dist/` with `tsc`), since Node does not strip types inside `node_modules`.
 
 ## Governance
 
@@ -99,4 +104,4 @@ bumps need no discussion; MINOR/MAJOR bumps need explicit sign-off from the proj
 maintainer before merge. Code review MUST check new work against the five rules in
 README's "The rules" section and against this constitution's principles.
 
-**Version**: 2.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-28
+**Version**: 2.2.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-28
