@@ -1,0 +1,31 @@
+{
+  "name": "fewrd",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Read a string with recipes: anchors, greedy expansion, a cuts index, and a fold-aware render.",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./recipes/*": {
+      "types": "./dist/recipes/*.d.ts",
+      "default": "./dist/recipes/*.js"
+    }
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc",
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
+    "dev": "vite playground --port 5577 --strictPort"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6"
+  }
+}
