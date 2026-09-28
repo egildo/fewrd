@@ -1,9 +1,8 @@
 // Subjects written the way the real ones are. Invented companies, real comuni.
 
-export interface Case {
-  name: string;
-  text: string;
-}
+import type { PlaygroundCase as Case } from '../src/playground.ts';
+
+export type { Case };
 
 export const CASES: Case[] = [
   {
