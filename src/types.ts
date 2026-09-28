@@ -1,5 +1,6 @@
 // The vocabulary. A reading is plain data: no RegExp, no functions, nothing a
-// JSON round-trip loses — so it can be cached by (text, book version).
+// JSON round-trip loses — so it can be cached by (text, book version). A book
+// may be written as plain data too (`BookData`), then compiled to a `Book`.
 
 /** Half-open, indices into the ORIGINAL string. */
 export interface Span {
@@ -46,6 +47,54 @@ export interface Recipe {
 export interface Book {
   version: string;
   recipes: readonly Recipe[];
+}
+
+/** A recipe's `resolve`, supplied by name at compile time. */
+export type Resolver = NonNullable<Recipe['resolve']>;
+
+/** A `Neighbour` as data. `rx` is a pattern: `"/source/flags"`. */
+export interface NeighbourData {
+  part: string;
+  rx: string;
+}
+
+/**
+ * A `Recipe` as data. Patterns are `"/source/flags"` strings, where
+ * `%{NAME}` splices in `BookData.defs.NAME` as one unit; `resolve` names a
+ * function from `CompileOptions.resolvers`.
+ */
+export interface RecipeData {
+  entity: string;
+  anchor: string;
+  left?: NeighbourData[];
+  right?: NeighbourData[];
+  requires?: string[];
+  resolve?: string;
+  weak?: boolean;
+  rest?: boolean;
+  glued?: boolean;
+}
+
+/** A `Book` as data: the JSON a book is written in. */
+export interface BookData {
+  $schema?: string;
+  version: string;
+  /** Name → pattern source (no slashes, no flags), referenced as `%{NAME}`. */
+  defs?: Record<string, string>;
+  recipes: RecipeData[];
+}
+
+/** One problem found by `compile`. `recipe` indexes `BookData.recipes`. */
+export interface CompileError {
+  /** Where in the data, e.g. `recipes[2].left[0].rx`; `""` is the root. */
+  path: string;
+  recipe?: number;
+  entity?: string;
+  message: string;
+}
+
+export interface CompileOptions {
+  resolvers?: Readonly<Record<string, Resolver>>;
 }
 
 export interface Mention {

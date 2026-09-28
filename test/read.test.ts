@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { gist, html, read, type Book, type Cuts } from '../src/index.ts';
 import { itPa } from '../recipes/it-pa.ts';
 import { CASES } from '../playground/cases.ts';
@@ -171,9 +171,12 @@ test('the condensed CSS toggle is equivalent to gist: stripping data-fold spans 
 });
 
 test('a recipe book only imports the public surface, never engine internals', () => {
-  const source = readFileSync(new URL('../recipes/it-pa.ts', import.meta.url), 'utf8');
-  const imports = [...source.matchAll(/from\s+['"](\.\.?\/[^'"]+)['"]/g)].map((m) => m[1]);
-  for (const spec of imports) {
-    assert.ok(!/\/(read|render)\.ts$/.test(spec), `recipes/it-pa.ts imports engine internal: ${spec}`);
+  const dir = new URL('../recipes/', import.meta.url);
+  for (const file of readdirSync(dir).filter((f) => f.endsWith('.ts'))) {
+    const source = readFileSync(new URL(file, dir), 'utf8');
+    const imports = [...source.matchAll(/from\s+['"](\.\.?\/[^'"]+)['"]/g)].map((m) => m[1]);
+    for (const spec of imports) {
+      assert.ok(!/\/(read|render|compile)\.ts$/.test(spec), `recipes/${file} imports engine internal: ${spec}`);
+    }
   }
 });

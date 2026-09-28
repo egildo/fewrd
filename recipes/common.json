@@ -1,0 +1,79 @@
+{
+  "$schema": "../book.schema.json",
+  "version": "common@1",
+  "defs": {
+    "CUR": "[$€£¥]|USD|EUR|GBP|CHF|JPY",
+    "ISO_DATE": "\\d{4}-\\d{2}-\\d{2}",
+    "TIME": "\\d{2}:\\d{2}(?::\\d{2})?(?:Z|[+-]\\d{2}:?\\d{2})?",
+    "OCTET": "\\d{1,3}"
+  },
+  "recipes": [
+    {
+      "entity": "reply",
+      "anchor": "/(?:re|fwd?|aw|wg)\\s*:/iu"
+    },
+    {
+      "entity": "quote",
+      "anchor": "/(?:wrote|said)\\s*:\\s*/iu",
+      "rest": true
+    },
+    {
+      "entity": "url",
+      "anchor": "/https?:\\/\\/[^\\s<>\"'()\\[\\]]*[^\\s<>\"'()\\[\\].,;:!?]/iu"
+    },
+    {
+      "entity": "email",
+      "anchor": "/[\\p{L}\\p{N}._%+-]+@[\\p{L}\\p{N}-]+(?:\\.[\\p{L}\\p{N}-]+)+/u",
+      "left": [{ "part": "label", "rx": "/(?:e-?mail|mailto)\\s*:?\\s*/iu" }],
+      "resolve": "lower"
+    },
+    {
+      "entity": "phone",
+      "anchor": "/\\+\\d{1,3}(?:[\\s.-]?\\d{2,4}){2,5}/u",
+      "left": [{ "part": "label", "rx": "/(?:tel|phone|mobile|ph)\\.?\\s*:?\\s*/iu" }],
+      "resolve": "phone"
+    },
+    {
+      "entity": "ip",
+      "anchor": "/%{OCTET}(?:\\.%{OCTET}){3}/u",
+      "resolve": "ipv4"
+    },
+    {
+      "entity": "date",
+      "anchor": "/%{ISO_DATE}(?:[T ]%{TIME})?/u",
+      "left": [{ "part": "label", "rx": "/(?:due|until|by|on|since|eta)\\s*:?\\s*/iu" }],
+      "resolve": "datetime"
+    },
+    {
+      "entity": "money",
+      "anchor": "/\\d+(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?/u",
+      "left": [{ "part": "currency", "rx": "/%{CUR}\\s?/u" }],
+      "right": [{ "part": "currency", "rx": "/\\s?%{CUR}/u" }],
+      "requires": ["currency"],
+      "resolve": "money"
+    },
+    {
+      "entity": "percent",
+      "anchor": "/[+-]?\\d+(?:[.,]\\d+)?\\s?%/u"
+    },
+    {
+      "entity": "version",
+      "anchor": "/v?\\d+\\.\\d+\\.\\d+(?:-[\\p{L}\\p{N}]+(?:\\.[\\p{L}\\p{N}]+)*)?/u",
+      "left": [{ "part": "label", "rx": "/(?:version|release|ver\\.?)\\s*/iu" }],
+      "resolve": "version"
+    },
+    {
+      "entity": "ticket",
+      "anchor": "/[A-Z][A-Z0-9]{1,9}(?:-\\d+)+/u",
+      "left": [{ "part": "label", "rx": "/(?:ticket|issue|order|ref)\\.?\\s*(?:#|no\\.?)?\\s*:?\\s*/iu" }]
+    },
+    {
+      "entity": "handle",
+      "anchor": "/@[\\p{L}\\p{N}_]+/u"
+    },
+    {
+      "entity": "hashtag",
+      "anchor": "/#[\\p{L}_][\\p{L}\\p{N}_]*/u"
+    }
+  ]
+}

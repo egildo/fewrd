@@ -2,28 +2,30 @@
   "name": "fewrd",
   "version": "0.1.0",
   "type": "module",
-  "description": "Read a string with recipes: anchors, greedy expansion, a cuts index, and a fold-aware render.",
+  "description": "Finds what recurs in a string, cuts it loose, and gets you the gist in a few words.",
+  "keywords": ["text", "segmentation", "entity-extraction", "regex", "recipes", "gist", "fold"],
+  "repository": { "type": "git", "url": "git+https://github.com/egildo/fewrd.git" },
+  "homepage": "https://github.com/egildo/fewrd#readme",
+  "bugs": "https://github.com/egildo/fewrd/issues",
   "files": [
-    "dist"
+    "dist",
+    "book.schema.json"
   ],
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
-    },
-    "./recipes/*": {
-      "types": "./dist/recipes/*.d.ts",
-      "default": "./dist/recipes/*.js"
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./playground": {
-      "types": "./dist/src/playground.d.ts",
-      "default": "./dist/src/playground.js"
-    }
+      "types": "./dist/types/playground.d.ts",
+      "default": "./dist/playground.js"
+    },
+    "./book.schema.json": "./book.schema.json"
   },
   "scripts": {
     "test": "node --test \"test/*.test.ts\"",
     "typecheck": "tsc",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "vite build --config vite.lib.ts && tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
     "dev": "vite playground --port 5577 --strictPort"
   },

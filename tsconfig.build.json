@@ -3,8 +3,10 @@
   "compilerOptions": {
     "noEmit": false,
     "declaration": true,
-    "outDir": "dist",
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist/types",
     "rewriteRelativeImportExtensions": true
   },
-  "include": ["src", "recipes"]
+  "include": ["src"]
 }

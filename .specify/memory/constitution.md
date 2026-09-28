@@ -1,18 +1,15 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 → 2.0.0
-- Modified principles: IV. Strict Types, No Escape Hatches — the absolute "no build step
-  introduced" clause is redefined: development, typecheck, and test remain build-free, but
-  a separate, additive build now compiles src/ and recipes/ to dist/ for package
-  distribution, gated only at publish time. This reverses the prior unconditional
-  prohibition, hence MAJOR.
+- Version change: 2.0.0 → 2.1.0
+- Modified principles: IV. Strict Types, No Escape Hatches — the publish-time build now
+  bundles and minifies the library's public entries with vite (already a devDependency)
+  and emits declarations with tsc; only src/ is published, demo recipe books stay in the
+  repo. Expanded guidance, no principle removed or reversed, hence MINOR.
+- Modified sections: Development Workflow — build description and demo-book location.
 - Added sections: none
 - Removed sections: none
 - Follow-up TODOs: none
-- Trigger: user request to prepare the repo for tagged, distributable package releases
-  (dist/ output via tsc, publish-ready package.json). No new runtime or dev dependency was
-  added — tsc (already a devDependency) performs the whole build via
-  `rewriteRelativeImportExtensions`, keeping Principle I intact.
+- Trigger: user request to publish only the minified library as the package (0.2.0).
 -->
 
 # fewrd Constitution
@@ -54,14 +51,15 @@ domain text, not a dumping ground for toy patterns.
 `@ts-expect-error` additions. Development, typechecking, and testing MUST stay build-free:
 source ships and runs as-authored TypeScript, type-stripped directly by `node --test`, with
 no compile step in that loop. A separate, additive build (`pnpm build`, run automatically
-at `npm publish` via `prepublishOnly`) compiles `src/` and `recipes/` to `dist/` for
-package consumers; it MUST NOT be required to develop, typecheck, or test this project, and
-MUST NOT introduce a new dependency beyond `typescript` (already a devDependency).
+at `npm publish` via `prepublishOnly`) bundles and minifies the library's public entries
+from `src/` into `dist/` with `vite`, and emits their declarations with `tsc`; demo recipe
+books are not published. It MUST NOT be required to develop, typecheck, or test this
+project, and MUST NOT introduce a new dependency beyond those already present
+(`typescript`, `vite`).
 Rationale: type-checking stays the primary safety net for the loop contributors actually
-run — that loop stays build-free. Shipping compiled `dist/` output to package consumers is
-a separate, publish-time-only concern; it doesn't reintroduce ceremony into development,
-and needs no new tooling since `tsc`'s `rewriteRelativeImportExtensions` already handles
-rewriting the `.ts`-extensioned imports this project's source uses.
+run — that loop stays build-free. Shipping a small, minified library to package consumers
+is a separate, publish-time-only concern; it doesn't reintroduce ceremony into
+development, and needs no new tooling since both tools are already in the repo.
 
 ### V. Simplicity and a Closed Vocabulary
 New concepts are added to the existing vocabulary (`Recipe`, `Book`, `Mention`, `Leaf`,
@@ -83,10 +81,12 @@ output, since callers key their cache on `(text, book.version)`.
 Changes run `pnpm typecheck` and `pnpm test` before merge; there is no build step to gate
 on. `pnpm dev` (playground on port 5577) is the manual check for how a change renders,
 folded and unfolded, via the single `data-fold` CSS switch described in the README.
-Recipes for a new domain live under `recipes/` as their own `Book` (e.g.
-`recipes/it-pa.ts`) and do not modify the core engine in `src/`.
+Recipes for a new domain live under `recipes/` as their own book — data in
+`<name>.json`, resolvers and the compiled `Book` in `<name>.ts` (e.g. `recipes/common`,
+`recipes/it-pa`) — and do not modify the core engine in `src/`. They are demos and
+starting points, not part of the published package.
 
-Publishing a release runs `pnpm build` (via `prepublishOnly`) to compile `dist/`, triggered
+Publishing a release runs `pnpm build` (via `prepublishOnly`) to build `dist/`, triggered
 only by `npm publish`/`pnpm publish` — never part of the merge-time gate above. `dist/` is
 never committed to git; it is rebuilt fresh at publish time and stays gitignored.
 
@@ -99,4 +99,4 @@ bumps need no discussion; MINOR/MAJOR bumps need explicit sign-off from the proj
 maintainer before merge. Code review MUST check new work against the five rules in
 README's "The rules" section and against this constitution's principles.
 
-**Version**: 2.0.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-28
+**Version**: 2.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-28

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fewrd book",
+  "description": "A fewrd recipe book written as data. Compile it with compile(data, { resolvers }) from 'fewrd'.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Where this schema is, e.g. ./node_modules/fewrd/book.schema.json. Ignored by compile."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Keys a cached reading. Change it whenever a change to the recipes can change output."
+    },
+    "defs": {
+      "type": "object",
+      "description": "Named pattern fragments: source only, no slashes, no flags. Reference one from any pattern or fragment as %{NAME}; it splices in as one unit.",
+      "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+      "additionalProperties": { "type": "string" }
+    },
+    "recipes": {
+      "type": "array",
+      "description": "Recipes in priority order.",
+      "items": { "$ref": "#/$defs/recipe" }
+    }
+  },
+  "required": ["version", "recipes"],
+  "additionalProperties": false,
+  "$defs": {
+    "pattern": {
+      "type": "string",
+      "pattern": "^/.*/[dgimsuvy]*$",
+      "description": "A regex as /source/flags, e.g. \"/C\\\\.?U\\\\.?P/iu\". %{NAME} splices in a fragment from defs."
+    },
+    "neighbour": {
+      "type": "object",
+      "properties": {
+        "part": { "type": "string", "minLength": 1, "description": "The part name this neighbour attaches as, e.g. label, date, unit." },
+        "rx": { "$ref": "#/$defs/pattern", "description": "Written plainly: the engine pins it to the anchor's edge." }
+      },
+      "required": ["part", "rx"],
+      "additionalProperties": false
+    },
+    "recipe": {
+      "type": "object",
+      "properties": {
+        "entity": { "type": "string", "minLength": 1, "description": "What this recipe recognises; mentions carry it." },
+        "anchor": { "$ref": "#/$defs/pattern", "description": "The value, strict. Its part is value (lead on a rest recipe)." },
+        "left": { "type": "array", "items": { "$ref": "#/$defs/neighbour" }, "description": "Neighbours tried leftward from the anchor, in priority order." },
+        "right": { "type": "array", "items": { "$ref": "#/$defs/neighbour" }, "description": "Neighbours tried rightward from the anchor, in priority order." },
+        "requires": { "type": "array", "items": { "type": "string" }, "description": "Parts that must attach, or the candidate is dropped." },
+        "resolve": { "type": "string", "minLength": 1, "description": "Name of a resolver passed to compile: canonical value from the parts, or null (not this entity after all)." },
+        "weak": { "type": "boolean", "description": "Fills only the gaps the strong recipes leave." },
+        "rest": { "type": "boolean", "description": "The mention runs from its anchor to the end of its level, and what follows is read again inside it. Neighbours are ignored." },
+        "glued": { "type": "boolean", "description": "The anchor may start or end inside a word." }
+      },
+      "required": ["entity", "anchor"],
+      "additionalProperties": false
+    }
+  }
+}
