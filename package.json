@@ -1,10 +1,21 @@
 {
   "name": "fewrd",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Finds what recurs in a string, cuts it loose, and gets you the gist in a few words.",
-  "keywords": ["text", "segmentation", "entity-extraction", "regex", "recipes", "gist", "fold"],
-  "repository": { "type": "git", "url": "git+https://github.com/egildo/fewrd.git" },
+  "keywords": [
+    "text",
+    "segmentation",
+    "entity-extraction",
+    "regex",
+    "recipes",
+    "gist",
+    "fold"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/egildo/fewrd.git"
+  },
   "homepage": "https://github.com/egildo/fewrd#readme",
   "bugs": "https://github.com/egildo/fewrd/issues",
   "files": [
