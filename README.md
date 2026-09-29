@@ -50,10 +50,7 @@ Rendering the tree is yours. fewrd stops at data.
 npm install fewrd
 ```
 
-ESM only, zero dependencies, types included. Runs in current Node and in any current browser or bundler.
-
-> [!IMPORTANT]
-> This README describes 1.0.0, a rewrite. Until it is on npm, `npm install fewrd` still gets 0.3.0, the older book-and-recipes API; the [changelog](CHANGELOG.md) says what changed and how to upgrade. Meanwhile, build this repository (`pnpm install && pnpm build`) and depend on the checkout.
+ESM only, zero dependencies, types included. Runs in current Node and in any current browser or bundler. Coming from 0.3.0, the book-and-recipes API: the [changelog](CHANGELOG.md) says what changed and how to upgrade.
 
 ## Quick start
 

@@ -107,4 +107,4 @@ Simplifications that are right at subject length and wrong past it. Each is mark
 - a twin-rule table, per-pair rules for twins;
 - `glued`, a root match allowed to cut a word;
 - HTML output from fewrd, which [the vision](vision.md) excludes today: taking it up means amending the vision first;
-- publishing to npm: `fewrd` is 1.0.0 and `fewrd-play` 0.2.0 in the repository; putting them on npm is its own act.
+- publishing `fewrd-play`: it is 0.2.0 in the repository and not on npm; putting it there is its own act.
