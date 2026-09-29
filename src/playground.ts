@@ -9,6 +9,7 @@ import { compile, type CompileError, type Resolve } from './index.ts';
 import { dom, type Node } from './dom.ts';
 import { find } from './find.ts';
 import { hidden, gist, type Fold } from './fold.ts';
+import { HUES, greyed, lanes, segments, slot, walk, wrap, type Row } from './grid.ts';
 
 export interface PlaygroundCase {
   name: string;
@@ -24,75 +25,6 @@ export interface PlaygroundConf {
   resolvers?: Readonly<Record<string, Resolve>>;
 }
 
-type Row = readonly [tag: string, span: Span];
-
-/** Stack rows into lanes: each row on the first lane whose last row ends at or before its start. */
-export function lanes(rows: Iterable<Row>): Row[][] {
-  const out: Row[][] = [];
-  const ends: number[] = [];
-  for (const row of rows) {
-    let i = ends.findIndex((end) => end <= row[1][0]);
-    if (i < 0) {
-      i = out.length;
-      out.push([]);
-      ends.push(0);
-    }
-    out[i].push(row);
-    ends[i] = row[1][1];
-  }
-  return out;
-}
-
-/** Where each line of a text wrapped to `cols` characters starts: after the last space that fits, or hard at `cols` when there is none. */
-export function wrap(text: string, cols: number): number[] {
-  const starts = [0];
-  for (let at = 0; text.length - at > cols; starts.push(at)) {
-    const space = text.lastIndexOf(' ', at + cols - 1);
-    at = space > at ? space + 1 : at + cols;
-  }
-  return starts;
-}
-
-/** Where a row falls on lines that start at `starts`: one piece per line it touches, columns within the line. */
-export function segments([a, b]: Span, starts: readonly number[]): { line: number; from: number; to: number }[] {
-  const out: { line: number; from: number; to: number }[] = [];
-  starts.forEach((from, line) => {
-    const end = starts[line + 1] ?? Infinity;
-    if (a < end && b > from) out.push({ line, from: Math.max(a, from) - from, to: Math.min(b, end) - from });
-  });
-  return out;
-}
-
-/** The tree, one entry per node but `doc`, in text order: the node, its depth and a one-line description (tag, span, twins, value, the node's text). */
-function walk(doc: Node, text: string): { node: Node; depth: number; line: string }[] {
-  const out: { node: Node; depth: number; line: string }[] = [];
-  const visit = (n: Node, depth: number) => {
-    const also = n.also ? ` also=${n.also.join(',')}` : '';
-    const value = n.value !== undefined ? ` value=${JSON.stringify(n.value)}` : '';
-    out.push({ node: n, depth, line: `${'  '.repeat(depth)}${n.tag} (${n.start}, ${n.end})${also}${value} ${JSON.stringify(text.slice(n.start, n.end))}` });
-    for (const c of n.children) visit(c, depth + 1);
-  };
-  for (const c of doc.children) visit(c, 0);
-  return out;
-}
-export const treeLines = (doc: Node, text: string): string[] => walk(doc, text).map((x) => x.line);
-
-/** The spans of the leaves the fold hides, adjacent ones merged. */
-export function greyed(doc: Node, fold: Fold): Span[] {
-  const out = hidden(doc, fold);
-  const spans: [number, number][] = [];
-  const visit = (n: Node) => {
-    if (n.children.length) return n.children.forEach(visit);
-    if (!out.has(n)) return;
-    const last = spans[spans.length - 1];
-    if (last && last[1] === n.start) last[1] = n.end;
-    else spans.push([n.start, n.end]);
-  };
-  doc.children.forEach(visit);
-  return spans;
-}
-
-
 const key = (tag: string, a: number, b: number) => `${tag}:${a}:${b}`;
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -107,11 +39,7 @@ function h<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, te
 // Neutrals: warm paper in light (hue 85), cool ink in dark (hue 265), surfaces close together and the text far from them; the twelve band hues share one lightness and chroma per theme.
 const LIGHT = `--bg:oklch(.965 .008 85);--surface:oklch(.977 .007 85);--raised:oklch(.99 .005 85);--sunken:oklch(.948 .009 85);--text:oklch(.21 .015 265);--muted:oklch(.45 .015 85);--faint:oklch(.6 .012 85);--line:oklch(.91 .009 85);--line-strong:oklch(.84 .011 85);--hover:oklch(.935 .02 270);--accent:oklch(.5 .13 275);--accent-fg:oklch(.985 .005 85);--ok:oklch(.5 .09 155);--warn:oklch(.52 .09 70);--err:oklch(.5 .12 27);--err-bg:oklch(.962 .02 27);--grey:oklch(.7 .008 85);--band-l:.64;--band-c:.105;--wash:18%;--shadow-sm:0 1px 2px oklch(.3 .02 85/.07);--shadow-pop:0 1px 2px oklch(.3 .02 85/.08),0 10px 28px oklch(.3 .02 85/.16);`;
 const DARK = `--bg:oklch(.22 .012 265);--surface:oklch(.25 .013 265);--raised:oklch(.29 .015 265);--sunken:oklch(.19 .011 265);--text:oklch(.94 .006 265);--muted:oklch(.74 .01 265);--faint:oklch(.58 .012 265);--line:oklch(.31 .013 265);--line-strong:oklch(.4 .015 265);--hover:oklch(.3 .03 270);--accent:oklch(.76 .09 275);--accent-fg:oklch(.2 .03 275);--ok:oklch(.78 .1 155);--warn:oklch(.8 .09 75);--err:oklch(.75 .11 25);--err-bg:oklch(.27 .04 25);--grey:oklch(.5 .01 265);--band-l:.74;--band-c:.1;--wash:24%;--shadow-sm:0 1px 2px oklch(0 0 0/.3);--shadow-pop:0 1px 2px oklch(0 0 0/.4),0 10px 28px oklch(0 0 0/.45);`;
-const HUES = [20, 50, 80, 110, 140, 170, 200, 230, 260, 290, 320, 350];
 const BANDS = HUES.map((hue, i) => `--band-${i}:oklch(var(--band-l) var(--band-c) ${hue});`).join('');
-
-/** The band slot of the tag at place `i` in its conf: a step of 5 slots is 150° of hue, so neighbours differ; the second lap shifts by one. */
-export const slot = (i: number): number => (Math.max(0, i) * 5 + Math.floor(Math.max(0, i) / HUES.length)) % HUES.length;
 
 const STYLE_ID = 'fewrd-pg-style';
 const STYLE = `

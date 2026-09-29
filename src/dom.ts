@@ -4,9 +4,9 @@
 // Matching runs on the normalised copy, as in `find`; nodes are in original
 // coordinates. The fold lives in fold.ts and reads the tree alone.
 
-import { rel, type Chart, type Span } from './chart.ts';
+import { edges, rel, type Chart, type Row, type Span } from './chart.ts';
 import type { Conf, Fate, Resolve } from './conf.ts';
-import { derive, index, type Row, type Step } from './derive.ts';
+import { derive, type Step } from './derive.ts';
 import { normalise } from './normalise.ts';
 
 export type Node = {
@@ -102,7 +102,7 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
     const [tag, [lo, hi]] = row;
     const def = conf.tags[tag];
     const within = all.filter((r) => lo <= r[1][0] && r[1][1] <= hi && key(r) !== k);
-    const ix = index(within);
+    const ix = edges(within);
     const out: Derivation[] = [];
     for (const search of def.search ?? []) {
       for (const from of within) {

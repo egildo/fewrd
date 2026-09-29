@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { greyed, lanes, segments, slot, treeLines, wrap } from '../src/playground.ts';
+import { greyed, lanes, segments, slot, treeLines, wrap } from '../src/grid.ts';
 import { Chart, type Span } from '../src/index.ts';
 import { build, type Tags } from './tree.ts';
 

@@ -4,7 +4,7 @@
 
 import { Chart } from './chart.ts';
 import type { Conf, Resolve } from './conf.ts';
-import { derive, index, pinned, type Row } from './derive.ts';
+import { derive, pinned, type Row } from './derive.ts';
 import { normalise } from './normalise.ts';
 
 type Compiled = Conf<RegExp, Resolve>;
@@ -53,7 +53,7 @@ export function find(text: string, conf: Compiled): Chart {
   const valueOf = ([tag, [a, b]]: Row) => values.get(key(tag, a, b)) ?? s.slice(a, b);
 
   for (;;) {
-    const ix = index(chart.all());
+    const ix = chart.edges();
     const found: Row[] = [];
     for (const tag of names) {
       const def = conf.tags[tag];

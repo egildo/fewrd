@@ -4,6 +4,12 @@
 
 `package.json` stays at 0.3.0 until release; `fewrd-play` keeps its version too and is not published.
 
+### Changed, after a call-graph sweep
+
+- The matcher's by-edge lookup is the chart's: `Chart.edges()` and `edges(rows)` in `chart.ts`, one owner for every row lookup; `derive.ts` no longer keeps its own.
+- The playground's geometry helpers (`lanes`, `wrap`, `segments`, `treeLines`, `greyed`, `slot`) moved to `src/grid.ts`, an internal module. They are no longer exported from `fewrd/playground`, which exports `mount` and its option types only.
+- `fewrd-play`'s command line has tests: `--help`, a folder without `conf.json`, a bad port, and a real run that prints its url and serves the folder.
+
 ### Added
 
 - `dom(text, chart, conf)`: from the chart, one tree of plain objects. Rows are selected (non-weak first, then longer, then earlier key in `tags`, then earlier start; a row that crosses a chosen one is dropped, so is one inside a chosen row of the same tag, a row with exactly a chosen row's span becomes a twin in `also`); each chosen composed row is derived again inside its own span, with the matcher of `find`, so its roles point at real nodes and the rows it took are chosen with it. A forced row of the composed row's own tag is absorbed (the outermost row of a self-grown tag keeps its chain's children, never a protocol inside a protocol); a derivation that would cross a chosen row gives way to the next, and the composed row is dropped when none is left. Values are resolved bottom-up. Water fills the gaps as `text` nodes, so the leaves cover the text exactly.

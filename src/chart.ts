@@ -6,7 +6,26 @@ export type AllenRelation =
   | 'before' | 'meets' | 'overlaps' | 'starts' | 'during' | 'finishes' | 'equals'
   | 'after' | 'met-by' | 'overlapped-by' | 'started-by' | 'contains' | 'finished-by';
 
-type Row = readonly [tag: string, span: Span];
+export type Row = readonly [tag: string, span: Span];
+
+/** Rows laid out by edge, what the matcher asks for: where rows start, where they end, and all of them in order. */
+export interface Edges {
+  starts: Map<number, Row[]>;
+  ends: Map<number, Row[]>;
+  all: Row[];
+}
+/** `rows` must come in position order; `Chart.edges()` for a whole chart, this for a subset of its rows. */
+export function edges(rows: Iterable<Row>): Edges {
+  const ix: Edges = { starts: new Map(), ends: new Map(), all: [...rows] };
+  for (const row of ix.all) {
+    for (const [map, at] of [[ix.starts, row[1][0]], [ix.ends, row[1][1]]] as const) {
+      const list = map.get(at);
+      if (list) list.push(row);
+      else map.set(at, [row]);
+    }
+  }
+  return ix;
+}
 
 const byPosition = (a: Span, b: Span) => a[0] - b[0] || a[1] - b[1];
 const byName = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
@@ -126,6 +145,11 @@ export class Chart {
     const rows: Row[] = [];
     for (const [tag, list] of this.#rows) for (const s of list) rows.push([tag, s]);
     return rows.sort((a, b) => byPosition(a[1], b[1]) || byName(a[0], b[0]));
+  }
+
+  /** Every row by edge, for the matcher: `has`, `after` and `before` answer one row at a time, this answers "every row at this edge". */
+  edges(): Edges {
+    return edges(this.all());
   }
 }
 

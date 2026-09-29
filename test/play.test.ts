@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { request, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -71,4 +72,56 @@ test('fewrd-play-folder: a file outside the folder is 404', () =>
 test('fewrd-play-folder: a title cannot close the script', async () => {
   const { page } = await import('../play/server.ts');
   assert.ok(!page('</script><b>').includes('</script><b>'));
+});
+
+// The command line: spawned as a user would run it, against the folder above.
+const CLI = join(import.meta.dirname, '..', 'play', 'cli.ts');
+function run(args: string[]): Promise<{ code: number | null; out: string; err: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [CLI, ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (c) => (out += c));
+    child.stderr.on('data', (c) => (err += c));
+    child.on('close', (code) => resolve({ code, out, err }));
+  });
+}
+
+test('fewrd-play-cli: --help prints the usage and exits 0', async () => {
+  const { code, out } = await run(['--help']);
+  assert.equal(code, 0);
+  assert.match(out, /^usage: fewrd-play/);
+});
+
+test('fewrd-play-cli: a folder without conf.json fails with the usage', async () => {
+  const { code, err } = await run([root]);
+  assert.equal(code, 1);
+  assert.match(err, /no conf\.json in/);
+  assert.match(err, /usage: fewrd-play/);
+});
+
+test('fewrd-play-cli: a bad port fails before listening', async () => {
+  const { code, err } = await run([dir, '--fewrd', lib, '--port', 'x']);
+  assert.equal(code, 1);
+  assert.match(err, /not a port: x/);
+});
+
+test('fewrd-play-cli: serves the folder and prints its url', async () => {
+  const child = spawn(process.execPath, [CLI, dir, '--fewrd', lib, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
+  try {
+    const url = await new Promise<string>((resolve, reject) => {
+      let out = '';
+      child.stdout.on('data', (c) => {
+        out += c;
+        const m = out.match(/http:\/\/127\.0\.0\.1:\d+\//);
+        if (m) resolve(m[0]);
+      });
+      child.on('close', (code) => reject(new Error(`exited ${code} before printing a url`)));
+    });
+    const res = await fetch(`${url}conf.json`);
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).version, 'shop@1');
+  } finally {
+    child.kill();
+  }
 });

@@ -2,10 +2,10 @@
 // `dom` (which re-runs it inside a chosen row's span to bind its roles).
 // Matching runs on the normalised copy.
 
-import type { Span } from './chart.ts';
+import type { Edges, Row } from './chart.ts';
 import type { Atom, Search } from './conf.ts';
 
-export type Row = readonly [tag: string, span: Span];
+export type { Row };
 export type Roles = Readonly<Record<string, string>>;
 /** One thing a derivation took: a row for a tag atom, the matched text for a regex atom (kept only when it has `as`). */
 export type Step = { row: Row; as?: string } | { text: string; as: string };
@@ -29,25 +29,6 @@ export function pinned(rx: RegExp, kind: Kind): RegExp {
     : new RegExp(`^(?:${rx.source})$`, bare(rx.flags)));
 }
 
-/** Rows laid out by edge: where they start, where they end, and all of them in order. */
-export interface Index {
-  starts: Map<number, Row[]>;
-  ends: Map<number, Row[]>;
-  all: Row[];
-}
-/** `rows` must come in position order. */
-export function index(rows: Iterable<Row>): Index {
-  const ix: Index = { starts: new Map(), ends: new Map(), all: [...rows] };
-  for (const row of ix.all) {
-    for (const [map, at] of [[ix.starts, row[1][0]], [ix.ends, row[1][1]]] as const) {
-      const list = map.get(at);
-      if (list) list.push(row);
-      else map.set(at, [row]);
-    }
-  }
-  return ix;
-}
-
 interface Pending {
   rx: RegExp;
   as?: string;
@@ -65,7 +46,7 @@ interface Pending {
  */
 export function derive(
   text: string,
-  ix: Index,
+  ix: Edges,
   valueOf: (row: Row) => string,
   search: Search<RegExp>,
   from: Row,

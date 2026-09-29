@@ -471,6 +471,9 @@ subjects in `cases/*.json`: the rows each must give, and, for every case that
 carries a `fold` and a `gist`, that `gist(dom(text, find(text, conf), conf),
 fold)` is that gist. The core rules are tested with small synthetic confs, one
 test per rule (`test/find.test.ts`, `test/dom.test.ts`, `test/fold.test.ts`).
+A conf names its resolvers as strings, so a call-graph tool sees every resolver
+in `confs/*.ts` as uncalled; `compile` is what checks those names, and an
+unknown one is a compile error with a test of its own.
 The rules of the finding half ("The rules"), of selection ("Selection") and of
 the fold ("The rules of the fold") are the single source of truth for `find`,
 `dom` and `hidden`/`gist`: a change to what they return changes those sections
