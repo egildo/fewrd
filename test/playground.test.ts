@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { greyed, lanes, segments, treeLines, wrap } from '../src/playground.ts';
+import { greyed, lanes, segments, slot, treeLines, wrap } from '../src/playground.ts';
 import { Chart, type Span } from '../src/index.ts';
 import { build, type Tags } from './tree.ts';
 
@@ -93,4 +93,10 @@ test('playground-fold-panel: greyed merges adjacent hidden leaves', () => {
   const { doc } = build(T, 'Nota ref #12 - fine');
   assert.deepEqual(greyed(doc, (n) => n.tag === 'ref'), [[4, 12]]);
   assert.deepEqual(greyed(doc, () => false), []);
+});
+
+test('playground-palette: slot keeps neighbours apart and every first-lap tag distinct', () => {
+  assert.equal(new Set(Array.from({ length: 12 }, (_, i) => slot(i))).size, 12);
+  assert.equal(slot(-1), 0);
+  for (let i = 0; i < 40; i++) assert.notEqual(slot(i), slot(i + 1));
 });
