@@ -104,9 +104,9 @@ function h<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, te
 }
 
 // The palette, once per theme; a theme is the light block, or the dark block under the OS setting or a data-theme override.
-// Neutrals are one cool scale (hue 275) that gains chroma with depth; the twelve band hues share one lightness and chroma per theme.
-const LIGHT = `--bg:oklch(.962 .007 275);--surface:oklch(.988 .003 275);--raised:oklch(1 0 0);--sunken:oklch(.935 .009 275);--text:oklch(.22 .02 275);--muted:oklch(.46 .02 275);--faint:oklch(.6 .015 275);--line:oklch(.9 .009 275);--line-strong:oklch(.8 .012 275);--hover:oklch(.94 .025 275);--accent:oklch(.5 .2 275);--accent-fg:oklch(.99 0 0);--ok:oklch(.5 .13 155);--warn:oklch(.52 .12 70);--err:oklch(.52 .18 27);--err-bg:oklch(.96 .025 27);--grey:oklch(.68 .01 275);--band-l:.6;--band-c:.15;--wash:20%;--shadow-sm:0 1px 2px oklch(.2 .02 275/.08);--shadow-pop:0 1px 2px oklch(.2 .02 275/.1),0 10px 28px oklch(.2 .02 275/.18);`;
-const DARK = `--bg:oklch(.17 .012 275);--surface:oklch(.215 .014 275);--raised:oklch(.27 .016 275);--sunken:oklch(.14 .01 275);--text:oklch(.93 .006 275);--muted:oklch(.72 .012 275);--faint:oklch(.56 .014 275);--line:oklch(.3 .015 275);--line-strong:oklch(.4 .018 275);--hover:oklch(.27 .04 275);--accent:oklch(.78 .13 275);--accent-fg:oklch(.2 .04 275);--ok:oklch(.8 .14 155);--warn:oklch(.82 .12 75);--err:oklch(.76 .15 25);--err-bg:oklch(.25 .05 25);--grey:oklch(.5 .012 275);--band-l:.76;--band-c:.13;--wash:28%;--shadow-sm:0 1px 2px oklch(0 0 0/.4);--shadow-pop:0 1px 2px oklch(0 0 0/.5),0 10px 28px oklch(0 0 0/.6);`;
+// Neutrals: warm paper in light (hue 85), cool ink in dark (hue 265), surfaces close together and the text far from them; the twelve band hues share one lightness and chroma per theme.
+const LIGHT = `--bg:oklch(.965 .008 85);--surface:oklch(.977 .007 85);--raised:oklch(.99 .005 85);--sunken:oklch(.948 .009 85);--text:oklch(.21 .015 265);--muted:oklch(.45 .015 85);--faint:oklch(.6 .012 85);--line:oklch(.91 .009 85);--line-strong:oklch(.84 .011 85);--hover:oklch(.935 .02 270);--accent:oklch(.5 .13 275);--accent-fg:oklch(.985 .005 85);--ok:oklch(.5 .09 155);--warn:oklch(.52 .09 70);--err:oklch(.5 .12 27);--err-bg:oklch(.962 .02 27);--grey:oklch(.7 .008 85);--band-l:.64;--band-c:.105;--wash:18%;--shadow-sm:0 1px 2px oklch(.3 .02 85/.07);--shadow-pop:0 1px 2px oklch(.3 .02 85/.08),0 10px 28px oklch(.3 .02 85/.16);`;
+const DARK = `--bg:oklch(.22 .012 265);--surface:oklch(.25 .013 265);--raised:oklch(.29 .015 265);--sunken:oklch(.19 .011 265);--text:oklch(.94 .006 265);--muted:oklch(.74 .01 265);--faint:oklch(.58 .012 265);--line:oklch(.31 .013 265);--line-strong:oklch(.4 .015 265);--hover:oklch(.3 .03 270);--accent:oklch(.76 .09 275);--accent-fg:oklch(.2 .03 275);--ok:oklch(.78 .1 155);--warn:oklch(.8 .09 75);--err:oklch(.75 .11 25);--err-bg:oklch(.27 .04 25);--grey:oklch(.5 .01 265);--band-l:.74;--band-c:.1;--wash:24%;--shadow-sm:0 1px 2px oklch(0 0 0/.3);--shadow-pop:0 1px 2px oklch(0 0 0/.4),0 10px 28px oklch(0 0 0/.45);`;
 const HUES = [20, 50, 80, 110, 140, 170, 200, 230, 260, 290, 320, 350];
 const BANDS = HUES.map((hue, i) => `--band-${i}:oklch(var(--band-l) var(--band-c) ${hue});`).join('');
 
@@ -117,7 +117,7 @@ const STYLE_ID = 'fewrd-pg-style';
 const STYLE = `
 .fewrd-pg { --ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; --icon: "Material Symbols Rounded";
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px; --t-xs: 12px; --t-sm: 13px; --t-md: 15px; --t-lg: 18px; --t-xl: 26px; --w-reg: 400; --w-med: 500; --w-semi: 600;
-  --r-s: 4px; --r-m: 8px; --r-l: 14px; --r-pill: 999px; --grid-size: 15px; --grid-lh: 24px; --band-h: 5px; --band-h-lost: 3px; --lane: 8px; --bar: 73px; --ic: 20px; --dur: 130ms;
+  --r-s: 4px; --r-m: 8px; --r-l: 14px; --r-pill: 999px; --grid-size: 15px; --grid-lh: 24px; --band-h: 5px; --band-h-lost: 3px; --lane: 8px; --bar: 73px; --ic: 20px; --ic-s: 16px; --dur: 130ms; --dur-drawer: 200ms; --drawer-w: min(34rem, calc(100vw - var(--s6))); --pane: 38%; --scrim: color-mix(in oklch, var(--text) 30%, transparent);
   ${BANDS} ${LIGHT} color-scheme: light dark; background: var(--bg); color: var(--text); font: var(--w-reg) var(--t-md)/1.5 var(--ui);  -webkit-font-smoothing: antialiased; }
 @media (prefers-color-scheme: dark) { .fewrd-pg:not([data-theme="light"]) { ${DARK} } }
 .fewrd-pg[data-theme="dark"] { ${DARK} color-scheme: dark; }
@@ -136,7 +136,7 @@ const STYLE = `
 .fewrd-pg[data-icons] .fewrd-ic { font: var(--w-reg) var(--ic)/1 var(--icon); font-variation-settings: "wght" 500; font-feature-settings: "liga"; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; }
 .fewrd-pg[data-icons] .fewrd-ic::before { content: none; }
 
-.fewrd-pg .fewrd-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: var(--s3); min-height: var(--bar); padding: var(--s3) var(--s4); background: color-mix(in oklch, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.fewrd-pg .fewrd-bar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: var(--s3); min-height: var(--bar); padding: var(--s3) var(--s4); background: color-mix(in oklch, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
 .fewrd-pg .fewrd-brand { font: var(--w-semi) var(--t-lg)/1 var(--ui); letter-spacing: -.02em; }
 .fewrd-pg .fewrd-nav { display: flex; align-items: center; gap: var(--s2); }
 .fewrd-pg .fewrd-step { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: var(--r-m); border: 1px solid var(--line); background: var(--raised); color: var(--accent); box-shadow: var(--shadow-sm); cursor: pointer; transition: background var(--dur), color var(--dur), border-color var(--dur), transform var(--dur); }
@@ -148,20 +148,35 @@ const STYLE = `
 .fewrd-pg .fewrd-theme { display: inline-flex; align-items: center; gap: var(--s2); margin-left: auto; height: 40px; padding: 0 var(--s3); border-radius: var(--r-m); border: 1px solid var(--line); background: var(--raised); font-size: var(--t-sm); font-weight: var(--w-med); cursor: pointer; white-space: nowrap; transition: border-color var(--dur); }
 .fewrd-pg .fewrd-theme:hover { border-color: var(--line-strong); }
 
-.fewrd-pg .fewrd-layout { display: grid; gap: var(--s4); grid-template-columns: minmax(0, 1fr); grid-template-areas: "draw" "gist" "fold" "conf" "tree"; max-width: 1680px; margin: 0 auto; padding: var(--s4); align-items: start; }
+.fewrd-pg .fewrd-layout { display: grid; gap: var(--s4); grid-template-columns: minmax(0, 1fr); grid-template-areas: "draw" "gist" "fold" "tree"; max-width: 1400px; margin: 0 auto; padding: var(--s4); align-items: start; }
 .fewrd-pg .fewrd-card { min-width: 0; padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r-l); background: var(--surface); }
 .fewrd-pg .fewrd-drawcard { grid-area: draw; }
 .fewrd-pg .fewrd-gistcard { grid-area: gist; min-width: 0; padding: 0 var(--s2); }
 .fewrd-pg .fewrd-foldcard { grid-area: fold; }
-.fewrd-pg .fewrd-conf { grid-area: conf; min-width: 0; }
 .fewrd-pg .fewrd-treebox { grid-area: tree; }
 @media (min-width: 720px) { .fewrd-pg .fewrd-layout { padding: var(--s5); gap: var(--s5); } }
-@media (min-width: 1100px) {
-  .fewrd-pg .fewrd-layout { grid-template-columns: minmax(0, 1fr) minmax(340px, 27rem); grid-template-areas: "draw conf" "gist conf" "fold conf" "tree conf"; grid-template-rows: auto auto auto 1fr; }
-  .fewrd-pg .fewrd-conf { position: sticky; top: calc(var(--bar) + var(--s5)); max-height: calc(100vh - var(--bar) - var(--s6)); overflow: auto; }
-  .fewrd-pg .fewrd-conf textarea { height: max(16rem, calc(100vh - 17rem)); }
+@media (max-width: 719px) { .fewrd-pg { --grid-size: 14px; --grid-lh: 22px; } .fewrd-pg .fewrd-brand, .fewrd-pg .fewrd-theme .fewrd-lbl { display: none; } .fewrd-pg .fewrd-bar { gap: var(--s2); padding-inline: var(--s3); } .fewrd-pg .fewrd-count { min-width: 6ch; font-size: var(--t-lg); } .fewrd-pg .fewrd-theme { padding: 0 var(--s2); } .fewrd-pg .fewrd-step { width: 40px; height: 40px; } }
+
+/* The conf: a drawer under the sticky bar below 1700px, the left pane from there on. */
+.fewrd-pg .fewrd-scrim { position: fixed; inset: 0; z-index: 20; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity var(--dur-drawer); }
+.fewrd-pg .fewrd-drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 25; display: flex; flex-direction: column; gap: var(--s3); width: var(--drawer-w); padding: calc(var(--bar) + var(--s3)) var(--s4) var(--s4); border-right: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-pop); transform: translateX(-100%); opacity: 0; visibility: hidden; transition: transform var(--dur-drawer) ease, opacity var(--dur-drawer) ease, visibility 0s linear var(--dur-drawer); }
+.fewrd-pg[data-drawer] .fewrd-drawer { transform: none; opacity: 1; visibility: visible; transition-delay: 0s; }
+.fewrd-pg[data-drawer] .fewrd-scrim { opacity: 1; pointer-events: auto; }
+.fewrd-pg .fewrd-confhead { display: flex; align-items: baseline; gap: var(--s2); }
+.fewrd-pg .fewrd-drawer textarea { display: block; flex: 1; min-height: 12rem; width: 100%; padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sunken); resize: none; font: var(--w-reg) var(--t-xs)/1.6 var(--mono); font-variant-ligatures: none; tab-size: 2; }
+.fewrd-pg .fewrd-drawer textarea[aria-invalid="true"] { border-color: var(--err); }
+.fewrd-pg .fewrd-errors { flex: none; max-height: 40%; overflow: auto; padding: var(--s3); border: 1px solid color-mix(in oklch, var(--err) 35%, transparent); border-radius: var(--r-m); background: var(--err-bg); color: var(--err); font-size: var(--t-sm); overflow-wrap: anywhere; }
+.fewrd-pg .fewrd-errors ul { margin: var(--s2) 0 0; padding-left: 1.2em; font-size: var(--t-xs); }
+.fewrd-pg .fewrd-errors code { display: block; margin-top: var(--s1); font: inherit; }
+.fewrd-pg .fewrd-confbtn { position: relative; display: grid; place-items: center; flex: none; width: 40px; height: 40px; padding: 0; border-radius: var(--r-m); border: 1px solid var(--line); background: var(--raised); color: var(--muted); cursor: pointer; transition: border-color var(--dur), color var(--dur), background var(--dur); }
+.fewrd-pg .fewrd-confbtn:hover, .fewrd-pg .fewrd-confbtn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.fewrd-pg .fewrd-confbtn[aria-expanded="true"] { background: color-mix(in oklch, var(--accent) 10%, var(--raised)); }
+.fewrd-pg .fewrd-confbtn .fewrd-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; padding: 1px 5px; border: 1px solid var(--bg); background: var(--err); color: var(--bg); font-size: 11px; line-height: 14px; text-align: center; }
+@media (min-width: 1700px) {
+  .fewrd-pg .fewrd-shell { display: grid; grid-template-columns: var(--pane) minmax(0, 1fr); align-items: start; }
+  .fewrd-pg .fewrd-drawer { position: sticky; top: var(--bar); z-index: auto; width: auto; height: calc(100vh - var(--bar)); padding-top: var(--s4); box-shadow: none; transform: none; opacity: 1; visibility: visible; transition: none; }
+  .fewrd-pg .fewrd-scrim, .fewrd-pg .fewrd-confbtn { display: none; }
 }
-@media (max-width: 719px) { .fewrd-pg { --grid-size: 14px; --grid-lh: 22px; } .fewrd-pg .fewrd-brand, .fewrd-pg .fewrd-theme .fewrd-lbl { display: none; } .fewrd-pg .fewrd-bar { gap: var(--s2); padding-inline: var(--s3); } .fewrd-pg .fewrd-count { min-width: 6ch; font-size: var(--t-lg); } .fewrd-pg .fewrd-theme { padding: 0 var(--s2); } }
 
 .fewrd-pg .fewrd-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s1) var(--s3); }
 .fewrd-pg .fewrd-head .fewrd-grow { margin-left: auto; }
@@ -173,6 +188,7 @@ const STYLE = `
 .fewrd-pg .fewrd-line { position: relative; margin-bottom: var(--s4); }
 .fewrd-pg .fewrd-text { position: relative; white-space: pre; height: var(--grid-lh); }
 .fewrd-pg .fewrd-wash { position: absolute; top: 0; height: var(--grid-lh); border-radius: var(--r-s); background: color-mix(in oklch, var(--band) var(--wash), transparent); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--band) calc(var(--wash) * 1.6), transparent); pointer-events: none; }
+.fewrd-pg .fewrd-wash.mark { background: color-mix(in oklch, var(--band) calc(var(--wash) * .7), transparent); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--band) calc(var(--wash) * 1.1), transparent); }
 .fewrd-pg .fewrd-lane { position: relative; height: var(--lane); }
 .fewrd-pg .fewrd-lane:first-of-type { margin-top: 2px; }
 .fewrd-pg .fewrd-band { position: absolute; top: 1px; height: var(--band-h); background: var(--band); outline: none; transition: opacity .15s, box-shadow var(--dur), filter var(--dur); }
@@ -180,6 +196,11 @@ const STYLE = `
 .fewrd-pg .fewrd-band.gone { opacity: .25; }
 .fewrd-pg .fewrd-band.hot { z-index: 1; opacity: 1; filter: saturate(1.15) brightness(1.06); box-shadow: 0 0 0 2px color-mix(in oklch, var(--band) 30%, transparent); }
 .fewrd-pg .fewrd-band.gone.hot { opacity: .6; }
+/* Chip highlights: lit bands get a soft ring; while anything is lit the others recede. */
+.fewrd-pg .fewrd-band.mark { z-index: 1; opacity: 1; box-shadow: 0 0 0 2px color-mix(in oklch, var(--band) 26%, transparent); filter: saturate(1.1); }
+.fewrd-pg .fewrd-band.gone.mark { opacity: .6; }
+.fewrd-pg .fewrd-draw[data-marking] .fewrd-band:not(.mark):not(.hot) { opacity: .45; }
+.fewrd-pg .fewrd-draw[data-marking] .fewrd-band.gone:not(.mark):not(.hot) { opacity: .18; }
 .fewrd-pg .fewrd-band:focus-visible { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--band); }
 .fewrd-pg .fewrd-band.open { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
 .fewrd-pg .fewrd-band.close { border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
@@ -217,14 +238,19 @@ const STYLE = `
 
 .fewrd-pg .fewrd-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: var(--s3); }
 .fewrd-pg .fewrd-cap { flex-basis: 100%; margin-top: var(--s1); color: var(--muted); font-size: var(--t-xs); }
-.fewrd-pg .fewrd-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 8px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--raised); font: var(--w-med) var(--t-sm)/1 var(--ui); cursor: pointer; user-select: none; transition: background var(--dur), border-color var(--dur); }
-.fewrd-pg .fewrd-chip:hover { border-color: var(--line-strong); }
-.fewrd-pg .fewrd-chip:has(input:checked) { border-color: var(--accent); background: color-mix(in oklch, var(--accent) 12%, var(--raised)); }
-.fewrd-pg .fewrd-chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.fewrd-pg .fewrd-chip.absent { color: var(--muted); font-weight: var(--w-reg); background: transparent; }
-.fewrd-pg .fewrd-chip.absent i { opacity: .55; }
-.fewrd-pg .fewrd-chip input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
-.fewrd-pg .fewrd-chip i { width: 12px; height: var(--band-h); border-radius: 2px; background: var(--band); }
+.fewrd-pg .fewrd-chip { --band: var(--faint); display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--raised); font: var(--w-med) var(--t-sm)/1 var(--ui); transition: background var(--dur), border-color var(--dur); }
+.fewrd-pg .fewrd-chip:hover { border-color: color-mix(in oklch, var(--band) 60%, var(--line)); }
+.fewrd-pg .fewrd-chip.on { border-color: color-mix(in oklch, var(--band) 55%, var(--line)); background: color-mix(in oklch, var(--band) 16%, var(--raised)); }
+.fewrd-pg .fewrd-chip button { display: inline-flex; align-items: center; margin: 0; border: 0; background: none; cursor: pointer; }
+.fewrd-pg .fewrd-chip-main { gap: 6px; padding: 7px 4px 7px 10px; border-radius: var(--r-pill) 0 0 var(--r-pill); font-weight: inherit; }
+.fewrd-pg .fewrd-chip i, .fewrd-pg .fewrd-tag i { width: 12px; height: var(--band-h); border-radius: 2px; background: var(--band); }
+.fewrd-pg .fewrd-eye { justify-content: center; width: 28px; height: 28px; margin-right: 2px; padding: 0; border-radius: var(--r-pill); color: var(--muted); transition: background var(--dur), color var(--dur); }
+.fewrd-pg .fewrd-eye .fewrd-ic { --ic: var(--ic-s); }
+.fewrd-pg .fewrd-eye:hover { background: color-mix(in oklch, var(--band) 16%, transparent); color: var(--text); }
+.fewrd-pg .fewrd-chip.folded .fewrd-name { color: var(--muted); text-decoration: line-through; }
+.fewrd-pg .fewrd-chip.folded .fewrd-eye { color: var(--faint); }
+.fewrd-pg .fewrd-tag { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid transparent; border-radius: var(--r-pill); color: var(--muted); font: var(--w-reg) var(--t-sm)/1 var(--ui); cursor: default; }
+.fewrd-pg .fewrd-tag i { opacity: .5; }
 
 .fewrd-pg summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) 0; cursor: pointer; list-style: none; }
 .fewrd-pg summary::-webkit-details-marker { display: none; }
@@ -232,16 +258,10 @@ const STYLE = `
 .fewrd-pg details[open] > summary .fewrd-ic { transform: none; }
 .fewrd-pg .fewrd-badge { padding: 2px 8px; border-radius: var(--r-pill); background: var(--err-bg); color: var(--err); font-size: var(--t-xs); font-weight: var(--w-semi); }
 
-/* The editor is code: monospace. */
-.fewrd-pg .fewrd-conf textarea { display: block; width: 100%; height: 22rem; margin-top: var(--s2); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sunken); resize: vertical; font: var(--w-reg) var(--t-xs)/1.6 var(--mono); font-variant-ligatures: none; tab-size: 2; }
-.fewrd-pg .fewrd-conf textarea[aria-invalid="true"] { border-color: var(--err); }
-.fewrd-pg .fewrd-errors { margin-top: var(--s3); padding: var(--s3); border: 1px solid color-mix(in oklch, var(--err) 35%, transparent); border-radius: var(--r-m); background: var(--err-bg); color: var(--err); font-size: var(--t-sm); overflow-wrap: anywhere; }
-.fewrd-pg .fewrd-errors ul { margin: var(--s2) 0 0; padding-left: 1.2em; font-size: var(--t-xs); }
-.fewrd-pg .fewrd-errors code { display: block; margin-top: var(--s1); font: inherit; }
-
 .fewrd-pg .fewrd-tree { margin-top: var(--s3); font: var(--w-reg) var(--t-sm)/1.75 var(--ui); }
 .fewrd-pg .fewrd-node { --d: 0; display: flex; align-items: baseline; gap: var(--s2); min-width: 0; padding: 0 var(--s2) 0 calc(var(--s2) + var(--d) * 1.25rem); border-radius: var(--r-s); background-image: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 1.25rem); background-size: calc(var(--d) * 1.25rem) 100%; background-repeat: no-repeat; background-position: var(--s2) 0; transition: background-color var(--dur); }
 .fewrd-pg .fewrd-node:hover, .fewrd-pg .fewrd-node.on { background-color: var(--hover); }
+.fewrd-pg .fewrd-node.mark { background-color: color-mix(in oklch, var(--band) 14%, transparent); }
 .fewrd-pg .fewrd-node i { flex: none; width: 10px; height: var(--band-h); align-self: center; border-radius: 2px; background: var(--band); }
 .fewrd-pg .fewrd-node b { font-weight: var(--w-semi); }
 .fewrd-pg .fewrd-node .sp { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -270,6 +290,10 @@ const icon = (name: string, fallback: string): HTMLSpanElement => {
   s.dataset.fb = fallback;
   s.setAttribute('aria-hidden', 'true');
   return s;
+};
+const setIcon = (ic: HTMLElement, name: string, fallback: string) => {
+  ic.textContent = name;
+  ic.dataset.fb = fallback;
 };
 const THEME_ICON = { auto: ['contrast', '◐'], light: ['light_mode', '☀'], dark: ['dark_mode', '☾'] } as const;
 
@@ -310,6 +334,8 @@ export function mount(
   let cols = 80;
   /** The tags ticked in the fold panel, per case; seeded from the case's own `fold`, kept until the page reloads. */
   const folds = new Map<number, Set<string>>();
+  /** The tags kept lit by a click on their chip, per case. */
+  const marks = new Map<number, Set<string>>();
 
   // The bar: step, count, jump, theme.
   const step = (label: string, name: string, fallback: string) => {
@@ -343,8 +369,12 @@ export function mount(
   themeButton.type = 'button';
   const status = h('div', 'fewrd-sr');
   status.setAttribute('aria-live', 'polite');
+  const confBtn = h('button', 'fewrd-confbtn');
+  confBtn.type = 'button';
+  confBtn.setAttribute('aria-controls', 'fewrd-drawer');
+  const confBadge = h('span', 'fewrd-badge');
   const bar = h('header', 'fewrd-bar');
-  bar.append(h('span', 'fewrd-brand', 'fewrd'), nav, pick, themeButton, status);
+  bar.append(confBtn, h('span', 'fewrd-brand', 'fewrd'), nav, pick, themeButton, status);
 
   let theme: (typeof THEMES)[number] = 'auto';
   try {
@@ -392,29 +422,30 @@ export function mount(
 
   const chips = h('div', 'fewrd-chips');
   chips.setAttribute('role', 'group');
-  chips.setAttribute('aria-label', 'tags to fold');
+  chips.setAttribute('aria-label', 'tags');
   const reset = h('button', 'fewrd-reset', 'Reset');
   reset.type = 'button';
   const foldCard = h('section', 'fewrd-card fewrd-foldcard');
   const foldHead = h('div', 'fewrd-head');
-  foldHead.append(h('h2', undefined, 'Fold'), h('span', 'fewrd-dim', 'Tick a tag to drop it from the gist.'), reset);
+  foldHead.append(h('h2', undefined, 'Tags'), h('span', 'fewrd-dim', 'Hover a tag to find it, click to keep it lit, the eye drops it from the gist.'), reset);
   reset.classList.add('fewrd-grow');
   foldCard.append(foldHead, chips);
 
-  // The conf: an editor, its errors outside the collapse so they stay in view.
+  // The conf: a pane from 1700px, a drawer below; its errors stay under the editor either way.
   const confName = h('span', 'fewrd-dim');
   const badge = h('span', 'fewrd-badge');
   const editor = h('textarea');
   editor.spellcheck = false;
   editor.setAttribute('aria-label', 'conf, as JSON');
-  const confSummary = h('summary');
-  confSummary.append(icon('expand_more', '▾'), h('h2', undefined, 'Conf'), confName, badge);
-  const confDetails = h('details');
-  confDetails.append(confSummary, editor);
   const errorBox = h('div', 'fewrd-errors');
   errorBox.setAttribute('aria-live', 'polite');
-  const confPane = h('section', 'fewrd-card fewrd-conf');
-  confPane.append(confDetails, errorBox);
+  const confHead = h('div', 'fewrd-confhead');
+  confHead.append(h('h2', undefined, 'Conf'), confName, badge);
+  const drawer = h('aside', 'fewrd-drawer');
+  drawer.id = 'fewrd-drawer';
+  drawer.setAttribute('aria-label', 'conf editor');
+  drawer.append(confHead, editor, errorBox);
+  const scrim = h('div', 'fewrd-scrim');
 
   const treeMeta = h('span', 'fewrd-dim');
   const treeBody = h('div', 'fewrd-tree');
@@ -426,21 +457,48 @@ export function mount(
   treeBox.append(treeDetails);
 
   const layout = h('div', 'fewrd-layout');
-  layout.append(drawCard, gistCard, foldCard, confPane, treeBox);
+  layout.append(drawCard, gistCard, foldCard, treeBox);
+  const shell = h('div', 'fewrd-shell');
+  shell.append(drawer, layout);
   const tip = h('div', 'fewrd-tip');
   tip.hidden = true;
-  el.replaceChildren(bar, layout, tip);
+  el.replaceChildren(bar, shell, scrim, tip);
 
-  // The conf and the tree open when there is room; the reader's own toggle stands until the width crosses a breakpoint.
-  const wide = matchMedia('(min-width: 1100px)');
+  // The tree opens when there is room; the reader's own toggle stands until the width crosses the breakpoint.
   const medium = matchMedia('(min-width: 720px)');
-  const room = () => {
-    confDetails.open = wide.matches;
-    treeDetails.open = medium.matches;
-  };
-  wide.addEventListener('change', room);
+  const room = () => (treeDetails.open = medium.matches);
   medium.addEventListener('change', room);
   room();
+
+  // The drawer: the bar's button, Escape or the scrim close it; from 1700px the pane is docked and there is nothing to open.
+  const docked = matchMedia('(min-width: 1700px)');
+  let errorCount = 0;
+  const paintBtn = () => {
+    const open = el.hasAttribute('data-drawer');
+    confBtn.setAttribute('aria-expanded', String(open));
+    confBtn.setAttribute('aria-label', `conf editor${errorCount && !open ? `, ${errorCount === Infinity ? 'invalid JSON' : `${errorCount} error${errorCount === 1 ? '' : 's'}`}` : ''}`);
+    confBadge.textContent = errorCount === Infinity ? '!' : String(errorCount);
+    confBadge.hidden = open || !errorCount;
+  };
+  const drawerTo = (open: boolean) => {
+    el.toggleAttribute('data-drawer', open && !docked.matches);
+    paintBtn();
+  };
+  const ic = icon('data_object', '{}');
+  confBtn.append(ic, confBadge);
+  confBtn.addEventListener('click', () => {
+    const open = !el.hasAttribute('data-drawer');
+    drawerTo(open);
+    if (open) editor.focus({ preventScroll: true });
+  });
+  scrim.addEventListener('click', () => drawerTo(false));
+  docked.addEventListener('change', () => drawerTo(false));
+  el.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !el.hasAttribute('data-drawer')) return;
+    drawerTo(false);
+    confBtn.focus();
+  });
+  paintBtn();
 
   // Highlights and the tooltip, shared by the bands and the tree rows.
   // `order` is the bands in reading order, one per row: the only one in the tab order is the one last focused, ↑ ↓ move along it.
@@ -535,6 +593,8 @@ export function mount(
     const rowsByKey = new Map<string, HTMLElement>();
     const rowOf = new Map<Node, HTMLElement>();
     const bandsByKey = new Map<string, HTMLElement[]>();
+    const bandsByTag = new Map<string, HTMLElement[]>();
+    const treeRows = new Map<string, HTMLElement[]>();
 
     // The grid: one line per wrap, lanes under it, bands in the lanes.
     const starts = wrap(c.text, cols);
@@ -606,6 +666,7 @@ export function mount(
           band.addEventListener('blur', leave);
           l.lanes[laneIndex].append(band);
           bandsByKey.set(k, [...(bandsByKey.get(k) ?? []), band]);
+          bandsByTag.set(tag, [...(bandsByTag.get(tag) ?? []), band]);
         });
       }
     });
@@ -638,7 +699,11 @@ export function mount(
             row.addEventListener('mouseenter', () => light([node.start, node.end], water ? 'var(--faint)' : hue(node.tag)));
             row.addEventListener('mouseleave', unlight);
             rowOf.set(node, row);
-            if (!water) for (const t of [node.tag, ...(node.also ?? [])]) rowsByKey.set(key(t, node.start, node.end), row);
+            if (!water)
+              for (const t of [node.tag, ...(node.also ?? [])]) {
+                rowsByKey.set(key(t, node.start, node.end), row);
+                treeRows.set(t, [...(treeRows.get(t) ?? []), row]);
+              }
             return row;
           })
         : [h('p', 'fewrd-failed', treeError)]),
@@ -650,22 +715,86 @@ export function mount(
     folds.set(index, checked);
     for (const t of checked) if (!tags.includes(t)) checked.delete(t);
     const present = new Set(entries.flatMap(({ node }) => (node.tag === 'text' ? [] : [node.tag, ...(node.also ?? [])])));
-    const boxes = new Map<string, HTMLInputElement>();
+    // A chip of a tag in the tree: the body lights the tag's rows (hover or focus while it lasts, a click keeps it), the eye folds it out of the gist.
+    // A tag that is not in the tree gets a plain label and nothing to act on.
+    const pinned = marks.get(index) ?? new Set<string>();
+    marks.set(index, pinned);
+    for (const t of pinned) if (!present.has(t)) pinned.delete(t);
+    let over: string | undefined;
+    let tinted: HTMLElement[] = [];
+    /** Everything the lit tags touch, rebuilt from `pinned` and `over`: the bands, the tinted characters, the tree rows, the chips. */
+    const paintMarks = () => {
+      tinted.forEach((w) => w.remove());
+      tinted = [];
+      const on = new Set(pinned);
+      if (over) on.add(over);
+      drawing.toggleAttribute('data-marking', on.size > 0);
+      for (const [t, bands] of bandsByTag) bands.forEach((b) => b.classList.toggle('mark', on.has(t)));
+      treeRows.forEach((rs) => rs.forEach((r) => r.classList.remove('mark')));
+      for (const t of on) {
+        for (const [tag, span] of rows) {
+          if (tag !== t) continue;
+          for (const { line, from, to } of segments(span, starts)) {
+            const wash = h('div', 'fewrd-wash mark');
+            wash.style.cssText = `left:${from}ch;width:${to - from}ch`;
+            wash.style.setProperty('--band', hue(t));
+            lines[line].line.prepend(wash);
+            tinted.push(wash);
+          }
+        }
+        for (const r of treeRows.get(t) ?? []) {
+          r.classList.add('mark');
+          r.style.setProperty('--band', hue(t));
+        }
+      }
+    };
+    const chipOf = new Map<string, () => void>();
     const chip = (tag: string) => {
-      const box = h('input');
-      box.type = 'checkbox';
-      box.checked = checked.has(tag);
-      box.addEventListener('change', () => {
-        if (box.checked) checked.add(tag);
-        else checked.delete(tag);
+      const swatch = h('i');
+      if (!present.has(tag)) {
+        const plain = h('span', 'fewrd-tag');
+        plain.style.setProperty('--band', hue(tag));
+        plain.append(swatch, tag);
+        return plain;
+      }
+      const main = h('button', 'fewrd-chip-main');
+      main.type = 'button';
+      main.title = `Highlight ${tag} in the preview`;
+      main.append(swatch, h('span', 'fewrd-name', tag));
+      const eye = h('button', 'fewrd-eye');
+      eye.type = 'button';
+      const eyeIcon = icon('visibility', '◉');
+      eye.append(eyeIcon);
+      const box = h('span', 'fewrd-chip');
+      box.style.setProperty('--band', hue(tag));
+      box.append(main, eye);
+      const sync = () => {
+        const folded = checked.has(tag);
+        box.classList.toggle('on', pinned.has(tag));
+        box.classList.toggle('folded', folded);
+        main.setAttribute('aria-pressed', String(pinned.has(tag)));
+        eye.setAttribute('aria-pressed', String(folded));
+        eye.setAttribute('aria-label', `Fold ${tag} out of the gist`);
+        eye.title = folded ? `${tag} is folded out of the gist` : `Fold ${tag} out of the gist`;
+        setIcon(eyeIcon, folded ? 'visibility_off' : 'visibility', folded ? '◌' : '◉');
+      };
+      chipOf.set(tag, sync);
+      sync();
+      box.addEventListener('mouseenter', () => ((over = tag), paintMarks()));
+      box.addEventListener('mouseleave', () => ((over = undefined), paintMarks()));
+      box.addEventListener('focusin', (e) => e.target instanceof Element && e.target.matches(':focus-visible') && ((over = tag), paintMarks()));
+      box.addEventListener('focusout', () => ((over = undefined), paintMarks()));
+      main.addEventListener('click', () => {
+        if (!pinned.delete(tag)) pinned.add(tag);
+        sync();
+        paintMarks();
+      });
+      eye.addEventListener('click', () => {
+        if (!checked.delete(tag)) checked.add(tag);
+        sync();
         paint();
       });
-      boxes.set(tag, box);
-      const swatch = h('i');
-      swatch.style.setProperty('--band', hue(tag));
-      const label = h('label', `fewrd-chip${present.has(tag) ? '' : ' absent'}`);
-      label.append(box, swatch, tag);
-      return label;
+      return box;
     };
     const inTree = tags.filter((t) => present.has(t));
     const rest = tags.filter((t) => !present.has(t));
@@ -673,11 +802,11 @@ export function mount(
     reset.onclick = () => {
       checked.clear();
       (c.fold ?? []).forEach((t) => tags.includes(t) && checked.add(t));
-      boxes.forEach((box, t) => (box.checked = checked.has(t)));
+      chipOf.forEach((sync) => sync());
       paint();
     };
 
-    /** A tick changes only the gist, the greying and what fades; nothing is rebuilt. */
+    /** A fold changes only the gist, the greying and what fades; nothing is rebuilt. */
     function paint() {
       const fold: Fold = (n) => checked.has(n.tag);
       const out = doc ? gist(doc, fold) : '';
@@ -713,6 +842,7 @@ export function mount(
       });
     }
     paint();
+    paintMarks();
   }
 
   function showErrors(d?: Domain) {
@@ -728,6 +858,8 @@ export function mount(
     editor.setAttribute('aria-invalid', String(!errorBox.hidden));
     badge.textContent = d?.invalid ? 'invalid JSON' : list.length ? `${list.length} error${list.length === 1 ? '' : 's'}` : '';
     badge.hidden = !badge.textContent;
+    errorCount = d?.invalid ? Infinity : list.length;
+    paintBtn();
     drawCard.toggleAttribute('data-stale', Boolean(d?.invalid));
   }
 

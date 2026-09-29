@@ -218,3 +218,4 @@ Band hues unchanged. New in both themes: `--drawer-w` 34rem, `--scrim` (the text
 - Opened and closed by the bar's icon button (`data_object`, fallback `{}`, `aria-expanded`); closed also by Escape and by a click on the scrim. Opening moves focus to the editor; closing returns it to the button.
 - The drawer is the same pane as at 1700 px: title, editor, errors under it. Its content and errors survive closing. While it is closed the bar button carries the error count (an invalid JSON shows `!`), so errors are never silent.
 - Crossing 1700 px resets it: the pane docks, the button and scrim go away.
+- The icon subset grows to ten: `data_object`, `visibility` and `visibility_off` join the seven (fallbacks `{}`, ◉, ◌).
