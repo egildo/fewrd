@@ -1,6 +1,8 @@
 <!--
 Sync Impact Report
-- Version change: 3.0.0 → 3.1.0
+- Version change: 3.1.0 → 3.1.1 (PATCH, wording check at the end of phase 2, after the code and the README were done)
+- Modified: Principle II names the fold rules in the order the README's "The rules of the fold" applies them (a node folds, connector fate, emptying, separator fate) and adds the own-tag rule to forcing; Data Contracts, tree invariants: the root carries the text, and a node carries its tag's fate, so the fold reads the tree alone and a tree parsed back from JSON folds the same. No principle added, removed or redefined.
+- Previous: Version change: 3.0.0 → 3.1.0
 - Modified principles: II. Deterministic, Documented Finding Rules → II. Deterministic, Documented Finding and Fold Rules — the principle now names both rule sets: the finding-half rules for `find` and the DOM-half rules (selection, the tree, the rules of the fold) for `dom`, `hidden` and `gist`. Key order of `tags` is named as the one thing selection reads that `find` must not. Guidance expanded to a second rule set, no principle removed or redefined, hence MINOR.
 - Modified sections: Data Contracts — adds the tree invariants (the root is `doc` over the whole text; leaves partition the text; no two nodes cross; `also` only on twins). Development Workflow — the playground shows the tree and the fold too, and cases may carry `fold` and `gist`. Governance — review checks both rule sets.
 - Added sections: none
@@ -19,7 +21,7 @@ Dev tooling (e.g. `fewrd-play`, the playground server) ships as its own package 
 Rationale: the library's whole value is being small and auditable enough to read in one sitting — pulling in dependencies defeats that and forces every consumer to inherit an unbounded transitive graph.
 
 ### II. Deterministic, Documented Finding and Fold Rules
-Two rule sets in the README are the single source of truth for what fewrd returns: the finding-half rules in "The rules" (root rows, searches run from rows, atoms, composed rows filtered like root rows, passes to a fixpoint, the chart is complete and neutral) for `find`, and the DOM-half rules in "Selection" and "The rules of the fold" (order, take or drop, forcing; the tree, roles and values; fold, connector fate, separator fate, emptying) for `dom`, `hidden` and `gist`. Any change to what those functions return MUST update the matching section in the same change, and MUST NOT introduce nondeterminism: the chart depends on `(text, conf)` only, with no locale, no clock and no dependence on object key order; the tree depends on `(text, chart, conf)` only, and the key order of `tags` is the one tiebreak selection reads, nowhere else.
+Two rule sets in the README are the single source of truth for what fewrd returns: the finding-half rules in "The rules" (root rows, searches run from rows, atoms, composed rows filtered like root rows, passes to a fixpoint, the chart is complete and neutral) for `find`, and the DOM-half rules in "Selection" and "The rules of the fold" (order, take or drop, forcing with its own-tag rule; the tree, roles and values; a node folds, connector fate, emptying, separator fate) for `dom`, `hidden` and `gist`. Any change to what those functions return MUST update the matching section in the same change, and MUST NOT introduce nondeterminism: the chart depends on `(text, conf)` only, with no locale, no clock and no dependence on object key order; the tree depends on `(text, chart, conf)` only, and the key order of `tags` is the one tiebreak selection reads, nowhere else.
 Rationale: callers cache a chart by `(text, conf.version)` and fold the same tree many ways — undocumented or nondeterministic behavior breaks that contract silently.
 
 ### III. Cases Are the Single Source of Test Truth
@@ -47,10 +49,11 @@ A `Chart` is plain data: a map from tag to its rows, each row a span `[start, en
 
 A tree (`dom(text, chart, conf)`) is plain data too: nested `Node` objects, spans into the original string. Its invariants:
 
-- **One root**: a `doc` node spanning `(0, n)`. `^` and `$` never become nodes.
+- **One root**: a `doc` node spanning `(0, n)` and carrying the text. `^` and `$` never become nodes.
 - **Leaves partition the text**: the leaves (nodes with no children, water included), in order, cover every character of the text exactly once, so joining their text gives the text back.
 - **No two nodes cross**: any two nodes are either disjoint or one contains the other.
 - **`also` only on twins**: a node carries `also` only when rows of other tags had exactly its span; it names those tags.
+- **The tree is all the fold reads**: a node carries its tag's `fate`, and the root the text, so `hidden` and `gist` need no conf and no hidden state, and a tree that went through `JSON.stringify` and back folds the same.
 
 ## Development Workflow
 
@@ -64,4 +67,4 @@ Publishing a release runs `pnpm build` (via `prepublishOnly`) to build `dist/`, 
 
 This constitution supersedes ad hoc conventions. Amendments are proposed via a PR that edits this file and, when principles changed materially, also updates any README section they now contradict; the PR description states the version bump and rationale. PATCH bumps need no discussion; MINOR/MAJOR bumps need explicit sign-off from the project maintainer before merge. Code review MUST check new work against the finding-half rules in README's "The rules" section, the DOM-half rules in its "Selection" and "The rules of the fold" sections, and this constitution's principles.
 
-**Version**: 3.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29
+**Version**: 3.1.1 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29

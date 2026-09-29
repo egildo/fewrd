@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased: the rewrite, phase 2 (the DOM half)
+
+`package.json` stays at 0.3.0 until release; `fewrd-play` keeps its version too and is not published.
+
+### Added
+
+- `dom(text, chart, conf)`: from the chart, one tree of plain objects. Rows are selected (non-weak first, then longer, then earlier key in `tags`, then earlier start; a row that crosses a chosen one is dropped, so is one inside a chosen row of the same tag, a row with exactly a chosen row's span becomes a twin in `also`); each chosen composed row is derived again inside its own span, with the matcher of `find`, so its roles point at real nodes and the rows it took are chosen with it. A forced row of the composed row's own tag is absorbed (the outermost row of a self-grown tag keeps its chain's children, never a protocol inside a protocol); a derivation that would cross a chosen row gives way to the next, and the composed row is dropped when none is left. Values are resolved bottom-up. Water fills the gaps as `text` nodes, so the leaves cover the text exactly.
+- `Node` and `Fold`. A node carries its tag's `fate`, and `doc` the original `text`, so the fold reads the tree alone and a tree parsed back from JSON folds the same.
+- `hidden(doc, fold)` and `gist(doc, fold)`: the fold, then the connector fate, emptied brackets (delimiters not counted, a bracket nothing was cut from is left alone), and the separator fate (the strongest separator survives a cut, none at an edge, after an opening bracket or before closing punctuation).
+- `fate: 'bracket'`; `doc` and `text` are reserved tag names.
+- Brackets (`paren`) in both confs, and separators in the common one; `fold` and `gist` on every one of the 21 cases, asserted through `gist(dom(text, find(text, conf), conf), fold)`.
+- The playground shows the tree as an indented list under the chart and a fold panel, one checkbox per tag, with the gist printed under it and the hidden leaves greyed out on the grid; `treeLines` and `greyed` on `fewrd/playground`. `pnpm dev` opens all 21 cases.
+- `fewrd-play` reads the new folder (`conf.json`, `cases.json` with optional `fold` and `gist`, `cases.local.json`, `resolvers.ts`) and calls the new `mount`; it writes nothing.
+- The README's tree, selection, fold and rendering sections; the spec, plan and tasks of phase 2 under `specs/006-dom/`.
+
+### Changed
+
+- `normalise`'s boundary map is per UTF-16 unit, and `find` no longer converts from code points.
+- `it-pa@4` (gains `paren`) and `common@2` (gains `SEP`, `paren`, `sep`): their charts change.
+- The matcher moved from `find.ts` to `derive.ts`, shared by `find` and `dom`; `find` is unchanged.
+- Constitution 3.1.1.
+
 ## Unreleased: the rewrite, phase 1 (the finding half)
 
 `package.json` stays at 0.3.0 until release.
