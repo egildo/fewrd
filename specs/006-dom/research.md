@@ -12,7 +12,7 @@ Every decision below is either the brief's (section 5, cited as such), the spec'
 
 ## derive-reports-rows
 
-**Decision**: `derive`'s `emit` gains a fourth argument, the derivation's steps: `emit(lo, hi, roles, steps)` where `steps` is `{ row: Row; as?: string }` for each tag atom taken and `{ text: string; span: Span; as?: string }` for each regex atom, in the order taken, the `from` row first as `{ row }`. `roles` stays as it is (strings, for resolvers). `find` ignores `steps`.
+**Decision**: `derive`'s `emit` gains a fourth argument, the derivation's steps: `emit(lo, hi, roles, steps)` where `steps` is `{ row: Row; as?: string }` for each tag atom taken and `{ text: string; as: string }` for each regex atom that has an `as`, in the order taken, the `from` row first as `{ row }`. `roles` stays as it is (strings, for resolvers). `find` ignores `steps`.
 
 **Rationale**: forcing needs the rows, roles need to know which atom bound which row or text. `find`'s path is unchanged, so its tests prove the move.
 
@@ -20,7 +20,7 @@ Every decision below is either the brief's (section 5, cited as such), the spec'
 
 **Decision**: `dom` normalises the text once, builds the inverse of the boundary map (original offset → first copy boundary with that offset, for starts; → last, for ends), and maps every chart row into copy coordinates before selection. Selection, forcing and values run in copy coordinates on the copy's text, as `find` does. Nodes are built in original coordinates by mapping back through `at` once, at the end.
 
-**Rationale**: regex atoms are matched on the normalised text (phase 1 `atoms-meet-the-cursor`), so the re-run must be too; resolvers see the normalised text (`resolvers-see-normalised-text`). The inverse is ambiguous only inside an NFKC expansion (spec Open points).
+**Rationale**: regex atoms are matched on the normalised text (phase 1 `atoms-meet-the-cursor`), so the re-run must be too; resolvers see the normalised text (`resolvers-see-normalised-text`). The inverse is ambiguous only inside an NFKC expansion (spec Assumptions, *dom works on the copy*).
 
 **Alternatives considered**: carrying copy spans in the chart (breaks the phase 1 contract: spans into the original); re-running `find` inside `dom` (the brief forbids: `dom` takes the chart).
 
@@ -38,15 +38,15 @@ Every decision below is either the brief's (section 5, cited as such), the spec'
 
 ## forcing
 
-**Decision**: `choose(row)` adds the row, and, if its tag is composed, calls `derivationOf(row)` and `choose`s every step's row that is not `^`/`$` and not already chosen, recursively. `derivationOf(row)` builds an index of the rows inside the span (plus `^`/`$` when inside), runs `derive` for each of the tag's searches in order, each `from` row inside in position order, and keeps the first emission whose `(lo, hi)` equals the row's span, whose resolver (if any) accepts, and none of whose rows crosses a chosen row (the provisional choice of the spec's Open points). Memoised per row key. A forced row equal to a chosen row of another tag is a twin (`twins-become-also`). No derivation found: throw, naming the tag and span (it cannot happen for a chart `find` made; it can for a hand-edited chart).
+**Decision**: `take(row, own)` chooses a row: a row of the composed row's own tag (`own`) is not chosen, `force` runs on it instead (the outermost row of a self-grown tag absorbs its chain); a row already chosen is done; one equal to a chosen row of another tag becomes its twin; one crossing a chosen row fails; otherwise it is added and, if its tag is composed, `force`d. `force(row)` walks `derivationsOf(row)` in order; for each it saves the selection, `take`s every step's row that is not `^`/`$`, and on success records the derivation for the node (roles), on failure restores the saved selection and tries the next; none usable means `take` fails and the composed row is not chosen. `derivationsOf(row)` builds an index of the rows inside the span (plus `^`/`$` when inside, the row itself excluded), runs `derive` for each of the tag's searches in order, each `from` row inside in position order, and keeps, in order, every emission that spans exactly the row and that the resolver (if any) accepts; memoised per row key, independent of the chosen set. No acceptable derivation at all: throw, naming the tag and span (a refusal by the resolver says so). `ponytail:` the selection is snapshotted by copy per composed row tried; fine at subject length.
 
-**Rationale**: the brief's forcing, depth-first. The memo serves roles and values later.
+**Rationale**: the brief's forcing, depth-first, with the maintainer's two closings: the own-tag rule (`forced-derivation-chosen`) and the next-derivation-or-drop rule for a forced row that would cross. Keeping the memo independent of the chosen set makes it reusable for roles and values.
 
 ## values-lazy
 
-**Decision**: A memoised `valueOf(row)`: undefined when the tag does not resolve; for a root tag, `resolve({ value: copyText })`; for a composed tag, `resolve({ value, ...roles })` with each role the bound row's `valueOf` or its copy text, or the regex text, from its derivation's steps. A `null` answer throws (`values-bottom-up`). Forcing uses `valueOf` of the bound rows when it asks a resolver to accept a derivation; nodes get their `value` from the same memo.
+**Decision**: A memoised `valueOf(row)`, used for the role values a resolver sees: the row's text when its tag does not resolve; for a root tag, `resolve({ value: copyText })`; for a composed tag, the value of its first acceptable derivation, which `derivationsOf` computed with `resolve({ value, ...roles })`, each role the bound row's `valueOf` or its copy text, or the regex text. A `null` from a root tag's resolver throws (`values-bottom-up`). A node's own `value` is the one its kept derivation gave.
 
-**Rationale**: forcing needs values before the tree exists (a resolving composition accepts on its roles' values); recursion over the derivation is bottom-up by construction.
+**Rationale**: forcing needs values before the tree exists (a resolving composition accepts on its roles' values); recursion over the derivation is bottom-up by construction. A row's value and its node's value differ only when the first acceptable derivation was unusable.
 
 ## tree-stack
 
@@ -54,17 +54,17 @@ Every decision below is either the brief's (section 5, cited as such), the spec'
 
 **Rationale**: `tree-by-containment`; the attrs point at the same objects as `children`.
 
-## fold-reads-fates
+## fates-on-the-node
 
-**Decision**: `hidden(doc, fold)` and `gist(doc, fold)` need each tag's `fate`, but the brief's `Node` carries no fate and the brief's signatures take no conf. So `dom` records the fates of the conf's tags in a module-level `WeakMap<Node, Readonly<Record<string, Fate>>>` keyed by the `doc` it returns, and `fold.ts` reads it. A `doc` not made by `dom` (built by hand, or parsed from JSON) has no fates: every leaf is plain and only the fold itself (rule 1) applies.
+**Decision** (the maintainer's, replacing an earlier plan with a module-level `WeakMap`): `Node` gains `fate?: 'separator' | 'connector' | 'bracket'`, copied from the conf's tag when `dom` builds the node, and `doc` gains `text?: string`, the original string. `hidden(doc, fold)` and `gist(doc, fold)` then read the tree alone, with the brief's signatures and no hidden state; a tree parsed back from JSON folds with all four rules.
 
-**Rationale**: keeps `Node` exactly the brief's plain type and the functions' signatures exact, with no global state beyond a weak map. `ponytail:` comment: a tree that went through JSON loses its fates; pass them explicitly if consumers need that.
+**Rationale**: no global state, no third argument, and the tree is self-sufficient data, which is what "fewrd returns plain objects" promises. The text is needed because a node holds spans (separator strength and closing punctuation are read from the text, and `gist` returns it).
 
-**Alternatives considered**: a `fate` field on `Node` (changes the brief's type); a third `conf` argument (changes the brief's signatures).
+**Alternatives considered**: a `WeakMap` keyed by the doc (loses fates through JSON); a `conf` argument (changes the brief's signatures).
 
 ## fate-order
 
-**Decision** (spec Assumptions): in `hidden`, four passes over the leaves in order: rule 1 (walk from `doc`, hide a folded node's subtree), connectors right to left, brackets innermost first (post-order), then separator runs left to right. Strength by `'-' > ';' > ':' > ','`, contained characters, leftmost on a tie. Closing punctuation `/^[.,;:!?)\]}]/` on the next surviving leaf's text.
+**Decision** (spec Assumptions): in `hidden`, four passes over the leaves in order: rule 1 (walk from `doc`, hide a folded node's subtree), connectors right to left, brackets innermost first (post-order), then separator runs left to right. Strength by `'-' > ';' > ':' > ','`, contained characters, leftmost on a tie. Closing punctuation `/^[.,;:!?)\]}]/` on the next surviving leaf's text. A bracket's delimiters are its first and last child when each is a water leaf of exactly one character; they are left out of the emptying test, the opening one is the inner edge of the separator rule, and a bracket is emptied only when at least one content leaf is hidden.
 
 ## confs-bump
 

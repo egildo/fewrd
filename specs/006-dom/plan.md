@@ -108,7 +108,7 @@ CHANGELOG.md            # EDIT: phase 2 entry
 
 `chart.ts`, `vite.lib.ts`, `tsconfig*.json`, `package.json`, `playground/` are not touched (`playground/main.ts` already passes whole cases, so `fold`/`gist` flow through).
 
-**Structure Decision**: Single library project. The matcher moves out of `find.ts` into `derive.ts` because two callers now need it (`find` and `dom`) and the brief's vocabulary names it; `find.ts` keeps the root scan and the pass loop. Selection, tree, roles and values share the chosen set and the value memo, so they live together in `dom.ts`; the fold reads only the finished tree and the conf's fates, so it lives apart in `fold.ts`. The fates are read from the node tags, so `hidden` and `gist` need the conf: see `fold-reads-fates` in research.
+**Structure Decision**: Single library project. The matcher moves out of `find.ts` into `derive.ts` because two callers now need it (`find` and `dom`) and the brief's vocabulary names it; `find.ts` keeps the root scan and the pass loop. Selection, tree, roles and values share the chosen set and the value memo, so they live together in `dom.ts`; the fold reads only the finished tree, so it lives apart in `fold.ts`. The fates ride on the nodes and the text on `doc`, so `hidden` and `gist` read the tree alone: see `fates-on-the-node` in research.
 
 ## Order of work
 

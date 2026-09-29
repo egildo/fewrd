@@ -16,6 +16,8 @@ export type Node = {
   value?: string;
   attrs: Record<string, Node | string>;
   also?: string[];
+  fate?: 'separator' | 'connector' | 'bracket';   // copied from the conf's tag
+  text?: string;                                  // the original string, on doc only
   children: Node[];
 };
 export function dom(text: string, chart: Chart, conf: Conf<RegExp, Resolve>): Node;   // throws on a tag the conf lacks, on a resolver refusal

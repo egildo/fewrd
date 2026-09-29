@@ -4,15 +4,15 @@
 
 **Created**: 2026-09-29
 
-**Status**: Draft; every worked example and every case gist is hand-derived and **not yet run**
+**Status**: Implemented; every worked example and every case gist was run against the code, and none had to be corrected (the five decisions below changed the rules before the first run, and are written in)
 
 **Input**: User description: "Phase 2 of the fewrd rewrite: the DOM half. dom(text, chart, conf) to a tree, selection with forcing, roles and values, fates and fold with gist, the cases' expected gists reinstated, the playground's tree and fold panel, fewrd-play on the new folder shape, README complete. Per specs/rewrite-brief.md section 5."
 
-Section 5 of the brief ([`specs/rewrite-brief.md`](../rewrite-brief.md)) is the settled outcome of the phase 2 design round. This spec turns it into requirements and does not reopen it. Where the brief is silent and a choice had to be made to make a requirement testable, the choice is stated in Assumptions; where the brief's own words leave a real gap, or two of its sentences pull apart, it is listed under Open points with what this phase does meanwhile. Phase 1 ([`specs/005-chart/spec.md`](../005-chart/spec.md)) is done: `compile`, `Chart`, `rel` and `find` exist and are not changed here except where a requirement says so.
+Section 5 of the brief ([`specs/rewrite-brief.md`](../rewrite-brief.md)) is the settled outcome of the phase 2 design round. This spec turns it into requirements and does not reopen it. Where the brief is silent and a choice had to be made to make a requirement testable, the choice is stated in Assumptions. Five points the brief left open were closed by the maintainer before implementation (the own-tag rule of forcing, a forced row that would cross, normalised coordinates, fates on the node, bracket delimiters); they are requirements and Assumptions now, and Open points keeps only what is still open. Phase 1 ([`specs/005-chart/spec.md`](../005-chart/spec.md)) is done: `compile`, `Chart`, `rel` and `find` exist and are not changed here except where a requirement says so.
 
 ## What phase 2 adds, in one paragraph
 
-Phase 1 finds everything and chooses nothing: the chart keeps crossing rows, twins, rows inside rows. A reader wants one reading of the text, and a shorter one. Phase 2 takes the chart and makes the choices, once and deterministically: it selects rows that do not cross, re-derives each chosen composition inside its own span so its roles point at real nodes, resolves values bottom-up, and builds a tree whose leaves cover the text exactly, the gaps as water. Then the fold: a policy says which nodes go, the connector and separator fates tidy what is left, emptied brackets go too, and `gist` reads what remains. fewrd still returns plain objects; turning the tree into HTML is the consumer's job.
+Phase 1 finds everything and chooses nothing: the chart keeps crossing rows, twins, rows inside rows. A reader wants one reading of the text, and a shorter one. Phase 2 takes the chart and makes the choices, once and deterministically: it selects rows that do not cross, re-derives each chosen composition inside its own span so its roles point at real nodes, resolves values bottom-up, and builds a tree whose leaves cover the text exactly, the gaps as water; a node carries its tag's fate and the root carries the text, so the fold reads the tree alone. Then the fold: a policy says which nodes go, the connector and separator fates tidy what is left, emptied brackets go too, and `gist` reads what remains. fewrd still returns plain objects; turning the tree into HTML is the consumer's job.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -102,7 +102,7 @@ A reader of the README learns, after the finding half, what the tree holds, how 
 - **A chart row of a tag the conf does not declare** (a chart cached under another `version`): `dom` throws naming the tag (`dom-returns-a-tree`).
 - **A root row with rows inside it** (a bracket around a CIG, a serial holding a number): it is not a leaf; its children are the rows inside it and the water between them.
 - **A text that begins or ends with a separator**: with nothing hidden it survives (`separators-untouched-without-a-fold`); a cut at the edge drops it (`no-separator-at-an-edge`).
-- **A self-growing search**: forcing chooses the whole derivation chain, so the partial rows on it nest inside each other; the partial rows off it cross or sit inside and drop. See Open points.
+- **A self-growing search**: the outermost row absorbs its chain (`forced-derivation-chosen`): the rows on the chain are not nodes, the rows of their derivations are its children; the partial rows off the chain sit inside it and drop (`outer-wins-same-tag`).
 - **A character outside the Basic Multilingual Plane**: after `normalise-per-utf16-unit`, spans still land on the right offsets; the playground grid still draws it as one glyph over two positions (the phase 1 ceiling, unchanged).
 - **A fold that names `sep` or `connector`**: those leaves are hidden by the policy like any other node; the fate rules then see them as hidden.
 
@@ -110,7 +110,7 @@ A reader of the README learns, after the finding half, what the tree holds, how 
 
 Every requirement has a short name, and the prose refers to requirements by that name. The identifiers follow the template and are for the tasks file only.
 
-Every worked example below is hand-written from the rules and **not yet run**: the implementing agent runs each one as a test named after its requirement, and where the code shows an example wrong, the example is corrected here, in the spec, not fudged in the test. Every example conf has `"version": "t@1"`; only `tags` is shown, in key order, since key order matters here. Offsets are into the example's text. A tree is written one node per line, indented by depth, as `tag (start,end) "text"`, with `also`, `value` and `attrs` after it when present.
+Every worked example below was written by hand from the rules and then run as a test named after its requirement; where the code showed an example wrong it was to be corrected here, in the spec, not fudged in the test. None needed it. Every example conf has `"version": "t@1"`; only `tags` is shown, in key order, since key order matters here. Offsets are into the example's text. A tree is written one node per line, indented by depth, as `tag (start,end) "text"`, with `also`, `value` and `attrs` after it when present.
 
 ### The tree and its API
 
@@ -123,16 +123,20 @@ Every worked example below is hand-written from the rules and **not yet run**: t
     value?: string;                       // the resolver's answer, only on tags that resolve
     attrs: Record<string, Node | string>; // roles bound by `as`: a Node for a tag atom, the text for a regex atom
     also?: string[];                      // tags of twins folded into this node, in selection order
+    fate?: 'separator' | 'connector' | 'bracket'; // the conf tag's fate, copied at dom time
+    text?: string;                        // the original string, on `doc` only
     children: Node[];                     // by containment, in text order, water included
   };
   type Fold = (node: Node) => boolean;
   ```
 
-  A tree survives `JSON.stringify` as data (a node bound in `attrs` is also somewhere in `children`, so a consumer that serialises it gets that node twice, not a cycle). A **leaf** is a node with no children: a root row's node with nothing inside it, or a `text` node.
+  `fate` is copied from the conf's tag when `dom` builds the node (absent on water, on `doc` and on tags without one), so the fold reads the tree alone: no hidden state, no conf argument. `text` is the one field beyond the brief's `Node` and the maintainer's `fate` that `hidden` and `gist` could not do without: a node holds spans, not text, and the fold needs the text of a separator (its strength) and of the leaf after a run (closing punctuation), and `gist` returns text. It is on `doc` only.
 
-- **FR-002 · `dom-returns-a-tree`**: `dom(text, chart, conf)` MUST return the root: a node with tag `doc` and span `(0, n)`, `n` the original length. It reads the chart's rows, never runs `find` itself, and throws when the chart holds a row whose tag the conf does not declare (other than `^` and `$`). `^` and `$` never become nodes; they exist for the fate rules' edge test.
+  A tree survives `JSON.stringify` as data (a node bound in `attrs` is also somewhere in `children`, so a consumer that serialises it gets that node twice, not a cycle), and a tree parsed back from JSON folds with all four rules, since everything the fold reads is in it. A **leaf** is a node with no children: a root row's node with nothing inside it, or a `text` node.
 
-- **FR-003 · `hidden-and-gist`**: `hidden(doc, fold)` MUST return the set of every node the condensed view drops, with the four fate rules of `fold-hides-subtree` to `bracket-empties-out` applied: every folded node and all its descendants, every connector and separator leaf the fates drop, every emptied bracket and all its descendants. `gist(doc, fold)` MUST return the text of every leaf not in that set, joined in order. The policy is asked about every node except `doc`.
+- **FR-002 · `dom-returns-a-tree`**: `dom(text, chart, conf)` MUST return the root: a node with tag `doc` and span `(0, n)`, `n` the original length. It reads the chart's rows, never runs `find` itself, and throws when the chart holds a row whose tag the conf does not declare (other than `^` and `$`), or a row whose span is not on a boundary of the text (the chart of another text). It matches on the normalised copy and builds nodes in original coordinates (see Assumptions, *dom works on the copy*). `^` and `$` never become nodes; they exist for the fate rules' edge test.
+
+- **FR-003 · `hidden-and-gist`**: `hidden(doc, fold)` MUST return the set of every node the condensed view drops, with the four fate rules of `fold-hides-subtree` to `bracket-empties-out` applied: every folded node and all its descendants, every connector and separator leaf the fates drop, every emptied bracket and all its descendants. `gist(doc, fold)` MUST return the text of every leaf not in that set, joined in order. The policy is asked about every node except `doc`. `hidden` and `gist` read the tree alone (`node-type`): a `doc` without its `text` is an error that says so.
 
   *Worked example.* On the tree of `fold-hides-subtree`'s first example, folding `ref`: `hidden` holds the `ref` node, its three leaves and the separator leaf `" "` at `(4,5)`; `gist` is `Nota - fine`.
 
@@ -167,7 +171,13 @@ These are the rules of section 5.2 of the brief, in the order they apply. Input:
 
   *Worked example.* In `outer-wins-same-tag`'s second example, `digit (0,1)` crosses nothing, has no same-tag row around it and no twin, so it is chosen.
 
-- **FR-011 · `forced-derivation-chosen`** (rule: *Forcing*): When a composed row is chosen, its derivation MUST be re-run at once, and every row that derivation took, the `from` row included, is chosen immediately, ahead of the walk, without the walk's tests. The re-run is the matcher of `find` (reused, not re-implemented) restricted to the chart's rows that lie inside the composed row's span (`^` and `$` among them when they do), enumerated in `find`'s order: the tag's searches in their order, the `from` rows in position order, and for each the depth-first enumeration of `find` (an optional atom tried skipped first, then taken; candidate rows in position order). The derivation kept is the first that spans exactly the composed row and, if the tag resolves, that its resolver accepts. A forced row that is itself composed is forced the same way, recursively. `^` and `$` taken by a derivation are not chosen. A derivation always exists: `find` accepted the row against the same chart. Forced rows may make later candidates inside the span cross and drop; that is intended.
+- **FR-011 · `forced-derivation-chosen`** (rule: *Forcing*): When a composed row is chosen, its derivation MUST be re-run at once, and every row that derivation took, the `from` row included, is chosen immediately, ahead of the walk. The re-run is the matcher of `find` (reused, not re-implemented) restricted to the chart's rows that lie inside the composed row's span (`^` and `$` among them when they do; the composed row itself never), enumerated in `find`'s order: the tag's searches in their order, the `from` rows in position order, and for each the depth-first enumeration of `find` (an optional atom tried skipped first, then taken; candidate rows in position order). A derivation is *usable* when it spans exactly the composed row, its resolver accepts it if the tag resolves, and none of its rows crosses a chosen row (below). The derivation kept is the first usable one. A forced row that is itself composed is forced the same way, recursively. `^` and `$` taken by a derivation are not chosen. A derivation that spans the row and is accepted always exists: `find` accepted the row against the same chart; a chart that has none (hand-edited) makes `dom` throw, naming the tag and span. Forced rows may make later candidates inside the span cross and drop; that is intended. A forced row skips the walk's same-tag test; a forced row equal to a chosen row of another tag is its twin (`twins-become-also`); a forced row that crosses a chosen row makes the derivation unusable.
+
+  Two rules close what the brief left open.
+
+  **A forced row of the composed row's own tag is not a node.** When a row of the composed row's own tag is among the rows its derivation took (the `from` row, or any other), that row is not chosen; the rows of *its* derivation are forced instead, recursively, under the same rule. The outermost row of a self-grown tag absorbs its chain: this is *outer wins* applied to forcing. The Italian `protocol` grown from `protocol` (a channel before a protocol) is therefore one `protocol` node with the channel and the label as its children, never a protocol inside a protocol. A role (`as`) bound to an absorbed row cannot be a node; it is bound to the row's text, like a regex atom's (`roles-from-forced-derivation`).
+
+  **A derivation that would cross a chosen row.** A composed row chosen late in the walk may hold rows chosen earlier, and its first derivation may take a row that crosses one of them, which would break "no two nodes cross". A derivation any of whose forced rows crosses a chosen row (or whose own forced rows cannot all be chosen, recursively) is unusable: the choices it made are undone and the next derivation is tried. If none is usable, the composed row is dropped as a crossing loser. No case of either corpus reaches this; two synthetic tests do.
 
   *Worked example (recursion).* `{ "outer": { "search": [{ "from": "inner", "forward": [{ "tag": "sp" }, { "tag": "n" }] }] }, "inner": { "search": [{ "from": "w", "forward": [{ "tag": "sp" }, { "tag": "n" }] }] }, "w": { "rx": "/[a-z]+/u" }, "n": { "rx": "/\\d+/u" }, "sp": { "rx": "/ /u" } }` on `ab 1 2`. `outer (0,6)` is walked first and chosen; its derivation took `inner (0,4)`, `sp (4,5)`, `n (5,6)`, all forced; `inner` is composed, so its derivation's `w (0,2)`, `sp (2,3)`, `n (3,4)` are forced too. Tree:
 
@@ -181,6 +191,22 @@ These are the rules of section 5.2 of the brief, in the order they apply. Input:
       sp (4,5) " "
       n (5,6) "2"
   ```
+
+  *Worked example (own tag).* `{ "w": { "rx": "/[a-z]+/u" }, "sp": { "rx": "/ /u" }, "list": { "search": [{ "from": "w", "forward": [{ "tag": "sp" }, { "tag": "w" }] }, { "from": "list", "forward": [{ "tag": "sp" }, { "tag": "w", "as": "last" }] }] } }` on `a b c`. The chart has `list (0,3)`, `(2,5)` and `(0,5)`. `list (0,5)` is walked first; its derivation took `list (0,3)` (the `from`), `sp (3,4)` and `w (4,5)`. `list (0,3)` has the tag `list`, so it is not chosen: the rows of its own derivation, `w (0,1)`, `sp (1,2)`, `w (2,3)`, are forced in its place. Tree:
+
+  ```
+  doc (0,5)
+    list (0,5) "a b c" attrs={ last: → w (4,5) }
+      w (0,1) "a"
+      sp (1,2) " "
+      w (2,3) "b"
+      sp (3,4) " "
+      w (4,5) "c"
+  ```
+
+  A role on an absorbed row: with `list` as `{ "search": [{ "from": "w", "forward": [{ "tag": "sp" }, { "tag": "list", "as": "rest" }] }, { "from": "w", "forward": [{ "tag": "sp" }, { "tag": "w" }] }] }` (same `w`, `sp`), `a b c` gives the same tree with `list (0,5) "a b c" attrs={ rest: "b c" }`: `list (2,5)` is absorbed, so `rest` is its text.
+
+  *Worked example (a crossing derivation).* Tags `a` `/a/`, `ab` `/a b/`, `cd` `/c d/`, `bcd` `/b c d/`, `sp` `/ /`, and `C`, weak, with the searches `{ "from": "ab", "forward": [{ "tag": "sp" }, { "tag": "cd" }] }` then `{ "from": "a", "forward": [{ "tag": "sp" }, { "tag": "bcd" }] }`, on `a b c d`. `C (0,7)` has two derivations. The weak `C` is walked after the others: `bcd (2,7)` is chosen, and `ab (0,3)` crosses it and drops. The first derivation takes `ab`, which crosses `bcd`: unusable. The second takes `a`, `sp (1,2)`, `bcd`: kept. `C`'s children are `a`, `sp`, `bcd`. With only the first search, no derivation is usable and `C (0,7)` is dropped, though the chart has it.
 
   The walk on one chart that has everything is written out under `the-walk` below.
 
@@ -265,7 +291,7 @@ Leaves: `ab`, ` `, `1.5`, ` `, `kg`, ` `, `okay`: they join to the text (`leaves
 
   *Worked example.* `the-walk`'s leaves: `(0,2)`, `(2,3)`, `(3,6)`, `(6,7)`, `(7,9)`, `(9,10)`, `(10,14)`.
 
-- **FR-015 · `roles-from-forced-derivation`** (rule: *Roles*): For each composed node, `attrs[as]` MUST be taken from its forced derivation: for a tag atom, the node of the row that atom took (a child, or a deeper node when another chosen row wraps it; a twin's row binds the node that stands for it); for a regex atom, the text the regex matched. An atom without `as` binds nothing; its row is still a node. Root nodes and water have empty `attrs`.
+- **FR-015 · `roles-from-forced-derivation`** (rule: *Roles*): For each composed node, `attrs[as]` MUST be taken from its forced derivation: for a tag atom, the node of the row that atom took (a child, or a deeper node when another chosen row wraps it; a twin's row binds the node that stands for it); for a regex atom, the text the regex matched; for a row the node absorbed (`forced-derivation-chosen`), the row's text. An atom without `as` binds nothing; its row is still a node. Root nodes and water have empty `attrs`.
 
   *Worked example.* Tag atom: in `the-walk`, `weight.attrs.unit` is the `unit (7,9)` node itself (the same object as `weight.children[2]`). Regex atom: `{ "price": { "search": [{ "from": "n", "back": [{ "rx": "/€ ?/u", "as": "currency" }] }] }, "n": { "rx": "/\\d+/u" } }` on `€ 5`: tree `price (0,3) "€ 5" attrs={ currency: "€ " }` › `text (0,2) "€ "`, `n (2,3) "5"`. The regex's text is a role, not a node; it shows as water.
 
@@ -338,11 +364,11 @@ The examples share one toy conf, `T`, in this key order:
 
   *Worked example.* `Nota, #12 - fine`, fold `num`: run `, `, `#12`, ` - `; ` - ` wins: `Nota - fine`. `a; #1, b`, fold `num`: `; ` beats `, `: `a; b`. `a #1 b`, fold `num`: two spaces tie, the left one stays: `a b`.
 
-- **FR-022 · `no-separator-at-an-edge`** (rule 3, exceptions): In a run that has a hidden leaf, no separator MUST survive when the run is at an edge of the text (nothing surviving before it, back to `^`, or after it, up to `$`); when the surviving leaf before it ends right after the opening character of a bracket node that is not hidden (its inner edge); or when the surviving leaf after it begins with closing punctuation (`.` `,` `;` `:` `!` `?` or a closing bracket `)` `]` `}`).
+- **FR-022 · `no-separator-at-an-edge`** (rule 3, exceptions): In a run that has a hidden leaf, no separator MUST survive when the run is at an edge of the text (nothing surviving before it, back to `^`, or after it, up to `$`); when the surviving leaf before it is the opening delimiter of a bracket node that is not hidden (its inner edge, right after the delimiter); or when the surviving leaf after it begins with closing punctuation (`.` `,` `;` `:` `!` `?` or a closing bracket `)` `]` `}`).
 
   *Worked example.* Under `T`, fold `num` in each: `#12 - fine` → `fine` (edge, `^`). `Nota - #12` → `Nota` (edge, `$`). `Nota (#12 fine)`: the bracket's leaves are `(`, `#12`, ` `, `fine)`; the run ` ` after `(` is at the bracket's inner edge → `Nota (fine)`. `Nota #12.` → `Nota.` (before `.`). `Nota (fine #12)`: the bracket's leaves are `(fine`, ` `, `#12`, `)`; the run before `)` → `Nota (fine)`.
 
-- **FR-023 · `bracket-empties-out`** (rule 4, *Emptying*): A bracket node MUST be hidden, with all its descendants, when every non-separator leaf inside it is hidden, not counting its own delimiters: its first character, when a water leaf is exactly that character, and its last character likewise (see Assumptions). Brackets are decided innermost first.
+- **FR-023 · `bracket-empties-out`** (rule 4, *Emptying*): A bracket node MUST be hidden, with all its descendants, when every non-separator leaf inside it is hidden, not counting its delimiters, and at least one such leaf is: a bracket nothing was cut from is left alone (folding nothing gives the text back, an empty `( )` included). A bracket node's **delimiters** are its leading and its trailing water, each when it is exactly one character (a leaf, the first and the last of the node's children): they do not count as content, and they are hidden with the bracket. Water that holds more than the delimiter (`(see`) is content and counts. Brackets are decided innermost first.
 
   *Worked example.* `Fornitura toner (ref #12) - saldo` under `T`. Leaves: `Fornitura`, ` `, `toner`, ` `, `(`, `ref`, ` `, `#12`, `)`, ` - `, `saldo`. Fold `ref`: inside the bracket, `ref` and `#12` are hidden and `(` and `)` are its delimiters, so the bracket is hidden; the run ` `, bracket, ` - ` keeps ` - `: `Fornitura toner - saldo`. Fold `num`: `ref` survives, so the bracket stays and its inner-edge rule drops the space before `)`: `Fornitura toner (ref) - saldo`. `Fornitura toner (ref #12 urgente) - saldo`, fold `ref`: `urgente)` is water that holds more than the delimiter, and it survives, so the bracket stays: `Fornitura toner (urgente) - saldo`.
 
@@ -358,7 +384,7 @@ The examples share one toy conf, `T`, in this key order:
 
   The phase 1 assertions (`italian-cases-tagged`, `common-conf`) are unaffected: they assert other tags.
 
-- **FR-027 · `reinstated-gists`**: Every case gets the `fold` and `gist` below. The old engine kept no gist in its case files; it kept them in two places, both reinstated here: the assertions of `test/read.test.ts` and `test/common.test.ts` on `004-connectors` that name a corpus case (source *test*), and, for every other case, the fold the old playground opened each domain with (`playground/main.ts`, the same on `main` and `004-connectors`), with the gist the old engine gives under it (source *playground*; run on `004-connectors`, the eight Italian cases of `main` being its first eight). Old fold names are translated to new tags (`fold-translation`). Each gist below is derived by hand from the rules of this spec and the real phase 1 charts, and is **not yet run** against `dom`.
+- **FR-027 · `reinstated-gists`**: Every case gets the `fold` and `gist` below. The old engine kept no gist in its case files; it kept them in two places, both reinstated here: the assertions of `test/read.test.ts` and `test/common.test.ts` on `004-connectors` that name a corpus case (source *test*), and, for every other case, the fold the old playground opened each domain with (`playground/main.ts`, the same on `main` and `004-connectors`), with the gist the old engine gives under it (source *playground*; run on `004-connectors`, the eight Italian cases of `main` being its first eight). Old fold names are translated to new tags (`fold-translation`). Each gist below was derived by hand from the rules of this spec and the real phase 1 charts, then run against `dom`: all 21 agreed.
 
   Italian (`cases/it-pa.json`). The playground fold, `P-it`, is `["dated", "protocol", "cig", "cup", "chapter", "quotation"]`.
 
@@ -394,7 +420,7 @@ The examples share one toy conf, `T`, in this key order:
   In the JSON the fold is written out, not as `P-it`/`P-co`.
 
   How three of them come out, for the implementer checking the rules against the corpus:
-  - *Gateway*: `dated (41,91)` is walked first and forces `protocol (41,76)` (the channel search), which forces `channel (41,58)`, `sep ": "` and the inner `protocol (60,76)`, which forces `prot-word`, `num-word`, `serial` and their separators. The weak `caps "POSTA CERTIFICATA"` equals the forced `channel`: a twin, `channel.also = ["caps"]`. The forced `serial (69,76)` gets `also = ["id-number", "number"]`. The other `dated` crosses the chosen one and drops.
+  - *Gateway*: `dated (41,91)` is walked first and forces `protocol (41,76)` (the channel search). That `protocol` takes `channel (41,58)`, `sep ": "` and the inner `protocol (60,76)`; the inner one has the same tag, so it is absorbed (`forced-derivation-chosen`) and its own rows, `prot-word`, `num-word`, `serial` and their separators, are forced in its place: one `protocol` node, no protocol inside it. The weak `caps "POSTA CERTIFICATA"` equals the forced `channel`: a twin, `channel.also = ["caps"]`. The forced `serial (69,76)` gets `also = ["id-number", "number"]`. The other `dated` crosses the chosen one and drops.
   - *Integration chain*: the outer `quotation` (to the end) is chosen first; the inner one lies inside it with the same tag and drops (`outer-wins-same-tag`), so `caps` and `cig` are grandchildren of the outer quotation through no inner node. Folding `quotation` hides it all.
   - *Brackets*: `paren (49,65)` holds `(`, the `cig` node, `)`; folding `cig` empties it (`bracket-empties-out`), and the run ` `, bracket, ` - ` keeps ` - `.
 
@@ -411,10 +437,10 @@ One line per case whose gist is expected to differ from what the old engine give
 
 - **Contacts**: old `Call Dana on or about the 15% discount`, new `Call Dana on or email about the 15% discount`. The old `email` recipe took a left label (`email `, `mailto:`) that folded with the address; phase 1's common conf ported `email` as a root tag with no label search, so the word `email` is water and stays.
 
-No other gist is expected to differ. Differences in the tree that leave the gist equal, for the record:
+No other gist differs: the run agreed with every gist written above, so no case's expectation was changed. Differences in the tree that leave the gist equal, for the record:
 
 - **Integration chain**: the old engine nested the inner quotation inside the outer; selection drops it (`outer-wins-same-tag`). Folding the outer hides the same text.
-- **PEC ×2, Riscontro, Gateway**: a protocol with its channel is a `protocol` node holding the bare `protocol` node (forcing), inside a `dated` node; the old engine had one flat mention with four parts.
+- **PEC ×2, Riscontro, Gateway**: a protocol with its channel is one `protocol` node holding the channel, the label and the number as children (the bare protocol it grew from is absorbed), inside a `dated` node; the old engine had one flat mention with four parts.
 - **Gateway**: `channel` and `caps` on `POSTA CERTIFICATA` are twins (`also`); `serial`, `id-number`, `number` on `0031002` likewise. The old engine had no twins, only the winner.
 - **Reply chain**: one `reply-chain` node instead of two `reply` mentions; the fold is renamed (`fold-translation`).
 
@@ -454,12 +480,12 @@ No other gist is expected to differ. Differences in the tree that leave the gist
 
 ### Key Entities
 
-- **Node**: one chosen row (or the root, or a stretch of water), with its span, value, roles, twins and children.
+- **Node**: one chosen row (or the root, or a stretch of water), with its span, value, roles, twins, fate and children.
 - **Water**: the text between chosen rows, as `text` nodes; never folded by tag, never a separator.
 - **Leaf**: a node with no children; the leaves partition the text.
 - **Fold**: a policy, a function from node to boolean; in cases, a list of tags.
 - **Twin**: a row with exactly a chosen row's span; it becomes a name in that node's `also`.
-- **Forced derivation**: the derivation of a chosen composed row, re-run inside its span; it chooses its rows and binds its roles.
+- **Forced derivation**: the derivation of a chosen composed row, re-run inside its span; it chooses its rows (a row of its own tag is absorbed, its rows chosen instead) and binds its roles.
 - **Gist**: the text of the leaves that survive the fold and the fates.
 
 The vocabulary is the constitution's closed set (principle V), with node, water, select and derive, which phase 2 adds. "Leaf", "twin", "crossing", "forced", "run" and "gist" are the brief's words for things the rules describe, not new concepts.
@@ -478,26 +504,27 @@ The vocabulary is the constitution's closed set (principle V), with node, water,
 ## Assumptions
 
 - **"During" means inside.** The brief's same-tag rule says *during*; its two stated purposes (a root scan's suffix matches, a self-growing search's partial rows) are Allen `finishes` and `starts`, not `during`. So the rule reads "inside": `starts`, `during` or `finishes`.
-- **Forced rows skip the walk's tests.** "Chosen immediately, ahead of the walk" is read as: a forced row is not tested for crossing, same-tag containment or twins, except that a forced row equal to a chosen row of another tag becomes its twin (there cannot be two nodes on one span).
+- **Forced rows skip the same-tag test, not the crossing test.** "Chosen immediately, ahead of the walk" is read as: a forced row is not tested for same-tag containment, and one equal to a chosen row of another tag becomes its twin (there cannot be two nodes on one span); but one that would cross a chosen row makes its derivation unusable (`forced-derivation-chosen`).
 - **Rule order in the fold.** The brief lists the separator fate before emptying, but a run cannot be judged before brackets are decided (an emptied bracket is part of a run). The order is fold, connectors, emptying, separators, as in the old engine.
 - **Runs at the edge with nothing hidden are untouched.** The brief's first clause speaks of separators "between two surviving non-separator leaves"; read strictly, a leading space with nothing folded would be dropped and folding nothing would not give the text back. The old engine kept it; so does this spec.
-- **A bracket's delimiters are its first and last characters.** A bracket is a root row that includes its delimiters, and the text around its content is water, so without this reading the water `(` and `)` would never be hidden and no bracket would ever empty. When content abuts a delimiter, the water leaf holds more than the delimiter (`(see`), and then it counts: that text is visible.
-- **The inner edge of a bracket** is right after its opening character; the closing side is covered by "before closing punctuation".
+- **A bracket's delimiters are its leading and trailing water, when each is exactly one character.** A bracket is a root row that includes its delimiters, and the text around its content is water, so without this reading the water `(` and `)` would never be hidden and no bracket would ever empty. They do not count as content for emptying and are hidden with the bracket. When content abuts a delimiter, the water leaf holds more than the delimiter (`(see`), and then it counts: that text is visible.
+- **The inner edge of a bracket** is right after its opening delimiter; the closing side is covered by "before closing punctuation".
+- **A bracket nothing was cut from is not emptied.** "Every non-separator leaf inside it is hidden" is vacuously true of `( )`; reading it so would drop text when nothing was folded. So emptying needs at least one hidden leaf inside.
+- **The own-tag rule of forcing** is the maintainer's closing of the brief's gap between "outer wins" and forcing: forcing chose every row a derivation took, so a self-growing search's chain would have nested, a protocol inside a protocol. A forced row of the composed row's own tag is absorbed instead (`forced-derivation-chosen`).
+- **A forced row that would cross** takes the next derivation, and the composed row is dropped when none is left (`forced-derivation-chosen`). No corpus case reaches it; two synthetic tests do.
+- **dom works on the copy.** The chart holds original spans, but the matcher and its regex atoms work on the normalised copy, and resolvers see it. `dom` normalises the text and maps each chart span into the copy: an original start goes to the first copy boundary with that offset, an original end to the last; the nodes are built back in original coordinates. The mapping is exact except inside a character NFKC expands into several: a row edge `find` placed inside one is not recovered. No case reaches it.
+- **Fates live on the node.** `fate` is copied from the conf's tag onto the node at `dom` time, and the root carries the text, so `hidden(doc, fold)` and `gist(doc, fold)` read the tree alone, with the brief's signatures. A tree parsed back from JSON folds with all four rules.
 - **Strength and ties.** A separator's strength is that of the strongest of `-` `;` `:` `,` it contains; a tie goes to the leftmost, as in the old engine.
 - **The policy is not asked about `doc`.** Folding the root would hide everything; no fold in the cases needs it.
 - **fewrd-play writes nothing.** The old server wrote `book.json` back on save through the old `mount`'s `save` option; the new `mount` has none, and the brief adds none. Saving is left out until a phase decides it.
 - **Where the brief says "the child Node"** for a role, the node may be deeper when another chosen row wraps the atom's row; it is the node of that row either way.
 - **Cases are one fold each.** Old assertions that folded by position (`(m, i) => i === 0`) cannot be written as a list of tags and are not carried; the old assertions on texts that are not corpus cases (fragments of a case, `Liquidazione fattura, CIG Z1234ABCDE.`, the NBSP and en-dash text) are not cases and are not carried either (principle III).
-- **Values are recomputed.** `find` drops values after the call (phase 1), so `dom` asks the resolvers again, bottom-up; a resolver is a pure function, which is why a refusal is a bug.
+- **Values are recomputed.** `find` drops values after the call (phase 1), so `dom` asks the resolvers again, bottom-up; a resolver is a pure function, which is why a refusal is a bug. A role takes the value of the first derivation its row's resolver accepts, as `find` did; a node's own `value` is the one its kept derivation gives (the two differ only when the first derivation was unusable).
 
 ## Open points
 
-Gaps the brief's words leave, found while specifying. Each says what this phase does meanwhile; none is decided here.
+Still open. The five points this section held while specifying (the own-tag rule of forcing, a forced row that would cross, normalised coordinates, fates, bracket delimiters) were closed by the maintainer before implementation and are requirements and Assumptions above.
 
-- **Forcing versus "outer wins" on a self-growing search.** The brief says the same-tag rule is "what makes a self-growing search's partial rows scaffolding". But forcing chooses "every row that derivation took, the `from` row included", and the longest row of a self-growing search is always derived from a shorter row of its own tag. So the partial rows on the derivation chain become nested nodes (the Italian `protocol` grown from `protocol` shows it: a protocol node inside a protocol node); only those off the chain are scaffolding. This phase follows forcing. The maintainer may want a forced row of the composed row's own tag to be dropped instead, with its children lifted.
-- **A forced row that crosses a chosen row.** A composed row chosen late in the walk may contain rows forced earlier by an enclosing composition; its first derivation could take a row crossing one of them, breaking "no two nodes cross". The brief does not say what then. This phase, provisionally: the re-run keeps the first derivation none of whose rows crosses a chosen row; if there is none, the composed row is dropped as a crossing loser. No case of either corpus reaches this.
-- **Normalised coordinates for the re-run.** The chart holds original spans, but the matcher and its regex atoms work on the normalised copy. `dom` normalises the text and maps each span back through the inverse of the boundary map; that inverse is ambiguous inside a character NFKC expands into several (all its copy boundaries map to one original offset). This phase maps an original start to the first copy boundary with that offset and an original end to the last; a row edge that `find` placed inside an expansion is not recovered. No case reaches this.
-- **Where `hidden` and `gist` find the fates.** The brief's signatures, `hidden(doc, fold)` and `gist(doc, fold)`, take no conf, and its `Node` has no `fate`; the fate rules need both. This phase keeps both as the brief wrote them: `dom` remembers the conf's fates for the `doc` it returned (see the plan's research, `fold-reads-fates`), so a tree built by hand or parsed from JSON folds with rule 1 only.
 - **Optional labels** (brief 5.8, carried): a tag both root and composed. Two witnesses: Italian codes, common versions. Needs a conf construct, proposed after phase 2.
 - **Root scan advancing by one** (brief 5.8, carried, maintainer's call): same-tag suffix matches fill the chart; selection neutralises them (`outer-wins-same-tag`), so the tree is unaffected, the chart's size is not.
 
