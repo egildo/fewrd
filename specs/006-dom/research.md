@@ -76,7 +76,7 @@ Every decision below is either the brief's (section 5, cited as such), the spec'
 
 ## playground-tree-and-fold
 
-**Decision**: Two pure helpers, exported from `fewrd/playground` for tests: `treeLines(doc, text): string[]` (one line per node but `doc`: indentation of two spaces per depth, then `tag (start, end)`, then ` also=a,b`, ` value=…`, then the node's text in quotes) and `greyed(doc, fold): Span[]` (the spans of the hidden leaves, merged where adjacent). `mount` keeps a `Map<caseIndex, Set<string>>` of fold choices, seeded from the case's `fold`; the panel lists `Object.keys(compiled.tags)`; the grid greys the characters of `greyed` spans with a class on per-character overlays on the existing text line.
+**Decision**: Two pure helpers, exported from `fewrd/playground` for tests: `treeLines(doc, text): string[]` (one line per node but `doc`: indentation of two spaces per depth, then `tag (start, end)`, then ` also=a,b`, ` value=…`, then the node's text in quotes) and `greyed(doc, fold): Span[]` (the spans of the hidden leaves, merged where adjacent). `mount` keeps a `Map<caseIndex, Set<string>>` of fold choices, seeded from the case's `fold`; the panel lists `Object.keys(compiled.tags)`; the grid greys the characters of `greyed` spans by cutting each text line into plain and `fewrd-grey` pieces (inline, so the grid does not move).
 
 **Rationale**: the DOM glue stays untestable in node; its logic does not.
 

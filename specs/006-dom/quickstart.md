@@ -23,7 +23,7 @@ Both green. `pnpm test` runs, among the others:
 pnpm dev     # http://localhost:5577
 ```
 
-1. Case 1 (PEC, channel with a dash): under the chart, the tree lists `dated` holding `protocol` holding `channel`, a separator and the inner `protocol`; the fold panel has `dated`, `protocol`, `cig`, `cup`, `chapter`, `quotation` ticked; the gist reads as in `reinstated-gists`; those characters are grey on the grid.
+1. Case 1 (PEC, channel with a dash): under the chart, the tree lists `dated` holding one `protocol`, which holds `channel`, a separator, the label and the number as children (no protocol inside it); the fold panel has `dated`, `protocol`, `cig`, `cup`, `chapter`, `quotation` ticked; the gist reads as in `reinstated-gists`; those characters are grey on the grid.
 2. Untick everything: the gist is the text; nothing is grey.
 3. Case "Brackets": tick only `cig`: the bracket goes grey with it and the gist is `Fornitura di toner per le stampanti degli uffici - saldo`.
 4. Edit the conf (rename a tag): the panel's boxes follow the conf's tags.
