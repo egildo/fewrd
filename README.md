@@ -53,7 +53,7 @@ npm install fewrd
 ESM only, zero dependencies, types included. Runs in current Node and in any current browser or bundler.
 
 > [!IMPORTANT]
-> What this README describes is unreleased. npm still has 0.3.0, the older book-and-recipes API; the [changelog](CHANGELOG.md) says what changed and how to upgrade. Until the next release, build this repository (`pnpm install && pnpm build`) and depend on the checkout.
+> This README describes 1.0.0, a rewrite. Until it is on npm, `npm install fewrd` still gets 0.3.0, the older book-and-recipes API; the [changelog](CHANGELOG.md) says what changed and how to upgrade. Meanwhile, build this repository (`pnpm install && pnpm build`) and depend on the checkout.
 
 ## Quick start
 

@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
 
-The rewrite. fewrd keeps its name and its purpose, finding what recurs in a string and letting a reader fold it away, and replaces almost everything else. The old engine found, chose among overlaps and cut the text in one pass; the new one works in two halves with plain data between them. `find` makes a chart of every row the conf can build and chooses nothing; `dom` chooses one reading and returns a tree; `hidden` and `gist` fold the tree. `package.json` stays at 0.3.0 until this is released, and `fewrd-play` at 0.1.0.
+The rewrite. fewrd keeps its name and its purpose, finding what recurs in a string and letting a reader fold it away, and replaces almost everything else. The old engine found, chose among overlaps and cut the text in one pass; the new one works in two halves with plain data between them. `find` makes a chart of every row the conf can build and chooses nothing; `dom` chooses one reading and returns a tree; `hidden` and `gist` fold the tree. `fewrd-play` moves to 0.2.0 and requires fewrd 1.0.0.
 
 ### What replaced what
 

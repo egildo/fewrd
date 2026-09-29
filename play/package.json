@@ -1,6 +1,6 @@
 {
   "name": "fewrd-play",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Open a local fewrd conf (conf.json, cases.json, resolvers.ts) in the fewrd playground. Dev tooling, kept out of the fewrd library.",
   "type": "module",
   "license": "MIT",
@@ -11,7 +11,7 @@
   "bin": { "fewrd-play": "dist/cli.js" },
   "files": ["dist"],
   "engines": { "node": ">=22.13" },
-  "peerDependencies": { "fewrd": ">=0.3.0" },
+  "peerDependencies": { "fewrd": ">=1.0.0" },
   "scripts": {
     "prepublishOnly": "tsc -p tsconfig.json"
   }

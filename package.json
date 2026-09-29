@@ -1,6 +1,6 @@
 {
   "name": "fewrd",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "type": "module",
   "license": "MIT",
   "description": "Finds what recurs in a string, and lets a reader fold it away.",
