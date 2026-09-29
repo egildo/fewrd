@@ -51,20 +51,24 @@ Behaviour: [spec.md](../spec.md), requirements `conf-is-plain-data` to `find-is-
 ## `fewrd/playground`
 
 ```ts
-export interface PlaygroundCase { name: string; text: string }
+export interface PlaygroundCase { name: string; conf: string; text: string }
+export interface PlaygroundConf { conf: unknown; resolvers?: Readonly<Record<string, Resolve>> }
 
 export function mount(
   el: HTMLElement,
-  options: { conf: unknown; resolvers?: Readonly<Record<string, Resolve>>; cases: readonly PlaygroundCase[] },
+  options: { confs: Readonly<Record<string, PlaygroundConf>>; cases: readonly PlaygroundCase[] },
 ): void;
 
 /** Stack rows into lanes: each row on the first lane whose last row ends at or before its start. */
 export function lanes(rows: Iterable<readonly [tag: string, span: Span]>): (readonly [tag: string, span: Span])[][];
+
+/** Where a row falls on a text wrapped every `cols` characters: one piece per line. */
+export function segments(span: Span, cols: number): { line: number; from: number; to: number }[];
 ```
 
-`conf` is the data form (typically a JSON import); `mount` shows it in the editor and compiles it with `resolvers`. `lanes` is exported for its test and for anyone drawing a chart their own way.
+Each conf is the data form (typically a JSON import); `mount` shows the conf of the case on screen in the editor and compiles it with its `resolvers`. `lanes` and `segments` are exported for its test and for anyone drawing a chart their own way.
 
-Behaviour: requirements `playground-mount` to `dev-opens-italian`.
+Behaviour: requirements `playground-mount` to `dev-opens-two-domains`.
 
 ## Removed
 
