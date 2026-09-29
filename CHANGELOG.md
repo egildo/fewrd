@@ -17,6 +17,7 @@
 
 ### Changed
 
+- The playground is redesigned (`docs/playground-review.md`, `docs/playground-design.md`): a sticky bar with the stepper, a jump menu and a theme switch; the grid wraps at spaces to the width of the page; the gist and the fold come right under the chart, the conf is a side panel or a collapsed section, the tree comes last; hovering links bands and tree rows; bands are keyboard-reachable; rows the tree did not keep are dashed; light and dark themes from CSS custom properties. `mount` keeps its signature.
 - `normalise`'s boundary map is per UTF-16 unit, and `find` no longer converts from code points.
 - `it-pa@4` (gains `paren`) and `common@2` (gains `SEP`, `paren`, `sep`): their charts change.
 - The matcher moved from `find.ts` to `derive.ts`, shared by `find` and `dom`; `find` is unchanged.

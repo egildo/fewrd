@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { greyed, lanes, segments, treeLines } from '../src/playground.ts';
+import { greyed, lanes, segments, treeLines, wrap } from '../src/playground.ts';
 import { Chart, type Span } from '../src/index.ts';
 import { build, type Tags } from './tree.ts';
 
@@ -31,7 +31,7 @@ test('playground-draws-chart: lanes, no rows, no lanes', () => {
   assert.deepEqual(lanes([]), []);
 });
 
-const cut = (a: number, b: number) => segments([a, b], 10).map((s) => [s.line, s.from, s.to]);
+const cut = (a: number, b: number) => segments([a, b], [0, 10, 20, 30]).map((s) => [s.line, s.from, s.to]);
 test('playground-draws-chart: segments, a row inside one line is one piece', () => {
   assert.deepEqual(cut(2, 7), [[0, 2, 7]]);
 });
@@ -41,6 +41,22 @@ test('playground-draws-chart: segments, a row that crosses a wrap is one piece p
 test('playground-draws-chart: segments, a row ending on the wrap stays on its line', () => {
   assert.deepEqual(cut(4, 10), [[0, 4, 10]]);
   assert.deepEqual(cut(10, 12), [[1, 0, 2]]);
+});
+
+test('playground-draws-chart: segments, lines that start at uneven offsets', () => {
+  assert.deepEqual(segments([3, 12], [0, 8, 16]).map((s) => [s.line, s.from, s.to]), [[0, 3, 8], [1, 0, 4]]);
+});
+test('playground-draws-chart: wrap breaks after the last space that fits', () => {
+  assert.deepEqual(wrap('aaa bbb ccc', 8), [0, 8]);
+  assert.deepEqual(wrap('aaa bbb ccc ddd', 8), [0, 8]);
+  assert.deepEqual(wrap('aaa bbb ccc', 20), [0]);
+});
+test('playground-draws-chart: wrap cuts hard when a word does not fit, and keeps every line within cols', () => {
+  assert.deepEqual(wrap('abcdefghij', 4), [0, 4, 8]);
+  const text = 'Riscontro a nota prot. 0012345 del 03/02/2026 - Liquidazione fattura';
+  const starts = wrap(text, 16);
+  starts.forEach((from, i) => assert.ok((starts[i + 1] ?? text.length) - from <= 16));
+  assert.equal(wrap('', 10).length, 1);
 });
 
 test('playground-tree: treeLines of the walk', () => {

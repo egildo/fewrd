@@ -391,27 +391,33 @@ the whole text.
 `pnpm dev` opens the playground on twenty-one subjects from two domains,
 thirteen Italian public-administration ones and eight from a common inbox. One subject
 shows at a time: step through them with the big ‹ › buttons or the arrow keys,
-the counter between them says where you are.
+the counter between them says where you are, and a menu next to it jumps to any
+one. The bar stays on screen while you scroll.
 
 The subject's text sits on a character grid, a monospace font with every
-character exactly one `ch` wide, wrapped every 90 characters. Each row of the
-chart is an underline with a small tick at each end, so where it starts and
-stops is plain; rows that overlap stack in lanes below the line. Nothing is
-labelled: hover a band and a tooltip gives its tag and `(start, end)` while the
-characters it covers light up. A row of chips under the drawing is the legend
-of tag colours. On the left, the conf of the subject on screen recompiles as
-you type and the subject is found again. A mistake in the JSON shows beside the
-editor and the drawing stays; compile errors are listed with their paths and
-the tags that compiled are drawn. Each domain keeps its own edits.
+character exactly one `ch` wide, wrapped at spaces to as many columns as the
+page holds. Each row of the chart is an underline with a small tick at each end,
+so where it starts and stops is plain; rows that overlap stack in lanes below the
+line. Nothing is labelled: hover a band, or Tab to the bands and move along them
+with ↑ ↓, and a tooltip gives its tag, `(start, end)`, its text and whether the
+tree kept it, while the characters it covers light up and its row in the tree
+lights with them. A dashed band is a row the tree did not keep. The conf of the
+subject on screen sits in a panel that recompiles it as you type and finds the
+subject again; a mistake in the JSON is shown at once, the editor turns red and
+the drawing stays; compile errors are listed with their paths and the tags that
+compiled are drawn. Each domain keeps its own edits.
 
-Under the chart come the tree and the fold. The tree is the `dom` of the
+Under the chart come the gist, the fold and the tree. The fold is one chip per
+tag of the conf, each with its colour and a checkbox; the tags this subject's
+tree holds come first. The ticked tags are the fold: the gist is printed above,
+with the characters it saves, and on the grid the hidden leaves are struck out
+and their bands fade; ticking a box redraws both at once. A subject that carries
+a `fold` opens with those boxes ticked and says whether the gist matches the
+`gist` it carries; Reset returns to that fold. The tree is the `dom` of the
 subject as an indented list: one line per node, its tag, `(start, end)`, its
-`also` and `value` when it has them, and its text, water dimmed. The fold panel
-has one checkbox per tag of the conf, in key order; the ticked tags are the
-fold. Under it the gist is printed, and on the grid the characters of every
-hidden leaf are greyed out; ticking or unticking a box redraws both at once. A
-subject that carries a `fold` opens with those boxes ticked and says whether
-the gist matches the `gist` it carries.
+`also` and `value` when it has them, and its text, water dimmed; hovering a line
+lights its span on the grid. Light and dark follow the system; a switch in the
+bar overrides them.
 
 Or mount it in a page of your own:
 

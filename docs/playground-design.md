@@ -7,7 +7,7 @@ Same playground, same core: text on a JetBrains Mono grid (ligatures off, one ch
 1. **The case is the page.** A sticky bar holds ‹, "n / 21", ›, a jump menu (native select, grouped by domain, so duplicate names cannot collide) and a theme switch. The case stays steppable at any scroll.
 2. **The grid fits its column.** The wrap is measured from the container (`floor(width / 1ch)`) and breaks at spaces. No sideways scroll at any width.
 3. **Output first.** Below the grid come the gist (large, `aria-live`, with a "37 → 21 characters" line and a verdict) and the fold panel, then the tree, then the conf. The editor is a sidebar on wide screens and a collapsed section otherwise; its error state is always visible, outside the collapse.
-4. **Tree and grid are one thing.** Hovering a band lights its tree row; hovering a tree row washes its span on the grid. Bands are focusable (tab, or tap on touch) and show the same tooltip. The tooltip also says what the row is: a node, a twin, or not in the tree.
+4. **Tree and grid are one thing.** Hovering a band lights its tree row; hovering a tree row washes its span on the grid. Bands are one tab stop, ↑ ↓ Home End move along them in reading order, a tap focuses one; all show the same tooltip. The tooltip also says what the row is: a node, a twin, or not in the tree.
 5. **The legend and the fold panel merge.** One chip per tag: swatch in the band colour, real checkbox, label. Tags present in this text's tree come first, the rest follow under "not in this tree". A Reset returns to the case's own fold.
 6. **Hidden and lost are drawn.** Hidden leaves: muted and struck through on the grid, their bands faded. Rows the tree did not keep: dashed bands. Twins: solid bands, "twin of x" in the tooltip and an `also` pill in the tree.
 
@@ -38,7 +38,7 @@ Wide (at least 1100 px):
 └───────────────────────────────────────────────┴──────────────────────────┘
 ```
 
-Medium (720 to 1099 px, e.g. 900):
+Medium (720 to 1099 px, e.g. 900): one column; the conf is a collapsed card.
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -47,9 +47,11 @@ Medium (720 to 1099 px, e.g. 900):
 │ ┌ grid card (about 94 columns) ────────────────┐ │
 │ │ text, bands, hint                            │ │
 │ └──────────────────────────────────────────────┘ │
-│ ┌ Gist ──────────────┐ ┌ Fold ────────────────┐ │
-│ │ 18px mono, verdict │ │ chips, Reset         │ │
-│ └────────────────────┘ └──────────────────────┘ │
+│ ┌ Gist ────────────────────────────────────────┐ │
+│ └──────────────────────────────────────────────┘ │
+│ ┌ Fold ──────────────────────────────── Reset ─┐ │
+│ │ chips, wrapping                              │ │
+│ └──────────────────────────────────────────────┘ │
 │ ▸ Conf  it-pa  [2 errors]      (collapsed)       │
 │ [error box, visible even when collapsed]         │
 │ ▾ Tree  59 nodes                                 │

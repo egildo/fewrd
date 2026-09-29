@@ -73,10 +73,11 @@ export function page(title: string, resolvers?: string): string {
 <title>${esc(title)} · fewrd play</title>
 <script type="importmap">{ "imports": { "fewrd": "/@fewrd/index.js", "fewrd/playground": "/@fewrd/playground.js" } }</script>
 <style>
-  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: #1d1d1f; background: #fafafa; }
-  header { padding: 12px 16px; background: #fff; border-bottom: 1px solid #e5e5ea; }
+  :root { color-scheme: light dark; }
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; }
+  header { padding: 12px 16px; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
   h1 { margin: 0; font-size: 18px; }
-  main { padding: 16px 24px; }
+  main { padding: 0; }
 </style>
 </head>
 <body>
