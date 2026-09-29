@@ -11,7 +11,7 @@
 ![dependencies: 0](https://img.shields.io/badge/dependencies-0-78C4B6?style=flat-square)
 ![core: 4 kB gzip](https://img.shields.io/badge/core-4%20kB%20gzip-78C4B6?style=flat-square)
 ![types: strict](https://img.shields.io/badge/types-strict-78C4B6?style=flat-square)
-![tests: TESTS passing](https://img.shields.io/badge/tests-TESTS%20passing-78C4B6?style=flat-square)
+![tests: 107 passing](https://img.shields.io/badge/tests-107%20passing-78C4B6?style=flat-square)
 [![license: MIT](https://img.shields.io/badge/license-MIT-78C4B6?style=flat-square)](LICENSE)
 
 </div>
