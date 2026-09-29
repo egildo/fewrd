@@ -37,7 +37,7 @@ Every decision below is either the brief's (section 3.4, cited as such) or a cho
 **Decision** (brief 3.4): For each search and each row of its `from` tag, a recursive function walks the atoms in order with a cursor (the row's start going back, its end going forward), the current leftmost/rightmost edge, the roles bound so far, and at most one **pending regex atom** whose extent is not yet known. At each atom:
 
 - **Tag atom** (`tag` a name, a list, or `*`): for every candidate row of those tags in the previous chart that meets the cursor (ends at it going back, starts at it going forward), recurse with the cursor moved to the row's far edge. With a pending regex atom, the candidates are instead every row on the far side of the cursor (end ≤ cursor going back, start ≥ cursor going forward) whose gap to the cursor the pending regex matches **whole**; the regex's extent is that gap.
-- **Regex atom**: if a regex atom is already pending, resolve that one as last first (see `open point: two regex atoms in a row` in the spec); then this one becomes pending.
+- **Regex atom**: it becomes pending. `compile` rejects two regex atoms that could meet, even with only optional atoms between them, so none is pending already (`find` on a hand-built conf that has them yields no derivation for that branch).
 - **`optional`**: recurse once taking the atom and once skipping it.
 - **End of atoms**: a pending regex atom is matched as last (forward sticky or back pinned); a failed match ends the branch. Otherwise the derivation is complete: emit `(tag, leftmost, rightmost)` with its roles.
 

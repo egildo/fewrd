@@ -27,7 +27,7 @@ Old code worth reading before writing (git history, not to be restored): `git sh
 
 ## Phase 1: Setup
 
-- [ ] T001 Point config at the new layout: in `tsconfig.json` `include`, replace `"recipes"` with `"confs"`; in `package.json`, remove `"book.schema.json"` from `files` and the `"./book.schema.json"` entry from `exports` (keep `.` and `./playground`, keep the version). **Test**: `pnpm typecheck` and `pnpm test` still pass on the slate.
+- [x] T001 Point config at the new layout: in `tsconfig.json` `include`, replace `"recipes"` with `"confs"`; in `package.json`, remove `"book.schema.json"` from `files` and the `"./book.schema.json"` entry from `exports` (keep `.` and `./playground`, keep the version). **Test**: `pnpm typecheck` and `pnpm test` still pass on the slate.
 
 ---
 
@@ -37,7 +37,7 @@ Old code worth reading before writing (git history, not to be restored): `git sh
 
 ### Types and compile
 
-- [ ] T002 [P] Write `test/conf.test.ts` (imports from `../src/index.ts`), one test per bullet, named after the requirement:
+- [x] T002 [P] Write `test/conf.test.ts` (imports from `../src/index.ts`), one test per bullet, named after the requirement:
   - `compile-never-throws`: `compile` on `null`, `[]`, `'x'`, `42`, `{}` returns errors and never throws; one test per error kind, each asserting `path`, `tag` and that the tag is left out: unknown tag in `from`; unknown tag in an atom (a name and a name inside a list); a tag with both `rx` and `search`; a tag with neither; a search with both `back` and `forward`; a search with neither; a bad pattern (not `/source/flags`, and an invalid regex like `/(/u`); an unknown `%{NAME}`; a circular `%{A}`→`%{B}`→`%{A}`; an unknown resolver; a reserved name (`^`, `$`, `*`) declared as a tag; a reserved name in `from`; wrong types (`version` not a non-empty string, `weak` not a boolean, `fate` not `separator`/`connector`, an atom that is not an object).
   - `compile-never-throws: one broken tag`: with three tags and the middle one broken, the other two compile and keep their key order.
   - `compile-never-throws: a reference to a left-out tag`: tag `b` searches `from: "a"`, `a` has a bad pattern; exactly one error (for `a`), and `b` is kept.
@@ -45,16 +45,16 @@ Old code worth reading before writing (git history, not to be restored): `git sh
   - `resolvers-by-name`: a named resolver arrives as the same function on the compiled tag.
   - `conf-is-plain-data`: `weak` and `fate` pass through compile unchanged; `patterns` is kept as given.
   - `priority-is-key-order`: the compiled `tags` keys are in the data's key order.
-- [ ] T003 Write `src/conf.ts` exactly per [contracts/public-api.md](contracts/public-api.md) and `compiled-conf-is-the-same-shape` in research: the generic types `Conf<P = string, R = string>`, `Tag<P, R>`, `Search<P>`, `Atom<P>`, `Resolve`, `CompileError { path; tag?; message }`, and `compile(data: unknown, options?)`. Tag rule: "exactly one of rx / search". Search rule: "exactly one of back / forward". Reserved names `^` `$` `*`: "usable in atoms, never declarable", and not in `from`. Error paths like `tags.protocol.search[0].back[3].tag`, `""` for the root. Reuse the splicing and pattern parsing of the old `compile.ts` verbatim where it fits. No unknown-key errors (spec Open points). Create `src/index.ts` re-exporting `conf.ts`. **Test**: T002, `node --test test/conf.test.ts`.
+- [x] T003 Write `src/conf.ts` exactly per [contracts/public-api.md](contracts/public-api.md) and `compiled-conf-is-the-same-shape` in research: the generic types `Conf<P = string, R = string>`, `Tag<P, R>`, `Search<P>`, `Atom<P>`, `Resolve`, `CompileError { path; tag?; message }`, and `compile(data: unknown, options?)`. Tag rule: "exactly one of rx / search". Search rule: "exactly one of back / forward". Reserved names `^` `$` `*`: "usable in atoms, never declarable", and not in `from`. Error paths like `tags.protocol.search[0].back[3].tag`, `""` for the root. Reuse the splicing and pattern parsing of the old `compile.ts` verbatim where it fits. Unknown keys, `as` equal to `value`/`^`/`$`/`*`, an optional outermost atom and two regex atoms in a row are errors too (spec `compile-never-throws`). Create `src/index.ts` re-exporting `conf.ts`. **Test**: T002, `node --test test/conf.test.ts`.
 
 ### Chart
 
-- [ ] T004 [P] Write `test/chart.test.ts`, named after requirements:
+- [x] T004 [P] Write `test/chart.test.ts`, named after requirements:
   - `chart-invariants`: `Chart.empty(5).toJSON()` is `{ "$": [[5,5]], "^": [[0,0]] }`; after `with` in any order, each tag's rows are sorted by start then end and unique; `toJSON` keys are in code-unit order; `Chart.from(c.toJSON())` equals `c` (compare `toJSON`), and `JSON.parse(JSON.stringify(c))` round-trips; a tag with no rows is absent.
   - `chart-is-immutable`: `with` returns a new chart, leaves the old one unchanged, ignores triples already present (`size()` unchanged when all are present), and the `spans()` list of an untouched tag is the same object (`===`) in both charts.
   - `chart-queries`: `has`, `after`, `before`, `spans`, `size`, each with a tag and with `*`; `after` is the first span with start ≥ pos, `before` the last with end ≤ pos; `all()` orders by start, end, then tag name; `spans` of an absent tag is `[]`.
   - `allen-relations`: one case per relation, 13, on proper intervals; then `rel([0,0],[0,5]) === 'meets'`, `rel([0,5],[5,5]) === 'meets'`, `rel([3,3],[3,3]) === 'equals'`.
-- [ ] T005 Write `src/chart.ts` per contract and `chart-internals` and `allen-relations-order` in research: `Span`, `AllenRelation`, `class Chart` over a `ReadonlyMap<string, readonly Span[]>` plus `n`, copy-on-write per tag list, `rel`. Add a `ponytail:` comment on the list scans: linear or binary search per list is enough at subject length; index by position if subjects grow. Re-export from `src/index.ts`. **Test**: T004, `node --test test/chart.test.ts`.
+- [x] T005 Write `src/chart.ts` per contract and `chart-internals` and `allen-relations-order` in research: `Span`, `AllenRelation`, `class Chart` over a `ReadonlyMap<string, readonly Span[]>` plus `n`, copy-on-write per tag list, `rel`. Add a `ponytail:` comment on the list scans: linear or binary search per list is enough at subject length; index by position if subjects grow. Re-export from `src/index.ts`. **Test**: T004, `node --test test/chart.test.ts`.
 
 **Checkpoint**: commit `feat: conf, compile and chart`.
 
@@ -70,36 +70,37 @@ All tests in this phase go in `test/find.test.ts`, import from `../src/index.ts`
 
 ### Root scan
 
-- [ ] T006 [US1] Tests for root rows, each the spec's worked example verbatim: `root-rows-every-match: the guard` (`12 345 x9`), `: overlap` (`a b c`), `: zero length` (`ab`), `: resolve` (`12 7 30`, with the `even` resolver); `match-on-normalised-text` (`x   12`, three spaces, gives `n [[4,6]]`, `$ [[6,6]]`); and the edge case `find` on `""` gives `{ "$": [[0,0]], "^": [[0,0]] }`.
-- [ ] T007 [US1] Write `src/find.ts` with the root scan only: `normalise` the text; scan every root tag per `root-scan` in research (`gd` variant cached in a `WeakMap` per `RegExp`, `lastIndex = match.index + 1` after every match, skip zero-length, word guard with `/[\p{L}\p{N}]/u` on both edges, resolver filter with `{ value }`); build the chart from `Chart.empty(L)`; map every span back through `at` once, at the end, into a chart of the original length. Export `find(text, conf: Conf<RegExp, Resolve>): Chart` and re-export it from `src/index.ts`. **Test**: T006.
+- [x] T006 [US1] Tests for root rows, each the spec's worked example verbatim: `root-rows-every-match: the guard` (`12 345 x9`), `: overlap` (`a b c`), `: zero length` (`ab`), `: resolve` (`12 7 30`, with the `even` resolver); `match-on-normalised-text` (`x   12`, three spaces, gives `n [[4,6]]`, `$ [[6,6]]`); and the edge case `find` on `""` gives `{ "$": [[0,0]], "^": [[0,0]] }`.
+- [x] T007 [US1] Write `src/find.ts` with the root scan only: `normalise` the text; scan every root tag per `root-scan` in research (`gd` variant cached in a `WeakMap` per `RegExp`, `lastIndex = match.index + 1` after every match, skip zero-length, word guard with `/[\p{L}\p{N}]/u` on both edges, resolver filter with `{ value }`); build the chart from `Chart.empty(L)`; map every span back through `at` once, at the end, into a chart of the original length. Export `find(text, conf: Conf<RegExp, Resolve>): Chart` and re-export it from `src/index.ts`. **Test**: T006.
 
 ### Matcher
 
-- [ ] T008 [US1] Tests for the matcher, one per rule and per atom kind, each the spec's worked example verbatim unless noted:
+- [x] T008 [US1] Tests for the matcher, one per rule and per atom kind, each the spec's worked example verbatim unless noted:
   - `searches-run-from-rows` (`no 42 ok`: `labelled` and `counted`, twins).
   - `atoms-meet-the-cursor: alternatives` (`ab 7 42`, `alt`).
   - `atoms-meet-the-cursor: ^ and $` (`ab cd`, `first`, `last`).
   - `atoms-meet-the-cursor: regex between atoms` (`(ab) (c`, `group`).
   - `atoms-meet-the-cursor: regex last` (`€ 5 kg`, `weight` forward and `price` back).
-  - `atoms-meet-the-cursor: optional` (`no 42`, `tagged`, three rows including the twin of `n`).
+  - `atoms-meet-the-cursor: optional` (`k:7 k: 8`, `entry`).
   - `atoms-meet-the-cursor: nothing possessive` (`big red 7`, `named`).
-  - `atoms-meet-the-cursor: two regex atoms in a row` (spec Open points): `{ "from": "n", "forward": [{ "rx": "/ /u" }, { "rx": "/kg/u" }] }` on `5 kg` gives `[0,4]`, the first regex taken as last (sticky).
+  - Two regex atoms in a row, an optional outermost atom, unknown keys and `as: "value"` are compile errors (tested in `test/conf.test.ts`, spec `search-has-one-direction` and `compile-never-throws`).
+  - `atoms-meet-the-cursor: regex between atoms, going back`; `chart-complete-and-neutral: packing` (a row reached by two derivations appears once) and `passes-to-a-fixpoint: rows inside rows are kept`.
   - `atoms-meet-the-cursor: empty regex slice`: `{ "from": "open", "forward": [{ "rx": "/[^()]*/u" }, { "tag": "close" }] }` on `()` gives `group [[0,2]]`.
   - `composed-rows-resolve` (`5 kg 3 g`, `weight` with `canon` and `metric`); plus: a role bound to a row whose tag has no `resolve` receives the row's text.
   - `chart-complete-and-neutral: crossing kept`, `: twins kept`, `: packing` (rows inside rows kept), all from the `x.y.z` example.
   - `compile-never-throws: a reference to a left-out tag` finds no rows of the referring search and does not throw.
-- [ ] T009 [US1] Add the matcher to `src/find.ts` per `matcher-is-a-depth-first-enumeration`, `pinned-regexes` and `role-values-are-transient` in research: one pass of every search against a given chart; the pending-regex device; `^`/`$` as ordinary rows; `*` over every tag; roles `{ value, ...as }` with values from the transient map; searches in code-unit order of tag name, `from` rows in span order. Put the brief's `ponytail:` comment on the matcher: "exponential in the number of optional atoms per search, quadratic chart under `*` on a self-growing search". Wire it for a single pass after the roots. **Test**: T008.
+- [x] T009 [US1] Add the matcher to `src/find.ts` per `matcher-is-a-depth-first-enumeration`, `pinned-regexes` and `role-values-are-transient` in research: one pass of every search against a given chart; the pending-regex device; `^`/`$` as ordinary rows; `*` over every tag; roles `{ value, ...as }` with values from the transient map; searches in code-unit order of tag name, `from` rows in span order. Put the brief's `ponytail:` comment on the matcher: "exponential in the number of optional atoms per search, quadratic chart under `*` on a self-growing search". Wire it for a single pass after the roots. **Test**: T008.
 
 ### Pass loop
 
-- [ ] T010 [US1] Tests for the loop: `passes-to-a-fixpoint` (`1 2 3`, `list [[0,3],[0,5],[2,5]]`, `size()` 10); `atoms-meet-the-cursor: any tag` (`ab 7 42`, `star [[0,4],[0,7],[3,7]]`, which needs a second pass); `passes-to-a-fixpoint: a long self-growing search` (the fixpoint success criterion: the `list` conf over the numbers 1 to 100 separated by spaces ends, with 4,950 `list` rows).
-- [ ] T011 [US1] Add the pass loop to `src/find.ts` per `pass-loop` in research: run every search against the previous chart only, add the pass's rows at once with `with`, stop when `size()` does not change; no pass cap. **Test**: T010, and T006 and T008 still pass.
+- [x] T010 [US1] Tests for the loop: `passes-to-a-fixpoint` (`1 2 3`, `list [[0,3],[0,5],[2,5]]`, `size()` 10); `atoms-meet-the-cursor: any tag` (`ab 7 42`, `star [[0,4],[0,7],[3,7]]`, which needs a second pass); `passes-to-a-fixpoint: a long self-growing search` (the fixpoint success criterion: the `list` conf over the numbers 1 to 100 separated by spaces ends, with 4,950 `list` rows).
+- [x] T011 [US1] Add the pass loop to `src/find.ts` per `pass-loop` in research: run every search against the previous chart only, add the pass's rows at once with `with`, stop when `size()` does not change; no pass cap. **Test**: T010, and T006 and T008 still pass.
 
 ### find, end to end
 
-- [ ] T012 [US1] Tests: `find-is-deterministic` (for every toy conf in this file, reversing the key order of `tags` gives the same `JSON.stringify(find(...))`); `chart-holds-rows-only` (the chart JSON of the `composed-rows-resolve` example has only tag keys and span arrays, no values); the quickstart example of [quickstart.md](quickstart.md) section 3, asserting its printed JSON exactly.
-- [ ] T013 [US1] Make `src/index.ts` export exactly what [contracts/public-api.md](contracts/public-api.md) lists for `fewrd`, and nothing else (`normalise` stays internal). **Test**: T012, and `pnpm typecheck`.
-- [ ] T014 [US1] Remove the "not yet run" marks from the spec's worked examples that now pass, and correct in `specs/005-chart/spec.md` any example the code proved wrong (with its offsets and charts). **Test**: every test of `test/find.test.ts` passes with the spec's examples exactly as the spec now states them.
+- [x] T012 [US1] Tests: `find-is-deterministic` (for every toy conf in this file, reversing the key order of `tags` gives the same `JSON.stringify(find(...))`); `chart-holds-rows-only` (the chart JSON of the `composed-rows-resolve` example has only tag keys and span arrays, no values); the quickstart example of [quickstart.md](quickstart.md) section 3, asserting its printed JSON exactly.
+- [x] T013 [US1] Make `src/index.ts` export exactly what [contracts/public-api.md](contracts/public-api.md) lists for `fewrd`, and nothing else (`normalise` stays internal). **Test**: T012, and `pnpm typecheck`.
+- [x] T014 [US1] Remove the "not yet run" marks from the spec's worked examples that now pass, and correct in `specs/005-chart/spec.md` any example the code proved wrong (with its offsets and charts). **Test**: every test of `test/find.test.ts` passes with the spec's examples exactly as the spec now states them.
 
 **Checkpoint**: commit `feat: find, the finding half to a fixpoint`. User Story 1 is usable on its own.
 
