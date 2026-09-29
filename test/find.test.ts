@@ -307,3 +307,31 @@ test('quickstart: a conf by hand', () => {
     '{"$":[[5,5]],"^":[[0,0]],"list":[[0,3],[0,5],[2,5]],"n":[[0,1],[2,3],[4,5]],"sp":[[1,2],[3,4]]}',
   );
 });
+
+test('readme: the quick start prints what the README shows', () => {
+  const { conf, errors } = compile(
+    {
+      version: 'shop@1',
+      patterns: { SKU: '[A-Z]{3}-\\d{4}' },
+      tags: {
+        sku: { resolve: 'upper', search: [{ from: 'sku-code', back: [{ tag: 'sep', optional: true }, { tag: 'sku-word', as: 'label' }] }] },
+        'sku-code': { rx: '/%{SKU}/iu' },
+        'sku-word': { rx: '/sku|code/iu' },
+        sep: { rx: '/[\\s:]+/u' },
+      },
+    },
+    { resolvers: { upper: (p) => p.value.toUpperCase() } },
+  );
+  assert.deepEqual(errors, []);
+  const chart = find('Refund approved - SKU: abc-1234 - customer notified', conf);
+  assert.deepEqual(chart.spans('sku'), [[18, 31]]);
+  assert.deepEqual(chart.spans('sku-code'), [[23, 31]]);
+  assert.equal(
+    JSON.stringify(chart),
+    '{"$":[[51,51]],"^":[[0,0]],"sep":[[6,7],[15,16],[17,18],[21,23],[22,23],[31,32],[33,34],[42,43]],"sku":[[18,31]],"sku-code":[[23,31]],"sku-word":[[18,21]]}',
+  );
+  assert.deepEqual(chart.after('sep', 22), [22, 23]);
+  assert.deepEqual(chart.before('sep', 22), [17, 18]);
+  assert.deepEqual(chart.after('*', 23), [23, 31]);
+  assert.equal(chart.size(), 13);
+});

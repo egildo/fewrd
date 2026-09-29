@@ -5,14 +5,13 @@
   <img src=".github/fewrd-logo-neg.svg" alt="fewrd" width="380">
 </picture>
 
-**Finds what recurs in a string, cuts it loose, and gets you the gist in a
-few words.**
+**Finds what recurs in a string, and keeps every place it found it.**
 
 [![npm](https://img.shields.io/npm/v/fewrd?style=flat-square&color=78C4B6)](https://www.npmjs.com/package/fewrd)
 ![dependencies: 0](https://img.shields.io/badge/dependencies-0-78C4B6?style=flat-square)
 ![core: 4 kB gzip](https://img.shields.io/badge/core-4%20kB%20gzip-78C4B6?style=flat-square)
 ![types: strict](https://img.shields.io/badge/types-strict-78C4B6?style=flat-square)
-![tests: 59 passing](https://img.shields.io/badge/tests-59%20passing-78C4B6?style=flat-square)
+![tests: TESTS passing](https://img.shields.io/badge/tests-TESTS%20passing-78C4B6?style=flat-square)
 [![license: MIT](https://img.shields.io/badge/license-MIT-78C4B6?style=flat-square)](LICENSE)
 
 </div>
@@ -23,14 +22,18 @@ few words.**
 
 Your text is hiding treasure: protocol numbers under five different aliases,
 dates wedged between dashes, amounts that only count with a `€` stapled on.
-fewrd digs it all out in one pass, remembers exactly where each piece lives,
-then folds away whatever a reader doesn't need — no regex spaghetti, no
-stray commas left behind.
+fewrd digs it all out and remembers exactly where each piece lives, every
+reading of it, the ones that overlap included. It makes no choice among them:
+choosing is a second job, and it comes after.
 
 ```
-normalise → anchors → expand → merge → segment  ⇒  Cuts      (depends on text + book only: cacheable)
-                                    render(Cuts, fold)  ⇒  gist | tagged html   (always dynamic)
+normalise → root rows → searches, pass after pass  ⇒  Chart    (depends on text + conf only: cacheable)
 ```
+
+The rewrite splits what the old engine did in one go. This half **finds**:
+`text + conf → Chart`. The other half, still to come, selects one reading from
+the chart, builds the tree, and folds away what a reader doesn't need. Until
+then fewrd stops at the chart.
 
 ## Install
 
@@ -42,241 +45,219 @@ npm install fewrd
 pnpm add fewrd
 ```
 
-ESM only, zero dependencies, types included. Runs in Node 18+ and any current
-browser or bundler.
+ESM only, zero dependencies, types included. Runs in current Node and in any
+current browser or bundler.
 
 ## Quick start
 
-Describe what recurs as a **book** of recipes, in JSON:
+Describe what recurs as a **conf**, in JSON. Root tags match a regex; composed
+tags are built by searches that grow outward from the rows of another tag:
 
 ```json
 {
-  "$schema": "./node_modules/fewrd/book.schema.json",
   "version": "shop@1",
-  "defs": { "SKU": "[A-Z]{3}-\\d{4}" },
-  "recipes": [
-    {
-      "entity": "sku",
-      "anchor": "/%{SKU}/iu",
-      "left": [{ "part": "label", "rx": "/(?:sku|code)\\s*:?\\s*/iu" }],
-      "resolve": "upper"
-    }
-  ]
+  "patterns": { "SKU": "[A-Z]{3}-\\d{4}" },
+  "tags": {
+    "sku": {
+      "resolve": "upper",
+      "search": [
+        { "from": "sku-code", "back": [{ "tag": "sep", "optional": true }, { "tag": "sku-word", "as": "label" }] }
+      ]
+    },
+    "sku-code": { "rx": "/%{SKU}/iu" },
+    "sku-word": { "rx": "/sku|code/iu" },
+    "sep": { "rx": "/[\\s:]+/u" }
+  }
 }
 ```
 
-Compile it once, then read any text with it:
+Compile it once, then find in any text with it:
 
 ```ts
-import { compile, gist, html, read } from 'fewrd';
+import { compile, find } from 'fewrd';
 import data from './shop.json' with { type: 'json' };
 
-const { book, errors } = compile(data, { resolvers: { upper: (p) => p.value.toUpperCase() } });
+const { conf, errors } = compile(data, { resolvers: { upper: (p) => p.value.toUpperCase() } });
 
-const cuts = read('Refund approved - SKU: abc-1234 - customer notified', book);
-cuts.mentions[0].value;                 // 'ABC-1234'
-gist(cuts, (m) => m.entity === 'sku');  // 'Refund approved - customer notified'
-html(cuts, (m) => m.entity === 'sku');  // both views in one markup, see Rendering
+const text = 'Refund approved - SKU: abc-1234 - customer notified';
+const chart = find(text, conf);
+
+chart.spans('sku');          // [[18, 31]]   text.slice(18, 31) is 'SKU: abc-1234'
+chart.spans('sku-code');     // [[23, 31]]
+JSON.stringify(chart);
+// {"$":[[51,51]],"^":[[0,0]],"sep":[[6,7],[15,16],[17,18],[21,23],[22,23],[31,32],[33,34],[42,43]],
+//  "sku":[[18,31]],"sku-code":[[23,31]],"sku-word":[[18,21]]}
 ```
 
-## See it fold
+The chart holds spans into your string, nothing else. The `sep` rows overlap
+(`": "` and `" "` both end at 23) because every match is a row.
 
-A real Italian public-administration subject, unfolded:
+## The conf
 
-> Pec - Prot. n. 0023993 del 23/09/2026 - Misura 1.7.2 della missione 1, componente 1 del PNRR "Rete dei servizi di facilitazione digitale" - Comune di Ghilarza - CUP F84D26000210006 - Trasmissione cronoprogramma procedurale
-
-The same reading, with `protocol` and `cup` folded away:
-
-> Misura 1.7.2 della missione 1, componente 1 del PNRR "Rete dei servizi di facilitazione digitale" - Comune di Ghilarza - Trasmissione cronoprogramma procedurale
-
-No dangling dash where the protocol number used to sit, no orphaned separator
-before "Trasmissione" — fewrd decides which separator survives a fold and
-which bracket empties out along with what was inside it. Both strings come
-from the same `Cuts`; nothing gets re-parsed to produce the second one.
-
-Or an inbox line, with the `Re:`/`Fwd:` chain and the ticket key folded:
-
-> Re: Fwd: Invoice INV-2026-0042 for $1,250.00 due 2026-10-15
->
-> Invoice for $1,250.00 due 2026-10-15
-
-…while the money still reads as `1250.00 USD` and the date as `2026-10-15`.
-
-## The pieces
-
-| name | what it is |
-|---|---|
-| `BookData` | a book as plain JSON: patterns as `"/source/flags"`, shared `defs` spliced in as `%{NAME}`, `resolve` by name |
-| `compile` | `BookData` + your named resolvers → a `Book`, plus a list of errors. Never throws |
-| `Recipe` | one pattern: a strict `anchor` (the value), closed lists of `left`/`right` neighbours (label, channel, date…), `requires`, `resolve`, `weak`, `rest`, `glued` |
-| `Book` | recipes in priority order, plus a `version` that keys a cached reading |
-| `Mention` | one recognised thing: its `extent`, its `parts` in text order, a canonical `value`, and its `parent` when nested |
-| `Leaf` | one piece of the partition: `text`, `sep`, `open`, `close`, or a mention's `part` |
-| `Cuts` | the reading: `text`, `mentions`, `leaves`. The leaves cover the text in order, with no gap and no overlap. Survives a JSON round-trip |
-| `Fold` | your policy: which mentions a condensed view drops |
-
-## The rules
-
-- **Anchors are strict and neighbours are generous.** A neighbour's regex is
-  pinned to the edge it grows from. Each neighbour attaches at most once, and
-  after each attachment the list is tried again from the top.
-- **Nothing cuts a word.** An anchor or a neighbour may not start or end
-  inside a run of letters or digits (opt out with `glued`).
-- **Longest extent wins, then priority.** `weak` recipes only fill gaps.
-- **A `rest` recipe runs to the end of its level**, and what follows its
-  anchor is read again inside it. Folding it folds everything it holds.
-- **Separator fate.** Separators between two surviving leaves stay untouched
-  when no fold fell among them. Otherwise only the strongest survives
-  (`-` > `;` > `:` > `,` > space), and none survives at an edge, after an
-  opening bracket or before closing punctuation. Brackets a fold empties go
-  with it.
-- **One HTML, both views.** `html()` emits every leaf and marks what the
-  condensed view drops with `data-fold`. The whole switch is
-  `.condensed [data-fold] { display: none }`.
-
-## Books as data
-
-A book is JSON, so it diffs, reviews and validates like any config. Point its
-`$schema` at `./node_modules/fewrd/book.schema.json` (relative to the file)
-and your editor flags typos, wrong types and missing fields as you type.
+A conf is JSON, so it diffs, reviews and validates like any config.
 
 | key | what it holds |
 |---|---|
-| `version` | required; change it whenever a recipe change can change output |
-| `defs` | named pattern fragments, source only: `{ "DATE": "\\d{4}-\\d{2}-\\d{2}" }` |
-| `recipes` | required; in priority order |
-| `recipes[].entity` | required; what the recipe recognises |
-| `recipes[].anchor` | required; a pattern, the value itself |
-| `recipes[].left` / `right` | neighbours: `{ "part": "label", "rx": "/…/iu" }` |
-| `recipes[].requires` | parts that must attach, e.g. `["currency"]` |
-| `recipes[].resolve` | the name of a resolver you pass to `compile` |
-| `recipes[].weak` / `rest` / `glued` | flags, see The rules |
+| `version` | required; keys a cached chart. Change it whenever a change to the conf can change the chart |
+| `patterns` | named regex sources, spliced into others as `%{NAME}` |
+| `tags` | required; a name → tag map. Its key order is the priority the second half will use; `find` never reads it |
+| `tags.T.rx` | a root tag: a pattern, `"/source/flags"` |
+| `tags.T.search` | a composed tag: a list of searches. A tag has exactly one of `rx` and `search` |
+| `tags.T.resolve` | the name of a resolver you pass to `compile` |
+| `tags.T.weak`, `tags.T.fate` | carried through, read only by the second half (`fate` is `"separator"` or `"connector"`) |
+| `search.from` | the tag whose rows the search starts from |
+| `search.back` / `search.forward` | exactly one: the atoms, leftward from the row's start or rightward from its end |
+| atom | `{ "tag": "name" }`, `{ "tag": ["a", "b"] }` or `{ "rx": "/…/u" }`, with an optional `"as"` (a role name) and `"optional"` |
 
-**Patterns** are regex literals in a string: `"/source/flags"` — JSON doubles
-the backslashes. `%{NAME}` splices in a fragment from `defs` as one unit (an
-`a|b` inside never leaks out) and fragments may use other fragments. `%\{` is
-a literal `%{`. Fragments inside a `[…]` character class aren't supported.
+**Patterns** are regex literals in a string: `"/source/flags"`, and JSON doubles
+the backslashes. `%{NAME}` splices in a named pattern as one unit (an `a|b`
+inside never leaks out), and named patterns may use others. `%\{` is a literal
+`%{`. Named patterns inside a `[…]` character class aren't supported.
 
-**Resolvers** are the only code in a book: functions from the attached parts'
-text to a canonical value, or `null` for "not this entity after all". Nothing
-in the JSON is ever evaluated.
+**Reserved names.** `^` is the start of the string, `$` its end, `*` any tag.
+Use them in atoms; you cannot declare a tag with one of those names, and
+`from` names a declared tag.
+
+**Resolvers** are the only code in a conf: a function from `{ value, ...roles }`
+to a string, or `null` for "not this tag after all". `value` is the row's own
+text; every atom with `as` adds a role, the value of the row it took if that
+row's tag has a resolver, its text otherwise. `as` may not be `value`, `^`,
+`$` or `*`. Resolvers see the normalised text. Nothing in the JSON is ever
+evaluated.
+
+**Alternatives go longest-first.** The scanner offers one match per start
+position, and the word guard rejects it without trying a shorter one, so write
+`protocollo|prot`, never `prot|protocollo`.
+
+**Errors** come back as `{ path, tag, message }`: an unknown tag in `from` or in
+an atom, a tag with both or neither of `rx` and `search`, a search with both or
+neither of `back` and `forward`, a bad pattern, an unknown or circular
+`%{NAME}`, an unknown resolver, a reserved name declared, a wrong type, an
+unknown key (a typo such as `optinal` is an error, not a silent no-op), an
+`as` that is reserved, an `optional` outermost atom (the last of `back` or of
+`forward`: skipped, it would leave the row ending in glue), and two regex atoms
+in a row ("merge them into one pattern"). `compile` never throws. A tag with
+any error is left out; every other tag keeps working, in order.
 
 ```ts
-const resolvers = {
-  upper: (p) => p.value.toUpperCase(),
-  // a bare 1.2.3 is too often something else: a version needs its v or a label
-  version: (p) => (p.label || p.value.startsWith('v') ? p.value.replace(/^v/, '') : null),
-};
-```
-
-**Errors** come back as `{ path, recipe, entity, message }` — a bad regex or
-flag, an unknown or circular fragment, an unknown resolver, a wrong type, a
-typo'd key. A recipe with any error is left out; every other recipe keeps
-working, in order.
-
-```ts
-compile({ version: 'x@1', recipes: [{ entity: 'sku', anchor: '/%{SKU/iu', resolve: 'uper' }] });
+compile({ version: 'x@1', tags: { sku: { rx: '/%{SKU/iu', resolve: 'uper' } } });
 // errors:
-//   recipes[0].anchor  (sku)  Invalid regular expression: /%{SKU/iu: Incomplete quantifier
-//   recipes[0].resolve (sku)  unknown resolver "uper"
+//   tags.sku.rx       (sku)  Invalid regular expression: /%{SKU/iu: Incomplete quantifier
+//   tags.sku.resolve  (sku)  unknown resolver "uper"
 ```
 
-A `Book` can also be written directly in TypeScript, with `RegExp`s and
-functions in place of strings and names; `read` doesn't care which.
+## The rules
 
-## Rendering
+- **Every match of every root tag is a row.** A tag with `rx` is scanned over
+  the whole normalised text. Overlapping matches of the same tag are all rows
+  (the scan resumes one position after each match's start). Zero-length
+  matches are skipped. A match may not start or end inside a run of letters or
+  digits. A root tag with `resolve` keeps only the matches its resolver
+  accepts.
+- **Searches run from rows.** A search runs once per row of its `from` tag,
+  outward from that row's edge: `back` leftward from its start, atoms
+  nearest-first; `forward` rightward from its end. It produces a row of its
+  own tag, from the leftmost to the rightmost thing it matched, the `from` row
+  included.
+- **Atoms meet the cursor.** A tag atom takes any row of its tag (or of any
+  listed tag, or of any tag for `*`) that meets the cursor: starts there going
+  forward, ends there going back. A regex atom is matched against the text
+  itself: if another atom follows it, it must match exactly the slice between
+  the cursor and the row that atom takes; if it is last, it matches at the
+  cursor. `optional` means the sequence is tried with and without the atom.
+  Every combination that completes is a derivation, and all are kept. Nothing
+  about a match is possessive.
+- **Composed rows are filtered like root rows.** A search's tag with `resolve`
+  keeps a derivation only if the resolver accepts it, given `{ value, ...roles }`.
+  Values are worked out on the way and never stored in the chart.
+- **Passes run to a fixpoint.** Pass zero is the root rows. Each later pass
+  runs every search against the previous chart only, and adds its rows at
+  once. The same tag on the same span is one row, so a pass that adds nothing
+  ends the loop. A search may grow from its own tag: that is how repetition is
+  written, and it stops when the text runs out.
+- **The chart is complete and neutral.** Crossing rows, twins on one span, rows
+  inside rows: all kept. Choosing among them is the second half's job. The
+  chart depends on the text and the conf only, so cache it by
+  `(text, conf.version)`.
+
+Selection, the tree, the fold, and the separator and connector fates are not
+here yet: they come with the second half.
+
+## The chart
+
+On the chart of the quick start:
 
 ```ts
-import { gist, html, shown, type Fold } from 'fewrd';
-
-const fold: Fold = (m) => ['protocol', 'cup'].includes(m.entity);
-gist(cuts, fold);   // the condensed view as plain text
-html(cuts, fold);   // every leaf, tagged; what the condensed view drops carries data-fold
-shown(cuts, fold);  // one boolean per leaf, for your own renderer
+chart.spans('sep');            // [[6, 7], [15, 16], [17, 18], [21, 23], [22, 23], ...]: sorted by start, then end
+chart.has('sku-code', 23, 31); // true
+chart.after('sep', 22);        // [22, 23]: the first span of the tag starting at or after 22
+chart.before('sep', 22);       // [17, 18]: the last span of the tag ending at or before 22
+chart.after('*', 23);          // [23, 31]: '*' means any tag
+[...chart.all()];              // every [tag, span], in position order
+chart.size();                  // 13: total rows, `^` and `$` included
+JSON.stringify(chart);         // plain data...
+Chart.from(JSON.parse(json));  // ...and back
 ```
 
-Mentions come out as `<span data-entity data-mention>`, parts as
-`<span data-part>`, separators as `<span data-sep>`, nested as the mentions
-nest. Toggle between the full and condensed view with one class:
+A chart is a map from tag to its rows, each row a span `[start, end]` into
+**your original string**, not the normalised copy `find` matched on. Nothing
+else: no values, no roles, no derivations. Its invariants:
 
-```css
-.condensed [data-fold] { display: none; }
-```
+- rows sorted by start, then end, one row per `(tag, start, end)`;
+- `^` at `(0, 0)` and `$` at `(n, n)` always present, a tag with no rows absent;
+- `Chart.from(chart.toJSON())` equals the chart, and the JSON form (tags in
+  code-unit order) survives `JSON.stringify` and `JSON.parse` unchanged;
+- it is immutable: `chart.with(rows)` returns a new chart and shares the tag
+  lists it did not touch.
+
+`rel(a, b)` gives the Allen relation of one span to another (`before`, `meets`,
+`overlaps`, `starts`, `during`, `finishes`, `equals` and the inverses). The
+text's edges meet the rows that touch them: `rel([0, 0], [0, 5])` is `meets`.
 
 ## Playground
 
-Keep a book in a folder next to your code, and open it in the playground with
-one command. `fewrd-play` is a separate dev-only package, so none of it ends up
-in the library your code ships:
+`pnpm dev` opens the playground on the Italian conf and its subjects: the conf
+in an editor that recompiles as you type, and each subject with its chart drawn
+brat-style, one coloured band per row, stacked where rows overlap, the tag name
+on each band, and the chart printed below as `tag(start,end)` lines. A mistake
+in the JSON shows beside the editor and the drawings stay; compile errors are
+listed with their paths and the tags that compiled are drawn.
 
-```bash
-npm install -D fewrd-play
-```
-```bash
-npx fewrd-play path/to/book --open
-```
-
-```
-path/to/book/
-  book.json          the recipes; the playground's save button writes it back
-  cases.json         sample texts: [{ "name": "refund", "text": "Refund approved - SKU: abc-1234" }]
-  cases.local.json   more texts, e.g. real ones you keep out of git (optional)
-  resolvers.ts       export const resolvers = { upper: (p) => p.value.toUpperCase() } (optional)
-```
-
-`resolvers.ts` is served with its types stripped (Node 22.13+), so it may
-import types, `fewrd` itself and other files in the folder, but no other
-packages. A `resolvers.js` is served as is. The server listens on localhost
-only; `--port` picks the port (default 4747).
-
-Or mount the playground in a page of your own:
+Or mount it in a page of your own:
 
 ```ts
 import { mount } from 'fewrd/playground';
 import data from './shop.json' with { type: 'json' };
 
 mount(document.getElementById('app')!, {
-  data,                                  // edit the JSON live; errors show inline
-  resolvers,                             // your named resolvers
-  cases: [{ name: 'refund', text: 'Refund approved - SKU: abc-1234 - customer notified' }],
-  fold: (m) => m.entity === 'sku',       // optional: which entities start folded
-  save: (json) => fetch('/book', { method: 'POST', body: json }),  // optional: a save button
+  conf: data,                                    // shown and edited as JSON
+  resolvers,                                     // your named resolvers
+  cases: [{ name: 'refund', text: 'Refund approved - SKU: abc-1234' }],
 });
 ```
 
-Every edit recompiles the book and re-reads every case; invalid JSON keeps the
-last good result on screen, and reset brings back the last saved book. Pass
-`book` instead of `data`/`resolvers` for a read-only view of a compiled
-`Book`. The playground injects its own scoped styles, so it needs no
-stylesheet.
-
-## Demo books
-
-Two books live in this repo as working examples and starting points. They are
-not part of the package — copy what you need.
-
-- [`recipes/common`](recipes/common.json) — what recurs in any inbox, chat or
-  ticket: URLs, emails, phones, IPv4, ISO dates and times, money in three
-  formats, percentages, versions, ticket keys, @handles, #hashtags, `Re:`/`Fwd:`
-  chains and quoted replies. Its [resolvers](recipes/common.ts) mostly say
-  no: a bare `1.2.3`, an octet over 255, month 13, a phone too short.
-- [`recipes/it-pa`](recipes/it-pa.json) — Italian public administration
-  codes: protocol, CIG, CUP, chapter, amount, date, capitals tags,
-  «con oggetto».
-
-Their cases are in [`playground/cases.ts`](playground/cases.ts); the tests read
-those same cases.
+The playground injects its own scoped styles, so it needs no stylesheet. It
+finds only: no values, no fold, no tree yet. `fewrd-play`, the old dev-only
+package under `play/`, is not updated for the new engine.
 
 ## Develop
 
 ```bash
 pnpm install
-pnpm dev         # playground on 5577, both demo books, JSON editable live
-pnpm test        # node --test, type stripping, no build
-pnpm typecheck
-pnpm build       # minified dist/ + types, what npm gets (runs on publish)
+pnpm typecheck   # tsc --strict, no emit
+pnpm test        # node --test, TypeScript type-stripped: no build
+pnpm dev         # the playground, on http://localhost:5577
 ```
+
+There is no build step in that loop. `pnpm build` (run at publish) bundles the
+two public entries with vite and writes their types with `tsc`. The Italian
+conf, `confs/it-pa.json`, is tested through its subjects in
+`cases/it-pa.json`; the core rules are tested with small synthetic confs. The
+rules above are the single source of truth for `find`: a change to what it
+returns changes them in the same commit. The design is in
+[`specs/rewrite-brief.md`](specs/rewrite-brief.md) and
+[`specs/005-chart/`](specs/005-chart/spec.md).
 
 ## License
 
-[MIT](LICENSE) © 2026 Egildo Tagliareni
+MIT
