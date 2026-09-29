@@ -79,7 +79,7 @@ Every decision below is either the brief's (section 3.4, cited as such) or a cho
 
 **Decision**: `src/playground.ts`, plain DOM, no framework. Per case: the text in a monospace line (`white-space: pre`, horizontal scroll), under it one lane per stack level, each band an absolutely positioned element at `left: start ch; width: (end-start) ch`, coloured by tag, with the tag name inside when it fits and in `title` always. Lanes come from a pure `lanes(rows)` function: rows in `all()` order, each placed on the first lane whose last band ends at or before its start. Colour: hue from a small string hash of the tag name, fixed saturation and lightness, tuned for light and dark. Printed lines: `tag(start,end)` in `all()` order. Styles injected once, scoped under a class.
 
-**Rationale**: brat's look (bands under text, stacked on overlap) with the least machinery; `ch` units need no measuring. `lanes` and the line printer are pure, so they get a node test; the DOM is checked by eye in `pnpm dev`, as in rounds 002 and 003.
+**Rationale**: brat's look (bands under text, stacked on overlap) with the least machinery; `ch` units need no measuring. `lanes` is pure, so it gets a node test (the line printer is a one-line map over `all()`); the DOM is checked by eye in `pnpm dev`, as in rounds 002 and 003.
 
 **Ceiling**: a character outside the Basic Multilingual Plane takes two string positions but one glyph, so bands after it drift by one `ch`; `ponytail:` comment, measure with `Range` rects if real subjects need it.
 

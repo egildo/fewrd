@@ -19,7 +19,7 @@ Both pass. `pnpm test` runs, among others:
 - `test/chart.test.ts`: the chart invariants, copy-on-write, queries, `rel`.
 - `test/find.test.ts`: every worked example of the spec, by its requirement name.
 - `test/it-pa.test.ts`: the table of `italian-cases-tagged`, round-trip and determinism for every case.
-- `test/playground.test.ts`: `lanes` and the printed lines.
+- `test/playground.test.ts`: `lanes`.
 
 ## 2. The worked examples agree with the spec
 

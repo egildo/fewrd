@@ -18,13 +18,13 @@ Build the finding half from the clean slate: a conf format and its `compile`, an
 
 **Storage**: N/A. The playground keeps edits in memory.
 
-**Testing**: `node --test "test/*.test.ts"` with type stripping, no build. Synthetic toy confs inline for every rule (principle III's core-mechanics exception); the Italian conf is tested only through `cases/it-pa.json`. The playground's DOM is checked by eye in `pnpm dev`; its pure parts (`lanes`, printed lines) get a node test.
+**Testing**: `node --test "test/*.test.ts"` with type stripping, no build. Synthetic toy confs inline for every rule (principle III's core-mechanics exception); the Italian conf is tested only through `cases/it-pa.json`. The playground's DOM is checked by eye in `pnpm dev`; its pure part, `lanes`, gets a node test.
 
 **Target Platform**: Node ≥ 22.13 and current browsers and bundlers (JSON import attributes).
 
 **Project Type**: library with two entries, `fewrd` and `fewrd/playground`.
 
-**Performance Goals**: every Italian case found and redrawn on each keystroke in the playground with no perceptible delay (SC-006); subjects are a few hundred characters.
+**Performance Goals**: every Italian case found and redrawn on each keystroke in the playground with no perceptible delay (the playground success criterion); subjects are a few hundred characters.
 
 **Constraints**: zero dependencies (principle I); no `any`, no `@ts-ignore` (principle IV); no class except `Chart`; one responsibility per file (brief 3.4); output a function of `(text, conf)` only (`find-is-deterministic`); `src/normalise.ts` unchanged.
 
@@ -93,7 +93,7 @@ test/
 ├── chart.test.ts       # NEW
 ├── find.test.ts        # NEW: the spec's worked examples, by requirement name
 ├── it-pa.test.ts       # NEW: italian-cases-tagged
-└── playground.test.ts  # NEW: lanes, printed lines
+└── playground.test.ts  # NEW: lanes
 
 package.json            # files/exports: drop book.schema.json
 tsconfig.json           # include: recipes → confs

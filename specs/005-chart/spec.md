@@ -332,7 +332,7 @@ The vocabulary is the constitution's closed set (principle V); this spec adds no
 
 - **SC-001**: 100% of the worked examples in this spec have been run against the implementation and agree with it, each corrected here where it did not.
 - **SC-002**: 13 of 13 Italian cases produce exactly the rows of `italian-cases-tagged` for the asserted tags.
-- **SC-003**: Every Italian and synthetic case reaches its fixpoint; the self-growing example ends after the pass that adds nothing, and a self-growing search over a text of 1,000 repetitions ends too.
+- **SC-003**: Every Italian and synthetic case reaches its fixpoint; the self-growing example ends after the pass that adds nothing, and the same `list` conf over 100 numbers separated by spaces ends with 4,950 `list` rows (every run of two or more consecutive numbers).
 - **SC-004**: Every chart of every case survives a JSON round-trip unchanged, and gives the same JSON with its conf's `tags` reversed.
 - **SC-005**: Every kind of compile error in `compile-never-throws` is reported with its path and tag, and none stops the other tags from working.
 - **SC-006**: In the playground, an edit to the Italian conf redraws all 13 cases with no perceptible delay.
