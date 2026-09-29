@@ -244,8 +244,8 @@ Every example conf has `"version": "t@1"`; only `tags` is shown. Three toy tags 
         { "from": "id-number", "back": [ { "tag": "sep", "optional": true }, { "tag": "id-word", "as": "label" } ] }
       ] },
       "amount": { "resolve": "amount", "search": [
-        { "from": "number", "back": [ { "tag": "sep", "optional": true }, { "tag": "euro", "as": "currency" } ] },
-        { "from": "number", "forward": [ { "tag": "sep", "optional": true }, { "tag": "euro", "as": "currency" } ] }
+        { "from": "number", "back": [ { "rx": "/ ?/u" }, { "tag": "euro", "as": "currency" } ] },
+        { "from": "number", "forward": [ { "rx": "/ ?/u" }, { "tag": "euro", "as": "currency" } ] }
       ] },
       "date": { "rx": "/%{DATE}/u", "resolve": "date" },
       "quotation": { "search": [
@@ -279,9 +279,10 @@ Every example conf has `"version": "t@1"`; only `tags` is shown. Three toy tags 
   Notes on writing it, since each one is a trap a conf author will meet:
   - The scanner offers one match per start position, and the word-boundary guard rejects it without trying a shorter one. So alternatives go longest-first: `protocollo|prot\.?`, never the reverse, or `Prot` inside `Protocollo` is found and rejected and `Protocollo` never is. The same holds for `(?:llo|lla|lle|gli|l|i)` in `CONNECTOR`, and for the lookahead after `per il`: without it, `per i` inside `per inviare` would be rejected and `per` never found.
   - `SEP` is the old engine's separator pattern: whitespace, `,` `;` `:` followed by whitespace or the end, and `-` with whitespace on both sides. Scanned with overlap, ` - ` yields three rows, ` - `, `- ` and ` `; a tag atom takes whichever one meets the cursor.
+  - `amount` joins a number and its `euro` through a regex atom for at most one space, not through `sep`. `SEP` also matches ` - `, and a chapter code's tail followed by a dash and a euro sign (`SC04.0123 - €`) would otherwise be an amount: `0123 - €`. The conf, not the example, was wrong here: the first run of `italian-cases-tagged` found the extra row.
   - The resolvers: `date` accepts a real day and month (1–31, 1–12) and returns ISO `YYYY-MM-DD`; `cig` accepts a code that mixes letters and digits; `protocol` returns the seven digits found in the row's text; `amount` returns the number found in the row's text as `12450.00`. In phase 1 only their `null` matters; their values are for phase 2.
 
-- **FR-023 · `italian-cases-tagged`**: For every case in `cases/it-pa.json`, `find` with the Italian conf MUST produce exactly these rows for the asserted tags, `dated`, `protocol`, `cig`, `cup`, `chapter`, `cdr`, `provvedimento`, `amount`, `date`, `quotation`, `caps`, and for `connector` on the five connector cases. A tag not listed for a case has no rows in it. Rows are given as the text they cover; the test turns them into spans. **Written by hand from the conf and the rules; not yet run.**
+- **FR-023 · `italian-cases-tagged`**: For every case in `cases/it-pa.json`, `find` with the Italian conf MUST produce exactly these rows for the asserted tags, `dated`, `protocol`, `cig`, `cup`, `chapter`, `cdr`, `provvedimento`, `amount`, `date`, `quotation`, `caps`, and for `connector` on the five connector cases. A tag not listed for a case has no rows in it. Rows are given as the text they cover; the test turns them into spans. **Run against the real code as `test/it-pa.test.ts`; the table stands as written, and the one disagreement (an extra `amount`) was a fault of the conf, see the note on `amount` above. The other subjects have connectors too; they are not asserted.**
 
   | case | rows |
   |---|---|

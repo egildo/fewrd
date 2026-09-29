@@ -1,0 +1,69 @@
+{
+  "version": "it-pa@3",
+  "patterns": {
+    "DATE": "\\d{1,2}[\\/.\\-]\\d{1,2}[\\/.\\-]\\d{4}",
+    "SEP": "(?:\\s|[,;:](?=\\s|$)|(?<=^|\\s)-(?=\\s|$))+",
+    "CONNECTOR": "per\\s+(?:il|lo|la|i|gli|le)(?![\\p{L}\\p{N}])|(?:dell|all|dall|nell|sull)'|(?:de|da|ne|su|a)(?:llo|lla|lle|gli|l|i)|di|da|in|con|su|per|a",
+    "LABEL_WORDS": "(?:C\\.?I\\.?G|C\\.?U\\.?P|P\\.?C\\.?F|C\\.?D\\.?R|PROT|PEC|CAP|CAPITOL[OI]|COD|CODICE|FORN|FORNITORE|IVA|EURO|ID|RIF|DEL)\\.?(?![\\p{L}])",
+    "CAPS_WORD": "(?!%{LABEL_WORDS})\\p{Lu}(?:[.'&]?\\p{Lu}){2,}\\.?"
+  },
+  "tags": {
+    "dated": { "search": [
+      { "from": "protocol", "forward": [
+        { "tag": "sep" }, { "tag": "connector", "optional": true }, { "tag": "sep", "optional": true },
+        { "tag": "date", "as": "date" }
+      ] }
+    ] },
+    "protocol": { "resolve": "protocol", "search": [
+      { "from": "serial", "back": [
+        { "tag": "sep", "optional": true }, { "tag": "num-word", "optional": true }, { "tag": "sep", "optional": true },
+        { "tag": "prot-word", "as": "label" }
+      ] },
+      { "from": "protocol", "back": [ { "tag": "sep", "optional": true }, { "tag": "channel", "as": "channel" } ] }
+    ] },
+    "cig": { "search": [
+      { "from": "cig-code", "back": [ { "tag": "sep", "optional": true }, { "tag": "cig-word", "as": "label" } ] }
+    ] },
+    "cup": { "search": [
+      { "from": "cup-code", "back": [ { "tag": "sep", "optional": true }, { "tag": "cup-word", "as": "label" } ] }
+    ] },
+    "chapter": { "search": [
+      { "from": "chapter-code", "back": [ { "tag": "sep", "optional": true }, { "tag": "chapter-word", "as": "label" } ] }
+    ] },
+    "cdr": { "search": [
+      { "from": "cdr-code", "back": [ { "tag": "sep", "optional": true }, { "tag": "cdr-word", "as": "label" } ] }
+    ] },
+    "provvedimento": { "search": [
+      { "from": "id-number", "back": [ { "tag": "sep", "optional": true }, { "tag": "id-word", "as": "label" } ] }
+    ] },
+    "amount": { "resolve": "amount", "search": [
+      { "from": "number", "back": [ { "rx": "/ ?/u" }, { "tag": "euro", "as": "currency" } ] },
+      { "from": "number", "forward": [ { "rx": "/ ?/u" }, { "tag": "euro", "as": "currency" } ] }
+    ] },
+    "date": { "rx": "/%{DATE}/u", "resolve": "date" },
+    "quotation": { "search": [
+      { "from": "quote-word", "forward": [ { "rx": "/.+/u", "as": "body" }, { "tag": "$" } ] }
+    ] },
+    "caps": { "rx": "/%{CAPS_WORD}(?: %{CAPS_WORD})+/u", "weak": true },
+
+    "serial": { "rx": "/\\d{7}(?:\\/\\d{4})?/u" },
+    "num-word": { "rx": "/numero|n[r°]?\\.?/iu" },
+    "prot-word": { "rx": "/numero\\s+protocollo|protocollo|prot\\.?|rif\\.?/iu" },
+    "channel": { "rx": "/pec|posta\\s+certificata|riscontro\\s+a/iu" },
+    "cig-code": { "rx": "/[A-Z0-9]{10}/u", "resolve": "cig" },
+    "cig-word": { "rx": "/c\\.?i\\.?g\\.?(?:\\s+(?:derivato|originario|master))?/iu" },
+    "cup-code": { "rx": "/[A-Z]\\d{2}[A-Z0-9]{12}/u" },
+    "cup-word": { "rx": "/c\\.?\\s?u\\.?\\s?p\\.?(?:\\s+(?:derivato|master))?/iu" },
+    "chapter-code": { "rx": "/[A-Z]{2}\\d{2,3}\\.\\d{3,4}/u" },
+    "chapter-word": { "rx": "/(?:capitol[oi]|cap\\.?)(?:\\s+di\\s+(?:spesa|entrata))?/iu" },
+    "cdr-code": { "rx": "/\\d{2}(?:\\.\\d{2}){3}/u" },
+    "cdr-word": { "rx": "/c\\.?d\\.?r\\.?/iu" },
+    "id-number": { "rx": "/\\d{5,}/u" },
+    "id-word": { "rx": "/(?:provvedimento\\s+)?id/iu" },
+    "number": { "rx": "/\\d+(?:\\.\\d{3})*(?:,\\d{1,2})?/u" },
+    "euro": { "rx": "/€|euro/iu" },
+    "quote-word": { "rx": "/con\\s+oggetto\\s*:?/iu" },
+    "connector": { "rx": "/%{CONNECTOR}/iu", "fate": "connector" },
+    "sep": { "rx": "/%{SEP}/u", "fate": "separator" }
+  }
+}
