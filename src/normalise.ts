@@ -4,7 +4,7 @@
 
 export interface Normal {
   text: string;
-  /** Original boundary of each copy boundary, `text.length + 1` entries. */
+  /** Original boundary of each copy boundary, per UTF-16 unit: `text.length + 1` entries. */
   at: number[];
 }
 
@@ -26,11 +26,10 @@ export function normalise(original: string): Normal {
       inSpace = true;
     } else {
       const piece = cp.normalize('NFKC').replace(DASHES, '-').replace(QUOTES, straight);
-      // An expanded code point maps every copy boundary inside it to its start.
-      for (const ch of piece) {
-        at.push(i);
-        text += ch;
-      }
+      // One entry per UTF-16 unit of the copy: an expanded code point, or a
+      // surrogate pair, maps every copy boundary inside it to its start.
+      for (let j = 0; j < piece.length; j++) at.push(i);
+      text += piece;
       inSpace = false;
     }
     i += cp.length;

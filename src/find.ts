@@ -182,13 +182,5 @@ export function find(text: string, conf: Compiled): Chart {
     if (next.size() === chart.size()) break;
     chart = next;
   }
-  // `at` has one entry per code point of the copy; the chart counts UTF-16 units.
-  const unit: number[] = [];
-  let k = 0;
-  for (const cp of s) {
-    for (let j = 0; j < cp.length; j++) unit.push(k);
-    k++;
-  }
-  unit.push(k);
-  return Chart.empty(text.length).with([...chart.all()].map(([tag, [a, b]]): Row => [tag, [at[unit[a]], at[unit[b]]]]));
+  return Chart.empty(text.length).with([...chart.all()].map(([tag, [a, b]]): Row => [tag, [at[a], at[b]]]));
 }
