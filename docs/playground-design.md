@@ -166,3 +166,55 @@ Every colour, space, radius, size, weight, shadow and font is a custom property 
 Band hues, the same in both themes: `--band-0`…`--band-11` at 20, 50, 80, 110, 140, 170, 200, 230, 260, 290, 320, 350.
 
 Same in both themes: `--ui` (Inter, system-ui), `--mono` (JetBrains Mono), `--icon`, spacing `--s1`…`--s6` (4, 8, 12, 16, 24, 40), type `--t-xs`…`--t-xl` (12, 13, 15, 18, 26), weights `--w-reg` 400, `--w-med` 500, `--w-semi` 600, radii `--r-s` 4, `--r-m` 8, `--r-l` 14, `--r-pill`, `--grid-size`, `--grid-lh`, `--band-h` 5, `--band-h-lost` 3, `--lane` 8, `--ic` 20 (icon size), `--dur` 130 ms.
+
+## Round 3
+
+Four decisions. The core stays. Where this section disagrees with the earlier ones (the palette, the checkbox chips, the collapsible conf), this section wins.
+
+1. **A quieter palette.** Paper in light, ink in dark. The light neutrals lean warm (hue 85) and sit close together, so a card is a whisper above the page; the text is much darker than any surface. The dark neutrals stay cool (hue 265) and lifted (page at L .22, never black). Band chroma falls from .15/.13 to .105/.10 and the accent from .2/.13 to .13/.09, with the twelve bands still equal in lightness per theme and readable on both.
+2. **Chips are the interaction surface.** For a tag in the tree, the chip body highlights and the eye folds; the two are independent. Hover or keyboard focus on the chip lights the tag's rows in the preview (bands with a soft ring, the characters under them with a low tint of the tag's hue); a click keeps it lit, several tags at once. The tint is `color-mix(in oklch, var(--band) calc(var(--wash) * .7), transparent)`, so lit tags overlap without turning opaque, and while anything is lit the other bands drop to .45 opacity (hidden ones to .18). Tree rows that carry a lit tag (`also` twins included) get the same hue at 14%. The eye (`visibility`, `visibility_off`; text fallback) folds the tag out of the gist and is what the fold policy reads. No checkbox anywhere.
+3. **Tags not in the tree are inert.** A plain muted label under "not in this tree": no button, no tab stop, no hover, no eye.
+4. **The conf is a pane or a drawer.** From 1700 px: two panes, the editor full height on the left (38%), preview, gist, chips and tree on the right. Below: a drawer.
+
+### Tokens (replace the round 2 values; everything else is unchanged)
+
+| token | light | dark |
+|---|---|---|
+| `--bg` | oklch(.965 .008 85) | oklch(.22 .012 265) |
+| `--surface` | oklch(.977 .007 85) | oklch(.25 .013 265) |
+| `--raised` | oklch(.99 .005 85) | oklch(.29 .015 265) |
+| `--sunken` | oklch(.948 .009 85) | oklch(.19 .011 265) |
+| `--text` | oklch(.21 .015 265) | oklch(.94 .006 265) |
+| `--muted` | oklch(.45 .015 85) | oklch(.74 .01 265) |
+| `--faint` | oklch(.6 .012 85) | oklch(.58 .012 265) |
+| `--line` | oklch(.91 .009 85) | oklch(.31 .013 265) |
+| `--line-strong` | oklch(.84 .011 85) | oklch(.4 .015 265) |
+| `--hover` | oklch(.935 .02 270) | oklch(.3 .03 270) |
+| `--accent` | oklch(.5 .13 275) | oklch(.76 .09 275) |
+| `--accent-fg` | oklch(.985 .005 85) | oklch(.2 .03 275) |
+| `--ok` / `--warn` / `--err` | oklch(.5 .09 155) / oklch(.52 .09 70) / oklch(.5 .12 27) | oklch(.78 .1 155) / oklch(.8 .09 75) / oklch(.75 .11 25) |
+| `--err-bg` | oklch(.962 .02 27) | oklch(.27 .04 25) |
+| `--grey` | oklch(.7 .008 85) | oklch(.5 .01 265) |
+| `--band-l` / `--band-c` | .64 / .105 | .74 / .10 |
+| `--wash` | 18% | 24% |
+| `--shadow-sm` | 0 1px 2px oklch(.3 .02 85 / .07) | 0 1px 2px oklch(0 0 0 / .3) |
+| `--shadow-pop` | 0 1px 2px oklch(.3 .02 85 / .08), 0 10px 28px oklch(.3 .02 85 / .16) | 0 1px 2px oklch(0 0 0 / .4), 0 10px 28px oklch(0 0 0 / .45) |
+
+Band hues unchanged. New in both themes: `--drawer-w` 34rem, `--scrim` (the text colour at 30%), `--pane` 38%, `--dur-drawer` 200 ms, `--ic-s` 16 (the eye).
+
+### The chip
+
+| state | what shows |
+|---|---|
+| rest | pill, swatch, tag name, eye at the right |
+| hover / focus-visible | border in the tag's hue; the tag's bands, characters and tree rows are lit while it lasts |
+| highlighted (clicked, `aria-pressed`) | filled: hue at 16% over the raised colour, border at 55%; the same lighting, kept |
+| folded (eye pressed) | name struck through and muted, eye shows `visibility_off`; independent of highlighted |
+| inert (not in the tree) | plain muted label, no border change, no focus, no eye |
+
+### The drawer
+
+- Below 1700 px the conf pane is a drawer: fixed, full height, `min(34rem, 100vw - 40px)`, sliding in from the left in 200 ms (opacity and transform only; none under `prefers-reduced-motion`). It sits under the sticky bar, so the bar's button stays reachable.
+- Opened and closed by the bar's icon button (`data_object`, fallback `{}`, `aria-expanded`); closed also by Escape and by a click on the scrim. Opening moves focus to the editor; closing returns it to the button.
+- The drawer is the same pane as at 1700 px: title, editor, errors under it. Its content and errors survive closing. While it is closed the bar button carries the error count (an invalid JSON shows `!`), so errors are never silent.
+- Crossing 1700 px resets it: the pane docks, the button and scrim go away.
