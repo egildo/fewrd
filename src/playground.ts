@@ -95,7 +95,6 @@ export function greyed(doc: Node, fold: Fold): Span[] {
 
 const key = (tag: string, a: number, b: number) => `${tag}:${a}:${b}`;
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-const excerpt = (s: string, n = 40) => (s.length > n ? `${s.slice(0, n)}…` : s);
 
 function h<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const el = document.createElement(tag);
@@ -105,42 +104,54 @@ function h<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, te
 }
 
 // The palette, once per theme; a theme is the light block, or the dark block under the OS setting or a data-theme override.
-const LIGHT = `--bg:#f6f6f2;--surface:#fff;--sunken:#efefe9;--text:#1b1c20;--muted:#5f626b;--line:#dedfd8;--hover:#e9edfb;--accent:#3455d6;--accent-fg:#fff;--ok:#17754a;--warn:#9a5b00;--err:#b3261e;--err-bg:#fdeeec;--tip-bg:#1b1c20;--tip-fg:#f5f6f8;--grey:#9b9ea6;--band-s:60%;--band-l:40%;--wash:.22;--shadow:0 8px 28px rgb(20 22 30/.18);`;
-const DARK = `--bg:#111214;--surface:#191b1f;--sunken:#0c0d0f;--text:#e8e9ed;--muted:#9a9ea9;--line:#2a2d33;--hover:#232838;--accent:#93a6ff;--accent-fg:#0e1226;--ok:#63d69e;--warn:#f2b661;--err:#ff9c95;--err-bg:#2f1a19;--tip-bg:#eceef3;--tip-fg:#17181c;--grey:#5d616b;--band-s:58%;--band-l:66%;--wash:.3;--shadow:0 8px 28px rgb(0 0 0/.55);`;
+// Neutrals are one cool scale (hue 275) that gains chroma with depth; the twelve band hues share one lightness and chroma per theme.
+const LIGHT = `--bg:oklch(.962 .007 275);--surface:oklch(.988 .003 275);--raised:oklch(1 0 0);--sunken:oklch(.935 .009 275);--text:oklch(.22 .02 275);--muted:oklch(.46 .02 275);--faint:oklch(.6 .015 275);--line:oklch(.9 .009 275);--line-strong:oklch(.8 .012 275);--hover:oklch(.94 .025 275);--accent:oklch(.5 .2 275);--accent-fg:oklch(.99 0 0);--ok:oklch(.5 .13 155);--warn:oklch(.52 .12 70);--err:oklch(.52 .18 27);--err-bg:oklch(.96 .025 27);--grey:oklch(.68 .01 275);--band-l:.6;--band-c:.15;--wash:20%;--shadow-sm:0 1px 2px oklch(.2 .02 275/.08);--shadow-pop:0 1px 2px oklch(.2 .02 275/.1),0 10px 28px oklch(.2 .02 275/.18);`;
+const DARK = `--bg:oklch(.17 .012 275);--surface:oklch(.215 .014 275);--raised:oklch(.27 .016 275);--sunken:oklch(.14 .01 275);--text:oklch(.93 .006 275);--muted:oklch(.72 .012 275);--faint:oklch(.56 .014 275);--line:oklch(.3 .015 275);--line-strong:oklch(.4 .018 275);--hover:oklch(.27 .04 275);--accent:oklch(.78 .13 275);--accent-fg:oklch(.2 .04 275);--ok:oklch(.8 .14 155);--warn:oklch(.82 .12 75);--err:oklch(.76 .15 25);--err-bg:oklch(.25 .05 25);--grey:oklch(.5 .012 275);--band-l:.76;--band-c:.13;--wash:28%;--shadow-sm:0 1px 2px oklch(0 0 0/.4);--shadow-pop:0 1px 2px oklch(0 0 0/.5),0 10px 28px oklch(0 0 0/.6);`;
+const HUES = [20, 50, 80, 110, 140, 170, 200, 230, 260, 290, 320, 350];
+const BANDS = HUES.map((hue, i) => `--band-${i}:oklch(var(--band-l) var(--band-c) ${hue});`).join('');
+
+/** The band slot of the tag at place `i` in its conf: a step of 5 slots is 150° of hue, so neighbours differ; the second lap shifts by one. */
+export const slot = (i: number): number => (Math.max(0, i) * 5 + Math.floor(Math.max(0, i) / HUES.length)) % HUES.length;
 
 const STYLE_ID = 'fewrd-pg-style';
 const STYLE = `
-.fewrd-pg { --mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px; --t-xs: 12px; --t-sm: 13px; --t-md: 15px; --t-lg: 18px; --t-xl: 26px;
-  --r-s: 4px; --r-m: 8px; --r-l: 14px; --r-pill: 999px; --grid-size: 15px; --grid-lh: 24px; --band-h: 5px; --lane: 8px; --bar: 73px;
-  ${LIGHT} color-scheme: light dark; background: var(--bg); color: var(--text); font: var(--t-md)/1.5 var(--ui); }
+.fewrd-pg { --ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; --icon: "Material Symbols Rounded";
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px; --t-xs: 12px; --t-sm: 13px; --t-md: 15px; --t-lg: 18px; --t-xl: 26px; --w-reg: 400; --w-med: 500; --w-semi: 600;
+  --r-s: 4px; --r-m: 8px; --r-l: 14px; --r-pill: 999px; --grid-size: 15px; --grid-lh: 24px; --band-h: 5px; --band-h-lost: 3px; --lane: 8px; --bar: 73px; --ic: 20px; --dur: 130ms;
+  ${BANDS} ${LIGHT} color-scheme: light dark; background: var(--bg); color: var(--text); font: var(--w-reg) var(--t-md)/1.5 var(--ui);  -webkit-font-smoothing: antialiased; }
 @media (prefers-color-scheme: dark) { .fewrd-pg:not([data-theme="light"]) { ${DARK} } }
 .fewrd-pg[data-theme="dark"] { ${DARK} color-scheme: dark; }
 .fewrd-pg[data-theme="light"] { color-scheme: light; }
 .fewrd-pg *, .fewrd-pg ::before, .fewrd-pg ::after { box-sizing: border-box; }
 .fewrd-pg [hidden] { display: none !important; }
 .fewrd-pg :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.fewrd-pg h2 { margin: 0; font: 600 var(--t-md)/1.3 var(--ui); }
+.fewrd-pg h2 { margin: 0; font: var(--w-semi) var(--t-md)/1.3 var(--ui); letter-spacing: -.005em; }
 .fewrd-pg button, .fewrd-pg select, .fewrd-pg textarea { font: inherit; color: inherit; }
-.fewrd-pg .fewrd-dim { color: var(--muted); font-size: var(--t-sm); }
+.fewrd-pg .fewrd-dim { color: var(--muted); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
 .fewrd-pg .fewrd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-.fewrd-pg .fewrd-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: var(--s3); min-height: var(--bar); padding: var(--s3) var(--s4); background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
-.fewrd-pg .fewrd-brand { font: 600 var(--t-md) var(--mono); }
+/* Icons: a ligature name inside, a text glyph in data-fb until the icon font has loaded (the root then carries data-icons). */
+.fewrd-pg .fewrd-ic { display: inline-grid; place-items: center; flex: none; width: var(--ic); height: var(--ic); overflow: hidden; font-size: 0; line-height: 1; user-select: none; transition: transform var(--dur); }
+.fewrd-pg .fewrd-ic::before { content: attr(data-fb); font: var(--w-med) calc(var(--ic) * .9)/1 var(--ui); }
+.fewrd-pg[data-icons] .fewrd-ic { font: var(--w-reg) var(--ic)/1 var(--icon); font-variation-settings: "wght" 500; font-feature-settings: "liga"; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; }
+.fewrd-pg[data-icons] .fewrd-ic::before { content: none; }
+
+.fewrd-pg .fewrd-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: var(--s3); min-height: var(--bar); padding: var(--s3) var(--s4); background: color-mix(in oklch, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.fewrd-pg .fewrd-brand { font: var(--w-semi) var(--t-lg)/1 var(--ui); letter-spacing: -.02em; }
 .fewrd-pg .fewrd-nav { display: flex; align-items: center; gap: var(--s2); }
-.fewrd-pg .fewrd-step { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border-radius: var(--r-m); border: 1px solid var(--line); background: var(--surface); color: var(--accent); cursor: pointer; transition: background .12s, color .12s, border-color .12s, transform .12s; }
+.fewrd-pg .fewrd-step { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: var(--r-m); border: 1px solid var(--line); background: var(--raised); color: var(--accent); box-shadow: var(--shadow-sm); cursor: pointer; transition: background var(--dur), color var(--dur), border-color var(--dur), transform var(--dur); }
+.fewrd-pg .fewrd-step .fewrd-ic { --ic: 26px; }
 .fewrd-pg .fewrd-step:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 .fewrd-pg .fewrd-step:active { transform: scale(.94); }
-.fewrd-pg .fewrd-step svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.fewrd-pg .fewrd-count { min-width: 7ch; text-align: center; font: 600 var(--t-xl)/1 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.fewrd-pg .fewrd-pick { flex: 0 1 30rem; min-width: 0; height: 40px; padding: 0 var(--s3); border-radius: var(--r-m); border: 1px solid var(--line); background: var(--surface); text-overflow: ellipsis; }
-.fewrd-pg .fewrd-theme { margin-left: auto; height: 40px; padding: 0 var(--s3); border-radius: var(--r-m); border: 1px solid var(--line); background: var(--surface); font-size: var(--t-sm); cursor: pointer; white-space: nowrap; transition: border-color .12s; }
-.fewrd-pg .fewrd-theme:hover { border-color: var(--muted); }
+.fewrd-pg .fewrd-count { min-width: 7ch; text-align: center; font: var(--w-semi) var(--t-xl)/1 var(--ui); font-variant-numeric: tabular-nums; letter-spacing: -.02em; white-space: nowrap; }
+.fewrd-pg .fewrd-pick { flex: 0 1 30rem; min-width: 0; height: 40px; padding: 0 var(--s3); border-radius: var(--r-m); border: 1px solid var(--line); background: var(--raised); font-weight: var(--w-med); text-overflow: ellipsis; }
+.fewrd-pg .fewrd-theme { display: inline-flex; align-items: center; gap: var(--s2); margin-left: auto; height: 40px; padding: 0 var(--s3); border-radius: var(--r-m); border: 1px solid var(--line); background: var(--raised); font-size: var(--t-sm); font-weight: var(--w-med); cursor: pointer; white-space: nowrap; transition: border-color var(--dur); }
+.fewrd-pg .fewrd-theme:hover { border-color: var(--line-strong); }
 
 .fewrd-pg .fewrd-layout { display: grid; gap: var(--s4); grid-template-columns: minmax(0, 1fr); grid-template-areas: "draw" "gist" "fold" "conf" "tree"; max-width: 1680px; margin: 0 auto; padding: var(--s4); align-items: start; }
 .fewrd-pg .fewrd-card { min-width: 0; padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r-l); background: var(--surface); }
 .fewrd-pg .fewrd-drawcard { grid-area: draw; }
-.fewrd-pg .fewrd-gistcard { grid-area: gist; border-left: 3px solid var(--accent); }
+.fewrd-pg .fewrd-gistcard { grid-area: gist; min-width: 0; padding: 0 var(--s2); }
 .fewrd-pg .fewrd-foldcard { grid-area: fold; }
 .fewrd-pg .fewrd-conf { grid-area: conf; min-width: 0; }
 .fewrd-pg .fewrd-treebox { grid-area: tree; }
@@ -150,78 +161,96 @@ const STYLE = `
   .fewrd-pg .fewrd-conf { position: sticky; top: calc(var(--bar) + var(--s5)); max-height: calc(100vh - var(--bar) - var(--s6)); overflow: auto; }
   .fewrd-pg .fewrd-conf textarea { height: max(16rem, calc(100vh - 17rem)); }
 }
-@media (max-width: 719px) { .fewrd-pg { --grid-size: 14px; --grid-lh: 22px; } .fewrd-pg .fewrd-brand, .fewrd-pg .fewrd-theme .fewrd-lbl { display: none; } .fewrd-pg .fewrd-bar { gap: var(--s2); padding-inline: var(--s3); } .fewrd-pg .fewrd-count { min-width: 6ch; font-size: var(--t-lg); } }
+@media (max-width: 719px) { .fewrd-pg { --grid-size: 14px; --grid-lh: 22px; } .fewrd-pg .fewrd-brand, .fewrd-pg .fewrd-theme .fewrd-lbl { display: none; } .fewrd-pg .fewrd-bar { gap: var(--s2); padding-inline: var(--s3); } .fewrd-pg .fewrd-count { min-width: 6ch; font-size: var(--t-lg); } .fewrd-pg .fewrd-theme { padding: 0 var(--s2); } }
 
 .fewrd-pg .fewrd-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s1) var(--s3); }
 .fewrd-pg .fewrd-head .fewrd-grow { margin-left: auto; }
 
-.fewrd-pg .fewrd-draw { font: var(--grid-size)/var(--grid-lh) var(--mono); font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; letter-spacing: 0; transition: opacity .15s; }
+/* The grid: the one place that is monospace, so every character is one 1ch cell and a span is a distance. */
+.fewrd-pg .fewrd-draw { font: var(--w-reg) var(--grid-size)/var(--grid-lh) var(--mono); font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; letter-spacing: 0; transition: opacity .15s; }
 .fewrd-pg [data-stale] .fewrd-draw { opacity: .5; }
 .fewrd-pg .fewrd-probe { display: block; width: 1ch; height: 0; }
 .fewrd-pg .fewrd-line { position: relative; margin-bottom: var(--s4); }
 .fewrd-pg .fewrd-text { position: relative; white-space: pre; height: var(--grid-lh); }
-.fewrd-pg .fewrd-wash { position: absolute; top: 0; height: var(--grid-lh); border-radius: var(--r-s); background: hsl(var(--h) 80% 55% / var(--wash)); pointer-events: none; }
+.fewrd-pg .fewrd-wash { position: absolute; top: 0; height: var(--grid-lh); border-radius: var(--r-s); background: color-mix(in oklch, var(--band) var(--wash), transparent); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--band) calc(var(--wash) * 1.6), transparent); pointer-events: none; }
 .fewrd-pg .fewrd-lane { position: relative; height: var(--lane); }
 .fewrd-pg .fewrd-lane:first-of-type { margin-top: 2px; }
-.fewrd-pg .fewrd-band { --band: hsl(var(--h) var(--band-s) var(--band-l)); position: absolute; top: 1px; height: var(--band-h); background: var(--band); transition: opacity .15s, filter .15s; }
-.fewrd-pg .fewrd-band.lost { background: repeating-linear-gradient(90deg, var(--band) 0 3px, transparent 3px 5px); }
+.fewrd-pg .fewrd-band { position: absolute; top: 1px; height: var(--band-h); background: var(--band); outline: none; transition: opacity .15s, box-shadow var(--dur), filter var(--dur); }
+.fewrd-pg .fewrd-band.lost { top: 2px; height: var(--band-h-lost); }
 .fewrd-pg .fewrd-band.gone { opacity: .25; }
-.fewrd-pg .fewrd-band:hover, .fewrd-pg .fewrd-band:focus-visible { filter: brightness(1.2) saturate(1.2); }
+.fewrd-pg .fewrd-band.hot { z-index: 1; opacity: 1; filter: saturate(1.15) brightness(1.06); box-shadow: 0 0 0 2px color-mix(in oklch, var(--band) 30%, transparent); }
+.fewrd-pg .fewrd-band.gone.hot { opacity: .6; }
+.fewrd-pg .fewrd-band:focus-visible { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--band); }
 .fewrd-pg .fewrd-band.open { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
 .fewrd-pg .fewrd-band.close { border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
-.fewrd-pg .fewrd-band.open::before, .fewrd-pg .fewrd-band.close::after { content: ""; position: absolute; top: -1px; width: 2px; height: 7px; background: var(--band); filter: brightness(.85); }
+.fewrd-pg .fewrd-band.open::before, .fewrd-pg .fewrd-band.close::after { content: ""; position: absolute; top: -1px; width: 2px; height: 7px; background: color-mix(in oklch, var(--band) 85%, black); }
+.fewrd-pg .fewrd-band.lost.open::before, .fewrd-pg .fewrd-band.lost.close::after { height: 5px; }
 .fewrd-pg .fewrd-band.open::before { left: 0; }
 .fewrd-pg .fewrd-band.close::after { right: 0; }
-.fewrd-pg .fewrd-band .fewrd-hit { position: absolute; inset: -1px 0; }
-.fewrd-pg .fewrd-band:focus-visible { outline-offset: 3px; }
+.fewrd-pg .fewrd-band .fewrd-hit { position: absolute; inset: -2px 0; }
 .fewrd-pg .fewrd-grey { color: var(--grey); text-decoration: line-through; }
 .fewrd-pg .fewrd-hint { margin: var(--s3) 0 0; color: var(--muted); font-size: var(--t-xs); }
 .fewrd-pg .fewrd-failed { margin: 0; color: var(--err); font-size: var(--t-sm); }
-.fewrd-pg .fewrd-tip { position: fixed; z-index: 20; max-width: min(90vw, 44ch); padding: var(--s2) var(--s3); border-radius: var(--r-m); background: var(--tip-bg); color: var(--tip-fg); font: var(--t-xs)/1.5 var(--mono); box-shadow: var(--shadow); pointer-events: none; }
-.fewrd-pg .fewrd-tip div { opacity: .75; overflow-wrap: anywhere; }
 
-.fewrd-pg .fewrd-gist { margin: var(--s2) 0 0; font: 500 16px/1.5 var(--mono); font-variant-ligatures: none; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* The popover: above the text line, or below the last lane; the arrow points at the band. */
+.fewrd-pg .fewrd-tip { position: fixed; z-index: 20; display: grid; gap: 2px; max-width: min(90vw, 26rem); padding: var(--s2) var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r-m); background: var(--raised); color: var(--text); font: var(--w-reg) var(--t-xs)/1.45 var(--ui); box-shadow: var(--shadow-pop); pointer-events: none; animation: fewrd-pop var(--dur) ease-out; }
+.fewrd-pg .fewrd-tip::after { content: ""; position: absolute; left: var(--ax, 50%); width: 10px; height: 10px; margin-left: -5px; background: var(--raised); border: 1px solid var(--line-strong); transform: rotate(45deg); }
+.fewrd-pg .fewrd-tip[data-side="above"]::after { bottom: -6px; border-left: 0; border-top: 0; }
+.fewrd-pg .fewrd-tip[data-side="below"]::after { top: -6px; border-right: 0; border-bottom: 0; }
+.fewrd-pg .fewrd-tip-head { display: flex; align-items: center; gap: var(--s2); }
+.fewrd-pg .fewrd-tip-head i { width: 12px; height: var(--band-h); border-radius: 2px; background: var(--band); }
+.fewrd-pg .fewrd-tip-head b { font-weight: var(--w-semi); font-size: var(--t-sm); }
+.fewrd-pg .fewrd-tip-head span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.fewrd-pg .fewrd-tip-value { overflow-wrap: anywhere; }
+.fewrd-pg .fewrd-tip-note { color: var(--muted); }
+@keyframes fewrd-pop { from { opacity: 0; } }
+
+.fewrd-pg .fewrd-gistcard h2 { color: var(--muted); font-size: var(--t-xs); font-weight: var(--w-semi); letter-spacing: .08em; text-transform: uppercase; }
+.fewrd-pg .fewrd-gist { margin: var(--s2) 0 0; font: var(--w-reg) 17px/1.6 var(--ui); white-space: pre-wrap; overflow-wrap: anywhere; }
 .fewrd-pg .fewrd-gist.empty { color: var(--muted); font-style: italic; }
-.fewrd-pg .fewrd-verdict { font-size: var(--t-xs); font-weight: 600; }
+.fewrd-pg .fewrd-verdict { display: inline-flex; align-items: center; gap: var(--s1); font-size: var(--t-xs); font-weight: var(--w-med); }
+.fewrd-pg .fewrd-verdict .fewrd-ic { --ic: 14px; }
 .fewrd-pg .fewrd-verdict.ok { color: var(--ok); }
 .fewrd-pg .fewrd-verdict.warn { color: var(--warn); }
-.fewrd-pg .fewrd-reset { padding: var(--s1) var(--s3); border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--surface); font-size: var(--t-xs); cursor: pointer; }
+.fewrd-pg .fewrd-reset { padding: var(--s1) var(--s3); border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--raised); font-size: var(--t-xs); font-weight: var(--w-med); cursor: pointer; }
 .fewrd-pg .fewrd-reset:hover { border-color: var(--accent); color: var(--accent); }
 
 .fewrd-pg .fewrd-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: var(--s3); }
 .fewrd-pg .fewrd-cap { flex-basis: 100%; margin-top: var(--s1); color: var(--muted); font-size: var(--t-xs); }
-.fewrd-pg .fewrd-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 8px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); font: var(--t-sm)/1 var(--mono); cursor: pointer; user-select: none; transition: background .12s, border-color .12s; }
-.fewrd-pg .fewrd-chip:hover { border-color: var(--muted); }
-.fewrd-pg .fewrd-chip:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.fewrd-pg .fewrd-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 8px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--raised); font: var(--w-med) var(--t-sm)/1 var(--ui); cursor: pointer; user-select: none; transition: background var(--dur), border-color var(--dur); }
+.fewrd-pg .fewrd-chip:hover { border-color: var(--line-strong); }
+.fewrd-pg .fewrd-chip:has(input:checked) { border-color: var(--accent); background: color-mix(in oklch, var(--accent) 12%, var(--raised)); }
 .fewrd-pg .fewrd-chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.fewrd-pg .fewrd-chip.absent { color: var(--muted); border-style: dashed; }
+.fewrd-pg .fewrd-chip.absent { color: var(--muted); font-weight: var(--w-reg); background: transparent; }
+.fewrd-pg .fewrd-chip.absent i { opacity: .55; }
 .fewrd-pg .fewrd-chip input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
-.fewrd-pg .fewrd-chip i { width: 12px; height: var(--band-h); border-radius: 2px; background: hsl(var(--h) var(--band-s) var(--band-l)); }
+.fewrd-pg .fewrd-chip i { width: 12px; height: var(--band-h); border-radius: 2px; background: var(--band); }
 
 .fewrd-pg summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) 0; cursor: pointer; list-style: none; }
 .fewrd-pg summary::-webkit-details-marker { display: none; }
-.fewrd-pg summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .12s; }
-.fewrd-pg details[open] > summary::before { transform: rotate(45deg); }
-.fewrd-pg .fewrd-badge { padding: 2px 8px; border-radius: var(--r-pill); background: var(--err-bg); color: var(--err); font-size: var(--t-xs); font-weight: 600; }
+.fewrd-pg summary .fewrd-ic { color: var(--muted); transform: rotate(-90deg); }
+.fewrd-pg details[open] > summary .fewrd-ic { transform: none; }
+.fewrd-pg .fewrd-badge { padding: 2px 8px; border-radius: var(--r-pill); background: var(--err-bg); color: var(--err); font-size: var(--t-xs); font-weight: var(--w-semi); }
 
-.fewrd-pg .fewrd-conf textarea { display: block; width: 100%; height: 22rem; margin-top: var(--s2); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sunken); resize: vertical; font: var(--t-xs)/1.6 var(--mono); font-variant-ligatures: none; tab-size: 2; }
+/* The editor is code: monospace. */
+.fewrd-pg .fewrd-conf textarea { display: block; width: 100%; height: 22rem; margin-top: var(--s2); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sunken); resize: vertical; font: var(--w-reg) var(--t-xs)/1.6 var(--mono); font-variant-ligatures: none; tab-size: 2; }
 .fewrd-pg .fewrd-conf textarea[aria-invalid="true"] { border-color: var(--err); }
-.fewrd-pg .fewrd-errors { margin-top: var(--s3); padding: var(--s3); border: 1px solid color-mix(in srgb, var(--err) 35%, transparent); border-radius: var(--r-m); background: var(--err-bg); color: var(--err); font-size: var(--t-sm); overflow-wrap: anywhere; }
-.fewrd-pg .fewrd-errors ul { margin: var(--s2) 0 0; padding-left: 1.2em; font: var(--t-xs)/1.5 var(--mono); }
-.fewrd-pg .fewrd-errors code { display: block; margin-top: var(--s1); font: var(--t-xs)/1.5 var(--mono); }
+.fewrd-pg .fewrd-errors { margin-top: var(--s3); padding: var(--s3); border: 1px solid color-mix(in oklch, var(--err) 35%, transparent); border-radius: var(--r-m); background: var(--err-bg); color: var(--err); font-size: var(--t-sm); overflow-wrap: anywhere; }
+.fewrd-pg .fewrd-errors ul { margin: var(--s2) 0 0; padding-left: 1.2em; font-size: var(--t-xs); }
+.fewrd-pg .fewrd-errors code { display: block; margin-top: var(--s1); font: inherit; }
 
-.fewrd-pg .fewrd-tree { margin-top: var(--s3); font: var(--t-sm)/1.75 var(--mono); font-variant-ligatures: none; }
-.fewrd-pg .fewrd-node { --d: 0; display: flex; align-items: baseline; gap: var(--s2); min-width: 0; padding: 0 var(--s2) 0 calc(var(--s2) + var(--d) * 1.25rem); border-radius: var(--r-s); background-image: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 1.25rem); background-size: calc(var(--d) * 1.25rem) 100%; background-repeat: no-repeat; background-position: var(--s2) 0; transition: background-color .12s; }
+.fewrd-pg .fewrd-tree { margin-top: var(--s3); font: var(--w-reg) var(--t-sm)/1.75 var(--ui); }
+.fewrd-pg .fewrd-node { --d: 0; display: flex; align-items: baseline; gap: var(--s2); min-width: 0; padding: 0 var(--s2) 0 calc(var(--s2) + var(--d) * 1.25rem); border-radius: var(--r-s); background-image: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 1.25rem); background-size: calc(var(--d) * 1.25rem) 100%; background-repeat: no-repeat; background-position: var(--s2) 0; transition: background-color var(--dur); }
 .fewrd-pg .fewrd-node:hover, .fewrd-pg .fewrd-node.on { background-color: var(--hover); }
-.fewrd-pg .fewrd-node i { flex: none; width: 10px; height: var(--band-h); align-self: center; border-radius: 2px; background: hsl(var(--h) var(--band-s) var(--band-l)); }
-.fewrd-pg .fewrd-node b { font-weight: 600; }
-.fewrd-pg .fewrd-node .sp { flex: none; color: var(--muted); }
-.fewrd-pg .fewrd-node .pill { flex: none; padding: 0 6px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--muted) 16%, transparent); font-size: var(--t-xs); }
+.fewrd-pg .fewrd-node i { flex: none; width: 10px; height: var(--band-h); align-self: center; border-radius: 2px; background: var(--band); }
+.fewrd-pg .fewrd-node b { font-weight: var(--w-semi); }
+.fewrd-pg .fewrd-node .sp { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fewrd-pg .fewrd-node .pill { flex: none; padding: 0 6px; border-radius: var(--r-pill); background: color-mix(in oklch, var(--muted) 16%, transparent); font-size: var(--t-xs); }
 .fewrd-pg .fewrd-node .q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 .fewrd-pg .fewrd-node.water { color: var(--muted); }
-.fewrd-pg .fewrd-node.water b { font-weight: 400; }
+.fewrd-pg .fewrd-node.water b { font-weight: var(--w-reg); }
 .fewrd-pg .fewrd-node.gone b, .fewrd-pg .fewrd-node.gone .q { color: var(--grey); text-decoration: line-through; }
-@media (prefers-reduced-motion: reduce) { .fewrd-pg *, .fewrd-pg ::before { transition: none !important; } }`;
+@media (prefers-reduced-motion: reduce) { .fewrd-pg *, .fewrd-pg ::before { transition: none !important; animation: none !important; } }`;
 
 type Errors = Pick<CompileError, 'path' | 'tag' | 'message'>[];
 interface Domain {
@@ -235,7 +264,14 @@ interface Domain {
 type Piece = { line: number; from: number; to: number };
 
 const THEMES = ['auto', 'light', 'dark'] as const;
-const chevron = (path: string) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`;
+/** An icon: the ligature name of the icon font inside, a text glyph in `data-fb` for when the font is not there. */
+const icon = (name: string, fallback: string): HTMLSpanElement => {
+  const s = h('span', 'fewrd-ic', name);
+  s.dataset.fb = fallback;
+  s.setAttribute('aria-hidden', 'true');
+  return s;
+};
+const THEME_ICON = { auto: ['contrast', '◐'], light: ['light_mode', '☀'], dark: ['dark_mode', '☾'] } as const;
 
 /**
  * Mount the playground on `el`: `confs` are named confs (data, typically JSON
@@ -276,15 +312,15 @@ export function mount(
   const folds = new Map<number, Set<string>>();
 
   // The bar: step, count, jump, theme.
-  const step = (label: string, path: string) => {
+  const step = (label: string, name: string, fallback: string) => {
     const b = h('button', 'fewrd-step');
     b.type = 'button';
     b.setAttribute('aria-label', label);
-    b.innerHTML = chevron(path);
+    b.append(icon(name, fallback));
     return b;
   };
-  const prev = step('previous case', 'M15 5l-7 7 7 7');
-  const next = step('next case', 'M9 5l7 7-7 7');
+  const prev = step('previous case', 'chevron_left', '‹');
+  const next = step('next case', 'chevron_right', '›');
   const count = h('span', 'fewrd-count');
   const nav = h('div', 'fewrd-nav');
   nav.append(prev, count, next);
@@ -318,7 +354,8 @@ export function mount(
   const paintTheme = () => {
     if (theme === 'auto') delete el.dataset.theme;
     else el.dataset.theme = theme;
-    themeButton.replaceChildren('◐ ', h('span', 'fewrd-lbl', theme));
+    const [glyph, fallback] = THEME_ICON[theme];
+    themeButton.replaceChildren(icon(glyph, fallback), h('span', 'fewrd-lbl', theme));
     themeButton.setAttribute('aria-label', `theme: ${theme}, switch`);
     try {
       localStorage.setItem(STYLE_ID, theme);
@@ -329,6 +366,8 @@ export function mount(
     paintTheme();
   });
   paintTheme();
+  // The icon font is a dev-time extra: until it has really loaded the icons are their text glyphs.
+  document.fonts?.load(`20px "Material Symbols Rounded"`, 'chevron_left').then((f) => f.length && el.setAttribute('data-icons', ''), () => {});
 
   // The grid card: the text, its bands, one line of help.
   const probe = h('span', 'fewrd-probe');
@@ -346,7 +385,7 @@ export function mount(
   gistOut.setAttribute('aria-atomic', 'true');
   const saved = h('span', 'fewrd-dim');
   const verdict = h('span', 'fewrd-verdict');
-  const gistCard = h('section', 'fewrd-card fewrd-gistcard');
+  const gistCard = h('section', 'fewrd-gistcard');
   const gistHead = h('div', 'fewrd-head');
   gistHead.append(h('h2', undefined, 'Gist'), saved, verdict);
   gistCard.append(gistHead, gistOut);
@@ -369,7 +408,7 @@ export function mount(
   editor.spellcheck = false;
   editor.setAttribute('aria-label', 'conf, as JSON');
   const confSummary = h('summary');
-  confSummary.append(h('h2', undefined, 'Conf'), confName, badge);
+  confSummary.append(icon('expand_more', '▾'), h('h2', undefined, 'Conf'), confName, badge);
   const confDetails = h('details');
   confDetails.append(confSummary, editor);
   const errorBox = h('div', 'fewrd-errors');
@@ -380,7 +419,7 @@ export function mount(
   const treeMeta = h('span', 'fewrd-dim');
   const treeBody = h('div', 'fewrd-tree');
   const treeSummary = h('summary');
-  treeSummary.append(h('h2', undefined, 'Tree'), treeMeta);
+  treeSummary.append(icon('expand_more', '▾'), h('h2', undefined, 'Tree'), treeMeta);
   const treeDetails = h('details');
   treeDetails.append(treeSummary, treeBody);
   const treeBox = h('section', 'fewrd-card fewrd-treebox');
@@ -408,12 +447,14 @@ export function mount(
   let view: { starts: number[]; lines: HTMLElement[]; order: HTMLElement[]; head: Map<HTMLElement, HTMLElement> } = { starts: [0], lines: [], order: [], head: new Map() };
   let washes: HTMLElement[] = [];
   let lit: HTMLElement[] = [];
-  const light = (span: Span, hue: number) => {
+  /** The band whose popover is open, kept so a scroll or resize can put the popover back. */
+  let active: HTMLElement | undefined;
+  const light = (span: Span, color: string) => {
     unlight();
     for (const { line, from, to } of segments(span, view.starts)) {
       const wash = h('div', 'fewrd-wash');
       wash.style.cssText = `left:${from}ch;width:${to - from}ch`;
-      wash.style.setProperty('--h', String(hue));
+      wash.style.setProperty('--band', color);
       view.lines[line]?.prepend(wash);
       washes.push(wash);
     }
@@ -423,16 +464,31 @@ export function mount(
     washes = [];
   };
   const leave = () => {
+    active = undefined;
     tip.hidden = true;
     unlight();
-    lit.forEach((r) => r.classList.remove('on'));
+    lit.forEach((r) => r.classList.remove('on', 'hot'));
     lit = [];
   };
-  const place = (x: number, below: number, above: number) => {
+  /** Above the text line of the band, centred on it; below the last lane when there is no room above the sticky bar. The arrow points at the band. */
+  const place = (band: HTMLElement) => {
+    active = band;
     tip.hidden = false;
-    tip.style.left = `${Math.max(8, Math.min(x, innerWidth - tip.offsetWidth - 8))}px`;
-    tip.style.top = `${below + tip.offsetHeight > innerHeight - 8 ? above - tip.offsetHeight : below}px`;
+    const r = band.getBoundingClientRect();
+    const line = (band.closest('.fewrd-line') ?? band).getBoundingClientRect();
+    const w = tip.offsetWidth;
+    const gap = 10;
+    const above = line.top - gap - tip.offsetHeight >= bar.getBoundingClientRect().bottom + 4;
+    const cx = r.left + r.width / 2;
+    const left = Math.max(8, Math.min(cx - w / 2, innerWidth - w - 8));
+    tip.dataset.side = above ? 'above' : 'below';
+    tip.style.left = `${left}px`;
+    tip.style.top = `${above ? line.top - gap - tip.offsetHeight : line.bottom + gap}px`;
+    tip.style.setProperty('--ax', `${Math.max(14, Math.min(cx - left, w - 14))}px`);
   };
+  const replace = () => active && place(active);
+  addEventListener('scroll', replace, { passive: true });
+  addEventListener('resize', replace);
 
   function fail(text: string) {
     leave();
@@ -465,8 +521,8 @@ export function mount(
     }
     const rows = [...chart.all()].filter(([, [a, b]]) => b > a);
     const order = Object.keys(d.compiled.tags);
-    // Golden-angle hues by the tag's place in the conf: thirty tags stay apart, and a tag keeps its colour from case to case.
-    const hue = (tag: string) => Math.round((Math.max(0, order.indexOf(tag)) * 137.508 + 25) % 360);
+    // A band colour by the tag's place in the conf: neighbours differ, and a tag keeps its colour from case to case.
+    const hue = (tag: string) => `var(--band-${slot(order.indexOf(tag))})`;
 
     // What the tree kept: a chart row is a node, a twin of one, or not in the tree.
     const entries = doc ? walk(doc, c.text) : [];
@@ -493,9 +549,15 @@ export function mount(
     let lost = 0;
     const tipFor = (tag: string, span: Span) => {
       const hit = nodes.get(key(tag, ...span));
-      const note = !doc ? '' : !hit ? 'not in the tree' : hit.twinOf ? `twin of ${hit.twinOf}` : hit.node.value !== undefined ? `value ${JSON.stringify(hit.node.value)}` : 'in the tree';
-      tip.replaceChildren(h('b', undefined, tag), ` (${span[0]}, ${span[1]})`, h('div', undefined, JSON.stringify(excerpt(c.text.slice(...span)))));
-      if (note) tip.append(h('div', undefined, note));
+      const swatch = h('i');
+      swatch.style.setProperty('--band', hue(tag));
+      const head = h('div', 'fewrd-tip-head');
+      head.append(swatch, h('b', undefined, tag), h('span', undefined, `(${span[0]}, ${span[1]})`));
+      tip.replaceChildren(head);
+      const value = hit && !hit.twinOf ? hit.node.value : undefined;
+      if (value !== undefined) tip.append(h('div', 'fewrd-tip-value', `value ${JSON.stringify(value)}`));
+      const note = !doc ? '' : !hit ? 'not kept by the tree' : hit.twinOf ? `twin of ${hit.twinOf}` : '';
+      if (note) tip.append(h('div', 'fewrd-tip-note', note));
     };
     lanes(rows).forEach((lane, laneIndex) => {
       for (const [tag, span] of lane) {
@@ -513,7 +575,7 @@ export function mount(
           }
           const band = h('span', `fewrd-band${i === 0 ? ' open' : ''}${i === pieces.length - 1 ? ' close' : ''}${isLost ? ' lost' : ''}`);
           band.style.cssText = `left:${from}ch;width:${to - from}ch`;
-          band.style.setProperty('--h', String(hue(tag)));
+          band.style.setProperty('--band', hue(tag));
           band.tabIndex = -1;
           if (head) view.head.set(band, head);
           else first.push({ band, span });
@@ -522,23 +584,24 @@ export function mount(
           band.setAttribute('aria-label', `${tag}, ${span[0]} to ${span[1]}${isLost ? ', not in the tree' : ''}`);
           band.append(h('span', 'fewrd-hit'));
           const enter = () => {
+            leave();
             light(span, hue(tag));
             const row = rowsByKey.get(k);
+            for (const b of bandsByKey.get(k) ?? []) b.classList.add('hot');
+            lit.push(...(bandsByKey.get(k) ?? []));
             if (row) {
               row.classList.add('on');
               lit.push(row);
             }
             tipFor(tag, span);
+            place(band);
           };
           band.addEventListener('mouseenter', enter);
-          band.addEventListener('mousemove', (e) => place(e.clientX + 14, e.clientY + 18, e.clientY - 12));
           band.addEventListener('mouseleave', leave);
           band.addEventListener('focus', () => {
             view.order.forEach((b) => (b.tabIndex = -1));
             (view.head.get(band) ?? band).tabIndex = 0;
             enter();
-            const r = band.getBoundingClientRect();
-            place(r.left, r.bottom + 6, r.top - 6);
           });
           band.addEventListener('blur', leave);
           l.lanes[laneIndex].append(band);
@@ -551,7 +614,7 @@ export function mount(
     lineBox.replaceChildren(...lines.map((l) => l.line));
     const laneCount = Math.max(0, ...lines.map((l) => l.lanes.length));
     hint.textContent = rows.length
-      ? `${rows.length} rows in ${laneCount} lane${laneCount === 1 ? '' : 's'}. Hover a band, or Tab to the bands and use ↑ ↓, to read it.${lost ? ' Dashed bands are rows the tree did not keep.' : ''}`
+      ? `${rows.length} rows in ${laneCount} lane${laneCount === 1 ? '' : 's'}. Hover a band, or Tab to the bands and use ↑ ↓, to read it.${lost ? ' Thin bands are rows the tree did not keep.' : ''}`
       : 'Nothing found in this text with this conf.';
 
     // The tree: one row per node, linked both ways with the grid.
@@ -565,14 +628,14 @@ export function mount(
             row.title = line.trim();
             if (!water) {
               const swatch = h('i');
-              swatch.style.setProperty('--h', String(hue(node.tag)));
+              swatch.style.setProperty('--band', hue(node.tag));
               row.append(swatch);
             }
             row.append(h('b', undefined, node.tag), h('span', 'sp', `${node.start}–${node.end}`));
             if (node.also) row.append(h('span', 'pill', `also ${node.also.join(', ')}`));
             if (node.value !== undefined) row.append(h('span', 'pill', `= ${JSON.stringify(node.value)}`));
             row.append(h('span', 'q', JSON.stringify(c.text.slice(node.start, node.end))));
-            row.addEventListener('mouseenter', () => light([node.start, node.end], water ? 215 : hue(node.tag)));
+            row.addEventListener('mouseenter', () => light([node.start, node.end], water ? 'var(--faint)' : hue(node.tag)));
             row.addEventListener('mouseleave', unlight);
             rowOf.set(node, row);
             if (!water) for (const t of [node.tag, ...(node.also ?? [])]) rowsByKey.set(key(t, node.start, node.end), row);
@@ -599,7 +662,7 @@ export function mount(
       });
       boxes.set(tag, box);
       const swatch = h('i');
-      swatch.style.setProperty('--h', String(hue(tag)));
+      swatch.style.setProperty('--band', hue(tag));
       const label = h('label', `fewrd-chip${present.has(tag) ? '' : ' absent'}`);
       label.append(box, swatch, tag);
       return label;
@@ -624,7 +687,7 @@ export function mount(
       const same = (c.fold ?? []).length === checked.size && (c.fold ?? []).every((t) => checked.has(t));
       verdict.hidden = !doc || c.gist === undefined || c.fold === undefined || !same;
       const ok = out === c.gist;
-      verdict.textContent = ok ? "✓ matches the case's gist" : "≠ differs from the case's gist";
+      verdict.replaceChildren(...(ok ? [icon('check', '✓')] : []), ok ? "matches the case's gist" : "differs from the case's gist");
       verdict.title = ok ? '' : `the case's gist: ${c.gist}`;
       verdict.className = `fewrd-verdict ${ok ? 'ok' : 'warn'}`;
       reset.hidden = same;
