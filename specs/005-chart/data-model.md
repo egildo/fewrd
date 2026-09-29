@@ -40,4 +40,4 @@ The types live in `src/conf.ts` (conf, compile) and `src/chart.ts` (span, chart,
 
 `confs/it-pa.json`: the conf of `italian-conf-in-new-format`, 30 tags, version `it-pa@3`. `confs/it-pa.ts`: exports `itPaResolvers: Record<string, Resolve>` with `protocol`, `cig`, `amount`, `date`, and the compiled `itPa` (throwing at import if `compile` reports errors, as the old `recipes/it-pa.ts` did, since a broken demo conf is a bug).
 
-`cases/it-pa.json`, `cases/common.json`: `{ name: string; text: string }[]`.
+`cases/it-pa.json`, `cases/common.json`: `{ name: string; conf: string; text: string }[]`, `conf` naming the conf the case is found with.

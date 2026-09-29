@@ -216,12 +216,21 @@ text's edges meet the rows that touch them: `rel([0, 0], [0, 5])` is `meets`.
 
 ## Playground
 
-`pnpm dev` opens the playground on the Italian conf and its subjects: the conf
-in an editor that recompiles as you type, and each subject with its chart drawn
-brat-style, one coloured band per row, stacked where rows overlap, the tag name
-on each band, and the chart printed below as `tag(start,end)` lines. A mistake
-in the JSON shows beside the editor and the drawings stay; compile errors are
-listed with their paths and the tags that compiled are drawn.
+`pnpm dev` opens the playground on twenty subjects from two domains, twelve
+Italian public-administration ones and eight from a common inbox. One subject
+shows at a time: step through them with the big ‹ › buttons or the arrow keys,
+the counter between them says where you are.
+
+The subject's text sits on a character grid, a monospace font with every
+character exactly one `ch` wide, wrapped every 90 characters. Each row of the
+chart is an underline with a small tick at each end, so where it starts and
+stops is plain; rows that overlap stack in lanes below the line. Nothing is
+labelled: hover a band and a tooltip gives its tag and `(start, end)` while the
+characters it covers light up. A row of chips under the drawing is the legend
+of tag colours. On the left, the conf of the subject on screen recompiles as
+you type and the subject is found again. A mistake in the JSON shows beside the
+editor and the drawing stays; compile errors are listed with their paths and
+the tags that compiled are drawn. Each domain keeps its own edits.
 
 Or mount it in a page of your own:
 
@@ -230,15 +239,17 @@ import { mount } from 'fewrd/playground';
 import data from './shop.json' with { type: 'json' };
 
 mount(document.getElementById('app')!, {
-  conf: data,                                    // shown and edited as JSON
-  resolvers,                                     // your named resolvers
-  cases: [{ name: 'refund', text: 'Refund approved - SKU: abc-1234' }],
+  confs: { shop: { conf: data, resolvers } },     // named confs, shown and edited as JSON
+  cases: [{ name: 'refund', conf: 'shop', text: 'Refund approved - SKU: abc-1234' }],
 });
 ```
 
-The playground injects its own scoped styles, so it needs no stylesheet. It
-finds only: no values, no fold, no tree yet. `fewrd-play`, the old dev-only
-package under `play/`, is not updated for the new engine.
+The playground injects its own scoped styles, so it needs no stylesheet. It asks
+for a monospace font by name (JetBrains Mono, then IBM Plex Mono, then the
+system's); `playground/index.html` loads JetBrains Mono from Google Fonts, for
+development only, and your page can load whichever it likes. It finds only: no
+values, no fold, no tree yet. `fewrd-play`, the old dev-only package under
+`play/`, is not updated for the new engine.
 
 ## Develop
 
@@ -252,7 +263,7 @@ pnpm dev         # the playground, on http://localhost:5577
 There is no build step in that loop. `pnpm build` (run at publish) bundles the
 two public entries with vite and writes their types with `tsc`. The Italian
 conf, `confs/it-pa.json`, is tested through its subjects in
-`cases/it-pa.json`; the core rules are tested with small synthetic confs. The
+`cases/it-pa.json`, the common one, `confs/common.json`, by a small test; the core rules are tested with small synthetic confs. The
 rules above are the single source of truth for `find`: a change to what it
 returns changes them in the same commit. The design is in
 [`specs/rewrite-brief.md`](specs/rewrite-brief.md) and

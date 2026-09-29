@@ -52,16 +52,16 @@ The maintainer rewrites the Italian public-administration conf in the new format
 
 ### User Story 3 - See the chart in the playground (Priority: P3)
 
-An integrator mounts the playground with a conf, their resolvers and their cases, and sees each case's text with its chart drawn brat-style: one coloured band per row, stacked where rows overlap, with the tag name on each band. They edit the conf in a text area and every case is re-found as they type; a mistake shows as an error beside the editor while the last good chart stays on screen.
+An integrator mounts the playground with named confs, their resolvers and their cases, and sees one case at a time: its text on a character grid with every row of the chart drawn as an underline, stacked in lanes where rows overlap, the tag and span shown when a band is hovered. They step through the cases with a large left/right control. They edit the conf of the case on screen in a text area and the case is found again as they type; a mistake shows as an error beside the editor while the last good chart stays on screen.
 
 **Why this priority**: A chart that keeps everything is large; reading it as lines of numbers does not scale past a handful of rows. The playground is how a conf author sees what their searches built, and it is what `pnpm dev` opens on the Italian conf.
 
-**Independent Test**: Run `pnpm dev`, check that every Italian case is drawn and its `tag(start,end)` lines printed, change a pattern in the editor and see the bands move, break the JSON and see the error while the drawing stays.
+**Independent Test**: Run `pnpm dev`, step through the cases and check that each is drawn, hover a band and see its tooltip, change a pattern in the editor and see the bands move, break the JSON and see the error while the drawing stays.
 
 **Acceptance Scenarios**:
 
-1. **Given** the playground mounted with the Italian conf, resolvers and cases, **When** the page loads, **Then** every case shows its text with one band per non-empty row, overlapping rows on separate lanes, and the chart printed below as `tag(start,end)` lines.
-2. **Given** that playground, **When** a pattern in the conf is edited to a valid alternative, **Then** every case is re-found and redrawn.
+1. **Given** the playground mounted with the Italian and common confs and twenty cases, **When** the page loads, **Then** case 1 of 20 is shown with one underline per non-empty row, overlapping rows on separate lanes, and no list of rows.
+2. **Given** that playground, **When** the pattern of a tag in the conf on screen is edited to a valid alternative, **Then** the case is found again and redrawn, and the other domain's conf is untouched.
 3. **Given** that playground, **When** the conf stops being valid JSON or has compile errors, **Then** the errors are listed next to the editor; on invalid JSON the last good charts stay on screen, on compile errors the charts are drawn with the tags that compiled.
 
 ---
@@ -304,17 +304,19 @@ Every example conf has `"version": "t@1"`; only `tags` is shown. Three toy tags 
 
 ### The playground
 
-- **FR-024 · `playground-mount`**: `fewrd/playground` MUST export `mount(el, { conf, resolvers, cases })`, where `conf` is the conf as data, `resolvers` the named resolvers, and `cases` a list of `{ name, text }`. It injects its own scoped styles and needs no stylesheet.
+- **FR-024 · `playground-mount`**: `fewrd/playground` MUST export `mount(el, { confs, cases })`, where `confs` maps a name to `{ conf, resolvers }` (the conf as data and its named resolvers) and `cases` is a list of `{ name, conf, text }`, `conf` being the name of the entry in `confs` the case is found with. It injects its own scoped styles and needs no stylesheet. The font is not the playground's to load: the page that hosts it does, and the playground names a monospace stack (JetBrains Mono, IBM Plex Mono, then the system monospace).
 
-- **FR-025 · `playground-live-conf`**: The playground MUST show the conf as JSON in a text area and, on every edit, recompile it and re-find every case. Compile errors and JSON parse errors are listed next to the text area. On a parse error the last good charts stay on screen; on compile errors the charts are drawn with the tags that compiled. A failure while finding one case is shown on that case and does not stop the others.
+- **FR-025 · `playground-live-conf`**: The playground MUST show, in a text area, the conf as JSON of the case on screen, and on every edit recompile it and find the case again; only cases of that conf are affected, and an edit to one conf is kept when the case on screen changes to another conf and back. Compile errors and JSON parse errors are listed next to the text area. On a parse error the last good chart stays on screen; on compile errors the chart is drawn with the tags that compiled. A failure while finding the case is shown in its place.
 
-- **FR-026 · `playground-draws-chart`**: For each case the playground MUST show the text with the chart drawn brat-style: one coloured band per row under the characters it spans, rows that overlap stacked on separate lanes, the tag name on or beside each band and on hover. Each tag has one colour, derived from its name so it does not change between edits. Zero-length rows (`^`, `$`) are not drawn.
+- **FR-026 · `playground-draws-chart`**: The playground MUST draw the text on a character grid: a monospace font with no ligatures and no letter spacing, so that every character takes exactly `1ch`, wrapped every 90 characters at a column boundary (never at a word). Each row of the chart is an underline 5px thick with a small vertical tick at each end, its position and length computed in `ch` from the row's start and end, so it sits under exactly the characters it covers; a row that crosses a wrap is one piece per line, with ticks only at its true ends. Rows that overlap are stacked in lanes below the text line, 3px apart, each row on the first lane where it fits. Each tag has one colour derived from its name, so it does not change between cases or edits, with contrast enough on the dark background and a light scheme under `prefers-color-scheme`. Zero-length rows (`^`, `$`) are not drawn. A row carries no permanent label.
 
-- **FR-027 · `playground-prints-chart`**: Under each drawing the playground MUST print the chart as `tag(start,end)` lines, in the order of `all()`.
+- **FR-027 · `playground-reveals-on-hover`**: Hovering a band MUST show a tooltip with its tag and `(start, end)` and highlight the characters the row covers, on every line it crosses. The playground MUST NOT list the rows. A legend of chips, one per tag of the chart on screen, in that tag's colour, sits under the drawing.
 
-- **FR-028 · `playground-finds-only`**: The phase 1 playground MUST show no values, no fold and no tree; those arrive with phase 2.
+- **FR-028 · `playground-one-case`**: The playground MUST show one case at a time, with large previous and next buttons and the left and right arrow keys (not while typing in the editor), a counter such as `3 / 20` between the buttons, and the case's name and conf. Stepping wraps around. `pnpm dev` shows at most twenty cases.
 
-- **FR-029 · `dev-opens-italian`**: `pnpm dev` MUST open the playground on the Italian conf, its resolvers and `cases/it-pa.json`.
+- **FR-029 · `dev-opens-two-domains`**: `pnpm dev` MUST open the playground on the Italian conf with `cases/it-pa.json` and the common conf with `cases/common.json`, each with its resolvers; twelve Italian cases, then the eight common ones, grouped by domain. Every case names its conf in its own `conf` field, so `cases/` stays the single source. The playground finds only: no values, no fold, no tree; those arrive with phase 2.
+
+- **FR-029a · `common-conf`**: `confs/common.json`, with its resolvers in `confs/common.ts`, MUST compile with no errors and find, at least, links, email addresses, phone numbers, IPv4 addresses, ISO dates and datetimes (a deadline when a `due`, `until`, `by` or `eta` word leads), money (a currency and a number, either order), percentages, versions (a leading `v`, or a label such as `release`), ticket keys, `@handles`, `#hashtags`, the `Re:`/`Fwd:` chain and a quotation from `wrote:` to the end. Look-alikes (a date with month 13, an address with an octet over 255, a phone of four digits, a bare `1.2.3`) yield no row: a resolver says `null`, or the tag needs its label. Run as `test/common.test.ts`.
 
 ### Documents and package
 
@@ -346,12 +348,12 @@ The vocabulary is the constitution's closed set (principle V); this spec adds no
 - **SC-003**: Every Italian and synthetic case reaches its fixpoint; the self-growing example ends after the pass that adds nothing, and the same `list` conf over 100 numbers separated by spaces ends with 4,950 `list` rows (every run of two or more consecutive numbers).
 - **SC-004**: Every chart of every case survives a JSON round-trip unchanged, and gives the same JSON with its conf's `tags` reversed.
 - **SC-005**: Every kind of compile error in `compile-never-throws` is reported with its path and tag, and none stops the other tags from working.
-- **SC-006**: In the playground, an edit to the Italian conf redraws all 13 cases with no perceptible delay.
+- **SC-006**: In the playground, an edit to a conf redraws the case on screen with no perceptible delay.
 - **SC-007**: `package.json` `dependencies` stays empty and no devDependency is added.
 
 ## Assumptions
 
-- **Where things live.** The Italian conf is `confs/it-pa.json` plus `confs/it-pa.ts` (resolvers only); its cases are `cases/it-pa.json`. `cases/common.json` stays as corpus; the brief asks for no common conf in phase 1, so none is written and no test reads it yet.
+- **Where things live.** The Italian conf is `confs/it-pa.json` plus `confs/it-pa.ts` (resolvers only); its cases are `cases/it-pa.json`. `cases/common.json` is the second domain: its conf is `confs/common.json` plus `confs/common.ts`, ported from the old `recipes/common.*`. Every case carries a `conf` field naming its conf.
 - **The corpus.** `cases/it-pa.json` holds the eight subjects of `playground/cases.ts` on `main` plus the five connector subjects of branch `004-connectors`, since the conf's connectors need them.
 - **Tags with no rows are absent from the chart**, and `toJSON` orders tags by name: the brief asks for no key-order dependence, and a canonical order is the simplest way to make equal charts serialise equally.
 - **Resolvers see normalised text**, since the brief maps spans back once, at the end.

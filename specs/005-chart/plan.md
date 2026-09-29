@@ -82,7 +82,7 @@ confs/
 
 cases/
 ├── it-pa.json          # from the slate: 13 subjects
-└── common.json         # from the slate: kept as corpus, unread in phase 1
+└── common.json         # the common domain's cases, each naming its conf
 
 playground/
 ├── index.html          # NEW: the dev page

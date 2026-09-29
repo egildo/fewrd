@@ -1,0 +1,47 @@
+{
+  "version": "common@1",
+  "patterns": {
+    "CUR": "[$€£¥]|USD|EUR|GBP|CHF|JPY",
+    "ISO_DATE": "\\d{4}-\\d{2}-\\d{2}",
+    "TIME": "\\d{2}:\\d{2}(?::\\d{2})?(?:Z|[+-]\\d{2}:?\\d{2})?",
+    "OCTET": "\\d{1,3}"
+  },
+  "tags": {
+    "reply-chain": { "search": [
+      { "from": "reply-word", "forward": [ { "rx": "/\\s+/u" }, { "tag": "reply-word" } ] },
+      { "from": "reply-chain", "forward": [ { "rx": "/\\s+/u" }, { "tag": "reply-word" } ] }
+    ] },
+    "quote": { "search": [
+      { "from": "quote-word", "forward": [ { "rx": "/.+/u", "as": "body" }, { "tag": "$" } ] }
+    ] },
+    "money": { "resolve": "money", "search": [
+      { "from": "number", "back": [ { "rx": "/\\s?/u" }, { "tag": "currency", "as": "currency" } ] },
+      { "from": "number", "forward": [ { "rx": "/\\s?/u" }, { "tag": "currency", "as": "currency" } ] }
+    ] },
+    "version-ref": { "search": [
+      { "from": "version-num", "back": [ { "rx": "/\\s*/u" }, { "tag": "version-word", "as": "label" } ] }
+    ] },
+    "deadline": { "search": [
+      { "from": "date", "back": [ { "rx": "/\\s*/u" }, { "tag": "due-word", "as": "label" } ] }
+    ] },
+
+    "url": { "rx": "/https?:\\/\\/[^\\s<>\"'()\\[\\]]*[^\\s<>\"'()\\[\\].,;:!?]/iu" },
+    "version": { "rx": "/v\\d+\\.\\d+\\.\\d+(?:-[\\p{L}\\p{N}]+(?:\\.[\\p{L}\\p{N}]+)*)?/u" },
+    "email": { "rx": "/(?<![\\p{L}\\p{N}._%+-])[\\p{L}\\p{N}._%+-]+@[\\p{L}\\p{N}-]+(?:\\.[\\p{L}\\p{N}-]+)+/u", "resolve": "lower" },
+    "phone": { "rx": "/\\+\\d{1,3}(?:[\\s.-]?\\d{2,4}){2,5}/u", "resolve": "phone" },
+    "ip": { "rx": "/%{OCTET}(?:\\.%{OCTET}){3}/u", "resolve": "ipv4" },
+    "date": { "rx": "/%{ISO_DATE}(?:[T ]%{TIME})?/u", "resolve": "datetime" },
+    "percent": { "rx": "/(?:[+-]|(?<![\\p{N}.,+-]))\\d+(?:[.,]\\d+)?\\s?%/u" },
+    "ticket": { "rx": "/[A-Z][A-Z0-9]{1,9}(?:-\\d+)+/u" },
+    "handle": { "rx": "/(?<![\\p{L}\\p{N}_])@[\\p{L}\\p{N}_]+/u" },
+    "hashtag": { "rx": "/(?<![\\p{L}\\p{N}_\\/])#[\\p{L}_][\\p{L}\\p{N}_]*/u" },
+
+    "reply-word": { "rx": "/(?:re|fwd?|aw|wg)\\s*:/iu" },
+    "quote-word": { "rx": "/(?:wrote|said)\\s*:\\s*/iu" },
+    "currency": { "rx": "/%{CUR}/u" },
+    "number": { "rx": "/(?<![\\p{L}\\p{N}.,])\\d+(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?/u" },
+    "version-num": { "rx": "/\\d+\\.\\d+\\.\\d+(?:-[\\p{L}\\p{N}]+(?:\\.[\\p{L}\\p{N}]+)*)?/u" },
+    "version-word": { "rx": "/version|release|ver\\.?/iu" },
+    "due-word": { "rx": "/due|until|by|eta/iu" }
+  }
+}

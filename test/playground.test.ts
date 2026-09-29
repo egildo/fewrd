@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lanes } from '../src/playground.ts';
+import { lanes, segments } from '../src/playground.ts';
 import { Chart, type Span } from '../src/index.ts';
 
 const row = (tag: string, a: number, b: number): readonly [string, Span] => [tag, [a, b]];
@@ -28,4 +28,16 @@ test('playground-draws-chart: lanes, order within a lane follows all() order', (
 });
 test('playground-draws-chart: lanes, no rows, no lanes', () => {
   assert.deepEqual(lanes([]), []);
+});
+
+const cut = (a: number, b: number) => segments([a, b], 10).map((s) => [s.line, s.from, s.to]);
+test('playground-draws-chart: segments, a row inside one line is one piece', () => {
+  assert.deepEqual(cut(2, 7), [[0, 2, 7]]);
+});
+test('playground-draws-chart: segments, a row that crosses a wrap is one piece per line', () => {
+  assert.deepEqual(cut(8, 23), [[0, 8, 10], [1, 0, 10], [2, 0, 3]]);
+});
+test('playground-draws-chart: segments, a row ending on the wrap stays on its line', () => {
+  assert.deepEqual(cut(4, 10), [[0, 4, 10]]);
+  assert.deepEqual(cut(10, 12), [[1, 0, 2]]);
 });

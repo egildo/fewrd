@@ -1,34 +1,42 @@
 [
   {
     "name": "Reply chain, invoice",
+    "conf": "common",
     "text": "Re: Fwd: Invoice INV-2026-0042 for $1,250.00 due 2026-10-15"
   },
   {
     "name": "CI alert",
+    "conf": "common",
     "text": "[CI] OPS-1284 deploy of v2.4.1 to 10.0.12.7 failed, logs at https://ci.example.com/runs/8812."
   },
   {
     "name": "Contacts",
+    "conf": "common",
     "text": "Call Dana on +44 20 7946 0958 or email Dana.Reyes@Example.org about the 15% discount"
   },
   {
     "name": "Standup",
+    "conf": "common",
     "text": "Standup #backend #release: PAY-77 blocked (waiting on @marco), ETA 2026-10-02 14:30"
   },
   {
     "name": "Prices, two formats",
+    "conf": "common",
     "text": "Price drop: €89,90 → 74,90 EUR (-17%) until 2026-12-31"
   },
   {
     "name": "Quoted reply, read again inside",
+    "conf": "common",
     "text": "On 2026-09-30 Dana wrote: see OPS-1284, fixed in release 2.4.2 by @marco"
   },
   {
     "name": "Look-alikes",
+    "conf": "common",
     "text": "Build 1.2.3 on 999.10.10.10, not a date 2026-13-45, not a phone +12 34"
   },
   {
     "name": "Short prose",
+    "conf": "common",
     "text": "Lunch is on the terrace today"
   }
 ]
