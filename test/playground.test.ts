@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lanes, segments } from '../src/playground.ts';
+import { greyed, lanes, segments, treeLines } from '../src/playground.ts';
 import { Chart, type Span } from '../src/index.ts';
+import { build, type Tags } from './tree.ts';
 
 const row = (tag: string, a: number, b: number): readonly [string, Span] => [tag, [a, b]];
 const names = (l: ReturnType<typeof lanes>) => l.map((lane) => lane.map(([t]) => t));
@@ -40,4 +41,40 @@ test('playground-draws-chart: segments, a row that crosses a wrap is one piece p
 test('playground-draws-chart: segments, a row ending on the wrap stays on its line', () => {
   assert.deepEqual(cut(4, 10), [[0, 4, 10]]);
   assert.deepEqual(cut(10, 12), [[1, 0, 2]]);
+});
+
+test('playground-tree: treeLines of the walk', () => {
+  const WALK: Tags = {
+    weight: { search: [{ from: 'num', forward: [{ tag: 'sp' }, { tag: 'unit', as: 'unit' }] }] },
+    code: { rx: '/[a-z]+ \\d/u' },
+    num: { rx: '/\\d+(?:\\.\\d+)?/u' },
+    amount: { rx: '/\\d+\\.\\d+/u' },
+    unit: { rx: '/kg|g/u', resolve: 'canon' },
+    phrase: { rx: '/[a-z]+ [a-z]+/u', weak: true },
+    sp: { rx: '/ /u' },
+  };
+  const text = 'ab 1.5 kg okay';
+  const { doc } = build(WALK, text, { canon: (p) => p.value });
+  assert.deepEqual(treeLines(doc, text), [
+    'text (0, 2) "ab"',
+    'sp (2, 3) " "',
+    'weight (3, 9) "1.5 kg"',
+    '  num (3, 6) also=amount "1.5"',
+    '  sp (6, 7) " "',
+    '  unit (7, 9) value="kg" "kg"',
+    'sp (9, 10) " "',
+    'text (10, 14) "okay"',
+  ]);
+});
+
+test('playground-fold-panel: greyed merges adjacent hidden leaves', () => {
+  const T: Tags = {
+    ref: { search: [{ from: 'num', back: [{ tag: 'sep', optional: true }, { tag: 'lbl', as: 'label' }] }] },
+    num: { rx: '/#\\d+/u' },
+    lbl: { rx: '/ref|n\\./iu' },
+    sep: { rx: '/(?:\\s|[,;:](?=\\s|$)|(?<=^|\\s)-(?=\\s|$))+/u', fate: 'separator' },
+  };
+  const { doc } = build(T, 'Nota ref #12 - fine');
+  assert.deepEqual(greyed(doc, (n) => n.tag === 'ref'), [[4, 12]]);
+  assert.deepEqual(greyed(doc, () => false), []);
 });

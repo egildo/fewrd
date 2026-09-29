@@ -1,17 +1,23 @@
-// The phase 1 playground: a conf editor and one case at a time, its text on a
+// The playground: a conf editor and one case at a time, its text on a
 // character grid with every row of the chart drawn as an underline (stacked in
-// lanes where rows overlap), the row's tag and span shown on hover.
-// Finds only: no values, no fold, no tree.
+// lanes where rows overlap), the row's tag and span shown on hover. Under the
+// chart, the tree as an indented list and a fold panel: one box per tag, the
+// gist under it, and the hidden leaves greyed out on the grid.
 
 import type { Span } from './chart.ts';
 import { compile, type CompileError, type Resolve } from './index.ts';
+import { dom, type Node } from './dom.ts';
 import { find } from './find.ts';
+import { hidden, gist, type Fold } from './fold.ts';
 
 export interface PlaygroundCase {
   name: string;
   /** The key of the conf in `confs` this case is found with. */
   conf: string;
   text: string;
+  /** The tags folded when the case is first shown, and the gist that fold should give. */
+  fold?: string[];
+  gist?: string;
 }
 export interface PlaygroundConf {
   conf: unknown;
@@ -44,6 +50,35 @@ export function segments([a, b]: Span, cols: number): { line: number; from: numb
     out.push({ line, from: Math.max(a, line * cols) - line * cols, to: Math.min(b, (line + 1) * cols) - line * cols });
   }
   return out;
+}
+
+/** The tree, one entry per node but `doc`, indented two spaces per depth: tag, span, twins, value, the node's text. */
+function walk(doc: Node, text: string): { node: Node; line: string }[] {
+  const out: { node: Node; line: string }[] = [];
+  const visit = (n: Node, depth: number) => {
+    const also = n.also ? ` also=${n.also.join(',')}` : '';
+    const value = n.value !== undefined ? ` value=${JSON.stringify(n.value)}` : '';
+    out.push({ node: n, line: `${'  '.repeat(depth)}${n.tag} (${n.start}, ${n.end})${also}${value} ${JSON.stringify(text.slice(n.start, n.end))}` });
+    for (const c of n.children) visit(c, depth + 1);
+  };
+  for (const c of doc.children) visit(c, 0);
+  return out;
+}
+export const treeLines = (doc: Node, text: string): string[] => walk(doc, text).map((x) => x.line);
+
+/** The spans of the leaves the fold hides, adjacent ones merged. */
+export function greyed(doc: Node, fold: Fold): Span[] {
+  const out = hidden(doc, fold);
+  const spans: [number, number][] = [];
+  const visit = (n: Node) => {
+    if (n.children.length) return n.children.forEach(visit);
+    if (!out.has(n)) return;
+    const last = spans[spans.length - 1];
+    if (last && last[1] === n.start) last[1] = n.end;
+    else spans.push([n.start, n.end]);
+  };
+  doc.children.forEach(visit);
+  return spans;
 }
 
 const COLS = 90;
@@ -92,6 +127,15 @@ const STYLE = `
 .fewrd-pg .fewrd-tip { position: fixed; z-index: 10; padding: 4px 8px; border-radius: 4px; background: #1c1c20; color: #f2f2f4; font: 12px var(--mono); pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px #0006; }
 .fewrd-pg .fewrd-tip[hidden] { display: none; }
 .fewrd-pg .fewrd-failed { color: #b3261e; font-size: 12px; }
+.fewrd-pg .fewrd-panel { margin-top: 16px; }
+.fewrd-pg .fewrd-tree { margin: 0; max-height: 280px; overflow: auto; font: 12px/1.5 var(--mono); font-variant-ligatures: none; }
+.fewrd-pg .fewrd-tree div { white-space: pre; }
+.fewrd-pg .fewrd-tree .fewrd-water { opacity: .45; }
+.fewrd-pg .fewrd-tags { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 12px var(--mono); }
+.fewrd-pg .fewrd-tags label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.fewrd-pg .fewrd-gist { margin: 10px 0 0; padding: 8px 10px; border-radius: 4px; background: color-mix(in srgb, currentColor 7%, transparent); font: 13px/1.5 var(--mono); white-space: pre-wrap; }
+.fewrd-pg .fewrd-verdict { margin-top: 4px; font-size: 12px; opacity: .7; }
+.fewrd-pg .fewrd-grey { opacity: .25; text-decoration: line-through; }
 @media (prefers-color-scheme: dark) {
   .fewrd-pg .fewrd-errors, .fewrd-pg .fewrd-failed { color: #f2b8b5; }
   .fewrd-pg .fewrd-tip { background: #f2f2f4; color: #1c1c20; }
@@ -131,6 +175,8 @@ export function mount(
     }),
   );
   let index = 0;
+  /** The tags ticked in the fold panel, per case; seeded from the case's own `fold`, kept until the page reloads. */
+  const folds = new Map<number, Set<string>>();
 
   const confTitle = h('h2');
   const editor = h('textarea');
@@ -161,11 +207,67 @@ export function mount(
     );
   };
 
+  /** The tree list and the fold panel of one case; a box changes only the gist and the greying. */
+  function panels(c: PlaygroundCase, compiled: { tags: Record<string, unknown> }, doc: Node, texts: HTMLElement[]): HTMLElement[] {
+    const tags = Object.keys(compiled.tags);
+    const checked = folds.get(index) ?? new Set(c.fold ?? []);
+    folds.set(index, checked);
+    for (const t of checked) if (!tags.includes(t)) checked.delete(t);
+
+    const tree = h('div', 'fewrd-tree');
+    tree.append(...walk(doc, c.text).map(({ node, line }) => h('div', node.tag === 'text' ? 'fewrd-water' : undefined, line)));
+    const treePanel = h('section', 'fewrd-panel');
+    treePanel.append(h('h2', undefined, 'tree'), tree);
+
+    const out = h('pre', 'fewrd-gist');
+    const verdict = h('div', 'fewrd-verdict');
+    const paint = () => {
+      const fold: Fold = (n) => checked.has(n.tag);
+      out.textContent = gist(doc, fold);
+      const same = c.fold !== undefined && c.fold.length === checked.size && c.fold.every((t) => checked.has(t));
+      verdict.textContent = c.gist === undefined || !same ? '' : out.textContent === c.gist ? "matches the case's gist" : `differs from the case's gist: ${c.gist}`;
+      // The hidden leaves, greyed on the grid: each line's text is cut into plain and grey pieces.
+      const pieces = texts.map(() => [] as [number, number][]);
+      for (const span of greyed(doc, fold)) for (const { line, from, to } of segments(span, COLS)) pieces[line]?.push([from, to]);
+      texts.forEach((el, i) => {
+        const line = c.text.slice(i * COLS, (i + 1) * COLS);
+        const parts: (string | HTMLElement)[] = [];
+        let at = 0;
+        for (const [from, to] of pieces[i]) {
+          if (from > at) parts.push(line.slice(at, from));
+          parts.push(h('span', 'fewrd-grey', line.slice(from, to)));
+          at = to;
+        }
+        if (at < line.length) parts.push(line.slice(at));
+        el.replaceChildren(...parts);
+      });
+    };
+    const boxes = h('div', 'fewrd-tags');
+    for (const tag of tags) {
+      const box = h('input');
+      box.type = 'checkbox';
+      box.checked = checked.has(tag);
+      box.addEventListener('change', () => {
+        if (box.checked) checked.add(tag);
+        else checked.delete(tag);
+        paint();
+      });
+      const label = h('label');
+      label.append(box, tag);
+      boxes.append(label);
+    }
+    const foldPanel = h('section', 'fewrd-panel');
+    foldPanel.append(h('h2', undefined, 'fold'), boxes, out, verdict);
+    paint();
+    return [treePanel, foldPanel];
+  }
+
   function draw(c: PlaygroundCase) {
     const d = domains.get(c.conf);
     if (!d) return body.replaceChildren(h('div', 'fewrd-failed', `no conf named "${c.conf}"`));
     try {
-      const rows = [...find(c.text, d.compiled).all()].filter(([, [a, b]]) => b > a);
+      const chart = find(c.text, d.compiled);
+      const rows = [...chart.all()].filter(([, [a, b]]) => b > a);
       const lines = Array.from({ length: Math.max(1, Math.ceil(c.text.length / COLS)) }, (_, i) => {
         const line = h('div', 'fewrd-line');
         const text = h('div', 'fewrd-text', c.text.slice(i * COLS, (i + 1) * COLS));
@@ -219,6 +321,11 @@ export function mount(
         legend.append(chip);
       }
       body.replaceChildren(drawing, legend);
+      try {
+        body.append(...panels(c, d.compiled, dom(c.text, chart, d.compiled), lines.map((l) => l.text)));
+      } catch (e) {
+        body.append(h('div', 'fewrd-failed', `could not build the tree: ${message(e)}`));
+      }
     } catch (e) {
       body.replaceChildren(h('div', 'fewrd-failed', `could not find: ${message(e)}`));
     }

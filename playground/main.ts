@@ -6,8 +6,8 @@ import common from '../confs/common.json' with { type: 'json' };
 import itPaCases from '../cases/it-pa.json' with { type: 'json' };
 import commonCases from '../cases/common.json' with { type: 'json' };
 
-// Twenty cases, grouped by domain: twelve Italian, then the eight common ones.
+// Twenty-one cases, grouped by domain: thirteen Italian, then the eight common ones.
 mount(document.getElementById('app')!, {
   confs: { 'it-pa': { conf: itPa, resolvers: itPaResolvers }, common: { conf: common, resolvers: commonResolvers } },
-  cases: [...itPaCases.slice(0, 12), ...commonCases].slice(0, 20),
+  cases: [...itPaCases, ...commonCases],
 });
