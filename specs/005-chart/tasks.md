@@ -153,8 +153,8 @@ All tests in this phase go in `test/find.test.ts`, import from `../src/index.ts`
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [x] T023 Create `CHANGELOG.md` with an `## Unreleased: the rewrite, phase 1` entry (`changelog-entry`): added (conf format, `compile`, `Chart`, `rel`, `find`, the chart playground, the Italian conf `it-pa@3`); removed (`read`, `gist`, `html`, `shown`, books, recipes, `Mention`/`Leaf`/`Cuts`/`Fold`, `book.schema.json`, the old `mount` options); version unchanged until release. **Test**: none beyond review; it is prose.
-- [ ] T024 Final pass over `specs/005-chart/spec.md`: no "not yet run" mark remains (the worked-examples success criterion); Open points updated with anything learned in implementation. **Test**: `grep -n "not yet run" specs/005-chart/spec.md` finds nothing.
-- [ ] T025 Full gate: `pnpm typecheck`, `pnpm test`, and `pnpm build` (checks both public entries build; `dist/` stays gitignored); `package.json` `dependencies` still empty and no devDependency added (`zero-dependencies`). **Test**: the three commands pass.
+- [x] T024 Final pass over `specs/005-chart/spec.md`: no "not yet run" mark remains (the worked-examples success criterion); Open points updated with anything learned in implementation. **Test**: `grep -n "not yet run" specs/005-chart/spec.md` finds nothing.
+- [x] T025 Full gate: `pnpm typecheck`, `pnpm test`, and `pnpm build` (checks both public entries build; `dist/` stays gitignored); `package.json` `dependencies` still empty and no devDependency added (`zero-dependencies`). **Test**: the three commands pass.
 
 **Checkpoint**: commit `chore: changelog, final gate`.
 

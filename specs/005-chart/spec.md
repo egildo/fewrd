@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-29
 
-**Status**: Draft
+**Status**: Implemented; every worked example and the Italian table run as tests
 
 **Input**: User description: "Phase 1 of the fewrd rewrite: the finding half. Conf types and compile, the Chart, find(text, conf) to a fixpoint, the Italian conf in the new format, a brat-style chart playground, README for the finding half. Per specs/rewrite-brief.md."
 
