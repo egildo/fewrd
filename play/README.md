@@ -1,8 +1,8 @@
 # fewrd-play
 
-Open a local [fewrd](https://github.com/egildo/fewrd) book in the fewrd
-playground: edit the recipes live, watch every sample text re-read as you
-type, save the book back to disk.
+Open a local [fewrd](https://github.com/egildo/fewrd) conf in the fewrd
+playground: edit the conf live, watch every sample text found again as you
+type, see the chart, the tree and the gist under a fold you tick.
 
 A dev tool, packaged apart from `fewrd` so none of it ships with your code.
 No dependencies: it serves the `fewrd` your project already has installed.
@@ -11,24 +11,30 @@ No dependencies: it serves the `fewrd` your project already has installed.
 npm install -D fewrd-play
 ```
 ```bash
-npx fewrd-play path/to/book --open
+npx fewrd-play path/to/folder --open
 ```
 
 ## The folder
 
 ```
-path/to/book/
-  book.json          the recipes (fewrd's BookData); the save button writes it back
-  cases.json         sample texts: [{ "name": "refund", "text": "Refund approved - SKU: abc-1234" }]
+path/to/folder/
+  conf.json          the conf, as data
+  cases.json         sample texts: [{ "name": "refund", "text": "Refund approved - SKU: abc-1234", "fold": ["sku"], "gist": "Refund approved" }]
   cases.local.json   more texts, e.g. real ones you keep out of git (optional)
   resolvers.ts       named resolvers (optional)
 ```
 
+A case's `fold` (a list of tags) and `gist` (the text expected under it) are
+optional: with them, the fold panel opens with those tags ticked and says
+whether the gist matches. A case may also name its `conf`; without it, it uses
+the folder's one conf. The edits you make in the page are not written back:
+copy the conf out of the editor when you are happy with it.
+
 ```ts
 // resolvers.ts
-import type { Resolver } from 'fewrd';
+import type { Resolve } from 'fewrd';
 
-export const resolvers: Record<string, Resolver> = {
+export const resolvers: Record<string, Resolve> = {
   upper: (p) => p.value.toUpperCase(),
 };
 ```
@@ -48,7 +54,7 @@ fewrd-play [dir] [--port 4747] [--open]
 ```
 
 The server listens on 127.0.0.1 only. It serves the folder's `.json`, `.ts`
-and `.js` files and nothing else, and writes nothing but `book.json`.
+and `.js` files and nothing else, and writes nothing.
 
 ## License
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// fewrd-play <dir>: open a book folder in the fewrd playground.
+// fewrd-play <dir>: open a conf folder in the fewrd playground.
 
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -9,9 +9,10 @@ import { locateFewrd, play } from './server.ts';
 
 const USAGE = `usage: fewrd-play [dir] [--port 4747] [--open]
 
-Serves the fewrd playground for a book folder on localhost:
-  book.json          the recipes (saved back when you press save)
-  cases.json         sample texts: [{ "name": "…", "text": "…" }]
+Serves the fewrd playground for a conf folder on localhost:
+  conf.json          the conf, as data
+  cases.json         sample texts: [{ "name": "…", "text": "…", "fold": ["tag"], "gist": "…" }]
+                     (fold and gist are optional)
   cases.local.json   more texts, e.g. real ones kept out of git (optional)
   resolvers.ts|js    export const resolvers = { … }, or a default export (optional)
 
@@ -45,7 +46,7 @@ if (values.help) {
 }
 
 const dir = resolve(positionals[0] ?? '.');
-if (!existsSync(join(dir, 'book.json'))) fail(`no book.json in ${dir}\n\n${USAGE}`);
+if (!existsSync(join(dir, 'conf.json'))) fail(`no conf.json in ${dir}\n\n${USAGE}`);
 const port = Number(values.port);
 if (!Number.isInteger(port) || port < 0 || port > 65535) fail(`not a port: ${values.port}`);
 

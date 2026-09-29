@@ -1,15 +1,15 @@
-// fewrd-play: serve the fewrd playground for a folder holding a book —
-// book.json, cases.json (+ cases.local.json), resolvers.ts|js — on localhost.
+// fewrd-play: serve the fewrd playground for a folder holding a conf —
+// conf.json, cases.json (+ cases.local.json), resolvers.ts|js — on localhost.
 // Dev tooling only: its own package, so the fewrd library ships as it is.
 
-import { createServer, type IncomingMessage, type Server } from 'node:http';
-import { readFile, writeFile } from 'node:fs/promises';
+import { createServer, type Server } from 'node:http';
+import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import * as nodeModule from 'node:module';
 import { basename, dirname, extname, join, resolve, sep } from 'node:path';
 
 export interface PlayOptions {
-  /** The book folder. */
+  /** The folder holding conf.json. */
   dir: string;
   /** Where fewrd's built index.js and playground.js live. Default: the fewrd installed where `dir` is. */
   fewrd?: string;
@@ -54,24 +54,17 @@ async function cases(root: string): Promise<unknown[]> {
   const all: unknown[] = [];
   for (const name of ['cases.json', 'cases.local.json']) {
     const list = await readJson(join(root, name), []);
-    if (!Array.isArray(list)) throw new Error(`${name}: must be an array of { "name", "text" }`);
+    if (!Array.isArray(list)) throw new Error(`${name}: must be an array of { "name", "text", "fold"?, "gist"? }`);
     all.push(...list);
   }
   return all;
 }
 
-async function body(req: IncomingMessage): Promise<string> {
-  let text = '';
-  for await (const chunk of req) {
-    text += chunk;
-    if (text.length > 5_000_000) throw new Error('too large for a book');
-  }
-  return text;
-}
-
-/** The page: an import map onto the installed fewrd, then mount() with the folder's book, cases and resolvers. */
+/** The page: an import map onto the installed fewrd, then mount() with the folder's conf, cases and resolvers. */
 export function page(title: string, resolvers?: string): string {
   const load = resolvers ? `import('/${resolvers}')` : 'null';
+  // The folder's name keys its one conf; escaped so it cannot close the script.
+  const name = JSON.stringify(title).replace(/</g, '\\u003c');
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -83,14 +76,7 @@ export function page(title: string, resolvers?: string): string {
   body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: #1d1d1f; background: #fafafa; }
   header { padding: 12px 16px; background: #fff; border-bottom: 1px solid #e5e5ea; }
   h1 { margin: 0; font-size: 18px; }
-  main { max-width: 880px; margin: 0 auto; padding: 16px; }
-  .fewrd-case, .fewrd-trial { background: #fff; border: 1px solid #e5e5ea; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
-  h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #6e6e73; }
-  textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px; border: 1px solid #e5e5ea; border-radius: 6px; }
-  .fewrd-gist, details { font-size: 13px; color: #6e6e73; }
-  pre { max-height: 240px; overflow: auto; }
-  table { border-collapse: collapse; width: 100%; }
-  td, th { text-align: left; padding: 2px 6px; border-bottom: 1px solid #e5e5ea; }
+  main { padding: 16px 24px; }
 </style>
 </head>
 <body>
@@ -105,12 +91,12 @@ const json = async (path) => {
   return r.json();
 };
 try {
-  const [data, cases, mod] = await Promise.all([json('/book.json'), json('/cases.json'), ${load}]);
-  const save = async (text) => {
-    const r = await fetch('/book.json', { method: 'POST', body: text });
-    if (!r.ok) throw new Error(await r.text());
-  };
-  mount(app, { data, cases, resolvers: mod?.resolvers ?? mod?.default ?? {}, save });
+  const name = ${name};
+  const [conf, cases, mod] = await Promise.all([json('/conf.json'), json('/cases.json'), ${load}]);
+  mount(app, {
+    confs: { [name]: { conf, resolvers: mod?.resolvers ?? mod?.default ?? {} } },
+    cases: cases.map((c) => ({ conf: name, ...c })),
+  });
 } catch (e) {
   app.style.color = '#b3261e';
   app.textContent = e instanceof Error ? e.message : String(e);
@@ -122,8 +108,8 @@ try {
 }
 
 /**
- * A server for one book folder. Bind it to localhost only: it serves the
- * folder's .ts/.js/.json files and writes book.json on save.
+ * A server for one conf folder. Bind it to localhost only: it serves the
+ * folder's .ts/.js/.json files and writes nothing.
  */
 export function play({ dir, fewrd = locateFewrd(dir) }: PlayOptions): Server {
   const root = resolve(dir);
@@ -136,16 +122,6 @@ export function play({ dir, fewrd = locateFewrd(dir) }: PlayOptions): Server {
     try {
       const path = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
 
-      if (req.method === 'POST' && path === '/book.json') {
-        const text = await body(req);
-        try {
-          JSON.parse(text);
-        } catch (e) {
-          return send(400, 'text/plain', `book.json not saved: ${e instanceof Error ? e.message : String(e)}`);
-        }
-        await writeFile(join(root, 'book.json'), text.endsWith('\n') ? text : `${text}\n`);
-        return send(200, 'text/plain', 'saved');
-      }
       if (req.method !== 'GET') return send(405, 'text/plain', 'method not allowed');
 
       if (path === '/') return send(200, 'text/html', page(basename(root), RESOLVERS.find((f) => existsSync(join(root, f)))));
