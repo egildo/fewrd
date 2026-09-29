@@ -18,17 +18,15 @@
 
 ---
 
-## Why
-
-Every document an Italian public administration files has a subject line, its *oggetto*, and people fill it with whatever a register might ask for: a protocol number, the date it was given, a CIG or CUP code, a budget chapter. In a list of two hundred documents the subjects read as a wall of numbers, and the words that say what each document is about are somewhere in the middle.
+A subject line from an Italian public administration, as filed:
 
 > PEC: Prot. n. 0018842 del 12/09/2026 - Richiesta informazioni sullo stato della pratica di rimborso - Comune di Bosa
 
-fewrd finds the protocol number together with its label and the channel it came through, finds the date and the little word that joins it on, and lets the reader fold all of that away:
+The same line, with the protocol reference folded away:
 
 > Richiesta informazioni sullo stato della pratica di rimborso - Comune di Bosa
 
-Nothing is thrown away. The protocol is still there as `0018842` and the date as `2026-09-12`, for whoever wants them; the dash that used to follow the date went with it, and no stray separator is left behind. An inbox line works the same way, here with the `Re:`/`Fwd:` chain and the ticket key folded:
+Nothing was thrown away. The protocol is still there as `0018842` and the date as `2026-09-12`, the word `del` that joined the date on went with it, and no dash was left dangling. An inbox line works the same way, with the `Re:`/`Fwd:` chain and the ticket key folded:
 
 > Re: Fwd: Invoice INV-2026-0042 for $1,250.00 due 2026-10-15
 >
@@ -36,9 +34,15 @@ Nothing is thrown away. The protocol is still there as `0018842` and the date as
 
 while the amount reads as `1250.00 USD` and the due date as `2026-10-15`.
 
-What recurs is described in a **conf**, a JSON file of named patterns that a domain expert can read and edit.
+You describe what recurs in a **conf**, a JSON file of named patterns that a domain expert can read and edit. fewrd does the rest in two halves:
 
-fewrd works in two halves. `find` looks at a text with a conf and makes a **chart** of everything the conf can see, choosing nothing. `dom` picks one reading from the chart and returns it as a **tree** of plain objects, and `gist` folds the tree down to the words the reader keeps. Rendering the tree is yours; fewrd stops at data. The parts and the boundaries between them are drawn in [docs/architecture.md](docs/architecture.md); what fewrd is for, and what it deliberately is not, is in [docs/vision.md](docs/vision.md).
+```
+text + conf  →  find  →  chart      every row every pattern can see, nothing chosen   (cacheable)
+chart        →  dom   →  tree       one reading: nodes, values, roles, water
+tree + fold  →  gist  →  text       what the reader keeps, punctuation tidied
+```
+
+Rendering the tree is yours. fewrd stops at data.
 
 ## Install
 
@@ -46,13 +50,10 @@ fewrd works in two halves. `find` looks at a text with a conf and makes a **char
 npm install fewrd
 ```
 
-```bash
-pnpm add fewrd
-```
-
 ESM only, zero dependencies, types included. Runs in current Node and in any current browser or bundler.
 
-**Status:** what this README describes is unreleased. npm still has 0.3.0, the older book-and-recipes API; the [changelog](CHANGELOG.md) says what changed and how to upgrade. Until the next release, build this repository (`pnpm install && pnpm build`) and depend on the checkout.
+> [!IMPORTANT]
+> What this README describes is unreleased. npm still has 0.3.0, the older book-and-recipes API; the [changelog](CHANGELOG.md) says what changed and how to upgrade. Until the next release, build this repository (`pnpm install && pnpm build`) and depend on the checkout.
 
 ## Quick start
 
@@ -121,13 +122,25 @@ Refund approved - SKU: abc-1234 - customer notified
 
 `value` is what the `upper` resolver made of the row, and `attrs.label` is the node the search took for the atom it called `label`. Folding `sku` dropped the labelled code and one of the two dashes that were left side by side; folding nothing gives the text back.
 
+## How it thinks
+
+**The chart chooses nothing.** `find` keeps every row every pattern can produce, overlapping ones included, and it depends on the text and the conf alone. So a chart can be cached by text and conf version, and any number of readings can be built from one.
+
+**The tree is one reading.** `dom` walks the chart's rows in a fixed order, keeps those that do not cross, re-runs each composed row's search to bind its roles, resolves values bottom-up, and fills the gaps with water. No two nodes cross; the leaves cover the text exactly once.
+
+**The fold is a policy plus three fates.** A fold is a function from a node to a boolean. What it hides, the fates tidy up: a connector goes with what it introduced, a bracket empties out, and of the separators left side by side only the strongest survives.
+
+The parts and the boundaries are drawn in [docs/architecture.md](docs/architecture.md); what fewrd is for, and what it deliberately is not, is in [docs/vision.md](docs/vision.md); every christened name is in the [glossary](docs/glossary.md).
+
 ## The conf
 
 A conf is JSON, so it diffs, reviews and validates like any config. Its top level has three keys:
 
-- `version`: Required. It keys a cached chart, so change it whenever a change to the conf can change what `find` returns.
-- `patterns`: Named regular-expression sources, spliced into other patterns as `%{NAME}`.
-- `tags`: Required. A map from tag name to tag. Its key order is a priority, which the library reads in one place only (below).
+| key | holds |
+|---|---|
+| `version` | Required. Keys a cached chart: change it whenever a change to the conf can change what `find` returns. |
+| `patterns` | Named regular-expression sources, spliced into other patterns as `%{NAME}`. |
+| `tags` | Required. A map from tag name to tag. Its key order is a priority, read in one place only (below). |
 
 **Patterns** are regex literals in a string, `"/source/flags"`, and JSON doubles the backslashes. `%{NAME}` splices in a named pattern as one group, so an `a|b` inside never leaks out, and named patterns may use each other. `%\{` is a literal `%{`. A named pattern inside a `[…]` character class is not supported.
 
@@ -149,9 +162,11 @@ A conf is JSON, so it diffs, reviews and validates like any config. Its top leve
 
 **An atom** is one of:
 
-- `{ "tag": "sep" }`, a row of that tag;
-- `{ "tag": ["w", "n"] }`, a row of any tag in the list;
-- `{ "rx": "/…/u" }`, a stretch of the text itself.
+| atom | takes |
+|---|---|
+| `{ "tag": "sep" }` | a row of that tag |
+| `{ "tag": ["w", "n"] }` | a row of any tag in the list |
+| `{ "rx": "/…/u" }` | a stretch of the text itself |
 
 Either kind may carry `"as": "name"`, which binds what the atom took to a **role** of that name, and `"optional": true`, which lets the search try the sequence with and without the atom. The outermost atom (the last in the list) may not be optional, and two regex atoms may not meet (merge them into one pattern).
 
@@ -159,17 +174,22 @@ Either kind may carry `"as": "name"`, which binds what the atom took to a **role
 
 **`resolve`** names a function you pass to `compile`, the only code a conf ever reaches. A **resolver** gets `{ value, ...roles }`, where `value` is the row's own text and each role is the value of the row its atom took if that row's tag resolves, its text otherwise. It returns a string, the row's value, or `null` for "not this tag after all". Resolvers see the normalised text (NFKC, dashes as `-`, straight quotes, every run of whitespace as one space), and they must be pure, since both halves ask them. Nothing in the JSON is evaluated.
 
-**`weak`** and **`fate`** are read only when `dom` chooses. A `weak` tag's rows fill only what the others leave. `fate` marks a tag the fold treats specially, and takes three values:
+**`weak`** and **`fate`** are read only when `dom` chooses. A `weak` tag's rows fill only what the others leave. `fate` marks a tag the fold treats specially:
 
-- `"separator"`: Glue between words: spaces, dashes, commas. The fold keeps the strongest one where it cut.
-- `"connector"`: A word that joins what follows it on: `del`, `sul`, `per il`. It folds when what it joins folds.
-- `"bracket"`: A pair of delimiters and what they hold, like `"paren": { "rx": "/\\(.*?\\)/su", "fate": "bracket" }`. It goes when everything inside it goes.
+| fate | what it marks | what the fold does |
+|---|---|---|
+| `separator` | glue between words: spaces, dashes, commas | keeps the strongest one where it cut |
+| `connector` | a word that joins what follows it on: `del`, `sul`, `per il` | folds it when what it joins folds |
+| `bracket` | a pair of delimiters and what they hold, `"paren": { "rx": "/\\(.*?\\)/su", "fate": "bracket" }` | empties it when everything inside goes |
 
 **Key order is priority.** When two rows tie in `dom`, the tag whose key comes earlier in `tags` wins. `find` never reads the order: reorder the keys and the chart is the same.
 
 **Alternatives go longest-first.** The scan offers one match per start position, and a match the word guard rejects (one that would start or end inside a word, see the rules of finding) is not retried shorter, so write `protocollo|prot`, never `prot|protocollo`.
 
-**Compile errors** come back as a list of `{ path, tag, message }`, and `compile` never throws. A tag with any error is left out, every other tag keeps working, and a reference to a left-out tag simply finds nothing:
+**Compile errors** come back as a list of `{ path, tag, message }`, and `compile` never throws. A tag with any error is left out, every other tag keeps working, and a reference to a left-out tag simply finds nothing.
+
+<details>
+<summary>What the errors look like</summary>
 
 ```ts
 import { compile } from 'fewrd';
@@ -195,6 +215,8 @@ tags.price.search[0].forward[0].optinal (price): unknown key "optinal"
 ```
 
 The other errors it reports: a tag with both or neither of `rx` and `search`, a search with both or neither of `back` and `forward`, a pattern that is not `/source/flags` or that the regex engine rejects, a circular `%{NAME}`, a reserved name declared as a tag or used as a role, a `fate` that is none of the three, a wrong type, an optional outermost atom, and two regex atoms that could meet.
+
+</details>
 
 ## The rules of finding
 
@@ -256,7 +278,19 @@ A chart is a `Chart`, a map from tag to its rows, and nothing else: no values, n
 - it is immutable: `chart.with(rows)` returns a new chart and shares the tag lists it did not touch;
 - `Chart.from(chart.toJSON())` is the same chart, and the JSON form (tags in code-unit order) survives `JSON.stringify` and `JSON.parse` unchanged.
 
-Because it depends on the text and the conf only, you can cache a chart by the text and `conf.version`, and build any number of trees from it. It answers a few questions. On the chart of the quick start:
+Because it depends on the text and the conf only, you can cache a chart by the text and `conf.version`, and build any number of trees from it. It answers a few questions:
+
+| query | answers |
+|---|---|
+| `has(tag, start, end)` | whether that row is in the chart |
+| `after(tag, pos)`, `before(tag, pos)` | the first span of the tag starting at or after `pos`; the last one ending at or before it. `*` stands for any tag, as in atoms |
+| `spans(tag)`, `all()`, `size()` | one tag's rows; every row in position order; how many rows there are, `^` and `$` included |
+| `edges()` | every row laid out by where it starts and where it ends, the question the matcher asks. `edges(rows)` does the same for any subset |
+| `with(rows)`, `toJSON()`, `Chart.from(json)` | a new chart with rows added; the plain form; the chart back from it |
+| `rel(a, b)` | the **Allen relation** of one span to another: one of thirteen names for how two intervals sit (`before`, `meets`, `overlaps`, `starts`, `during`, `finishes`, `equals` and their inverses). The text's edges meet the rows that touch them |
+
+<details>
+<summary>On the chart of the quick start</summary>
 
 ```ts
 import { Chart, rel } from 'fewrd';
@@ -290,14 +324,7 @@ true
 finished-by meets meets
 ```
 
-What each one answers:
-
-- `has(tag, start, end)`: Whether that row is in the chart.
-- `after(tag, pos)`, `before(tag, pos)`: The first span of the tag starting at or after `pos`, the last one ending at or before it. `*` stands for any tag, as in atoms.
-- `spans(tag)`, `all()`, `size()`: One tag's rows; every row, in position order; how many rows there are, `^` and `$` included.
-- `edges()`: Every row laid out by where it starts and where it ends (`starts` and `ends`, two maps from position to rows), which is the question the matcher asks. The function `edges(rows)` does the same for any subset of rows.
-- `with(rows)`, `toJSON()`, `Chart.from(json)`: A new chart with rows added; the plain form; the chart back from it.
-- `rel(a, b)`: The **Allen relation** of one span to another: one of thirteen names for how two intervals sit (`before`, `meets`, `overlaps`, `starts`, `during`, `finishes`, `equals` and their inverses). The text's edges meet the rows that touch them.
+</details>
 
 ## The tree
 
@@ -316,20 +343,7 @@ type Node = {
 };
 ```
 
-A few lines print one, here the tree of the quick start:
-
-```ts
-import type { Node } from 'fewrd';
-
-const show = (n: Node, depth = 0): string[] => [
-  `${'  '.repeat(depth)}${n.tag} (${n.start},${n.end}) ${JSON.stringify(text.slice(n.start, n.end))}` +
-    (n.value !== undefined ? ` value=${JSON.stringify(n.value)}` : '') +
-    (n.also ? ` also=${n.also}` : '') +
-    Object.entries(n.attrs).map(([as, v]) => ` ${as}=${typeof v === 'string' ? JSON.stringify(v) : `${v.tag}(${v.start},${v.end})`}`).join(''),
-  ...n.children.flatMap((c) => show(c, depth + 1)),
-];
-console.log(show(doc).join('\n'));
-```
+The tree of the quick start, printed one node per line:
 
 ```
 doc (0,51) "Refund approved - SKU: abc-1234 - customer notified"
@@ -346,6 +360,24 @@ doc (0,51) "Refund approved - SKU: abc-1234 - customer notified"
   sep (42,43) " "
   text (43,51) "notified"
 ```
+
+<details>
+<summary>The few lines that printed it</summary>
+
+```ts
+import type { Node } from 'fewrd';
+
+const show = (n: Node, depth = 0): string[] => [
+  `${'  '.repeat(depth)}${n.tag} (${n.start},${n.end}) ${JSON.stringify(text.slice(n.start, n.end))}` +
+    (n.value !== undefined ? ` value=${JSON.stringify(n.value)}` : '') +
+    (n.also ? ` also=${n.also}` : '') +
+    Object.entries(n.attrs).map(([as, v]) => ` ${as}=${typeof v === 'string' ? JSON.stringify(v) : `${v.tag}(${v.start},${v.end})`}`).join(''),
+  ...n.children.flatMap((c) => show(c, depth + 1)),
+];
+console.log(show(doc).join('\n'));
+```
+
+</details>
 
 The `text` nodes are **water**, the stretches of text that no node of the conf's tags covers.
 
@@ -435,7 +467,7 @@ Folding nothing gives the text back, surrounding spaces included. Why a fate rid
 
 ## Rendering it yourself
 
-fewrd stops at the tree. Rendering both views from one tree takes a few lines of yours: `hidden` says which nodes the condensed view drops, and CSS does the switch.
+fewrd stops at the tree. Both views from one tree take a few lines of yours: `hidden` says which nodes the condensed view drops, and CSS does the switch.
 
 ```ts
 import { hidden, type Fold, type Node } from 'fewrd';
@@ -456,29 +488,24 @@ function html(doc: Node, fold: Fold): string {
 console.log(html(doc, (n) => n.tag === 'sku'));
 ```
 
-On the quick start's tree it prints:
-
-```
-Refund<span data-tag="sep"> </span>approved<span data-tag="sep"> - </span><span data-tag="sku" data-fold><span data-tag="sku-word" data-fold>SKU</span><span data-tag="sep" data-fold>: </span><span data-tag="sku-code" data-fold>abc-1234</span></span><span data-tag="sep" data-fold> - </span>customer<span data-tag="sep"> </span>notified
-```
-
 ```css
 .condensed [data-fold] { display: none }
 ```
 
 With the class `condensed` on the container the reader sees `Refund approved - customer notified`; without it, the whole text.
 
+<details>
+<summary>What it prints on the quick start's tree</summary>
+
+```
+Refund<span data-tag="sep"> </span>approved<span data-tag="sep"> - </span><span data-tag="sku" data-fold><span data-tag="sku-word" data-fold>SKU</span><span data-tag="sep" data-fold>: </span><span data-tag="sku-code" data-fold>abc-1234</span></span><span data-tag="sep" data-fold> - </span>customer<span data-tag="sep"> </span>notified
+```
+
+</details>
+
 ## Playground
 
-`pnpm dev` opens the playground on twenty-one cases from two domains, thirteen Italian subjects and eight inbox lines, each found with its own conf (`confs/it-pa.json`, `confs/common.json`). One case shows at a time.
-
-- **The bar** stays on screen while you scroll: ‹ and › step through the cases (so do the ← → keys, outside the editor and the menus), `n / 21` says where you are, a menu jumps to any case, grouped by conf, and a switch cycles the theme through auto, light and dark and remembers it.
-- **The grid** sets the text in a monospace font, one character to a cell, wrapped at spaces to the width of the page. Every row of the chart is an underline in its tag's colour with a tick at each end, and rows that overlap stack in lanes below the line. Rows the tree did not keep are drawn thinner.
-- **The popover.** Hover a band, or Tab to the bands and move along them with ↑ ↓, and a popover above the line gives its tag, its span, its value when it has one, and says when it is a twin or was not kept by the tree. The characters it covers light up, and so does its row in the tree.
-- **The gist** comes next: the folded text, the characters it saves, and, when the fold is the case's own, whether it matches the gist the case expects.
-- **The tag chips**, one per tag of the conf, the tags this tree holds first. Hovering a chip lights that tag's rows on the grid and in the tree; a click keeps it lit, several at once. The eye on the chip folds the tag out of the gist, and the hidden text is struck through on the grid. Tags that are not in this tree are listed after them as plain labels that do nothing. Reset returns to the case's own fold.
-- **The tree** is the `dom` of the case, one line per node with its tag, span, `also`, value and text; hovering a line lights its span on the grid.
-- **The conf editor** recompiles the conf as you type and finds the case again. From 1700 px wide it is a pane on the left; below that it is a drawer opened from the bar, where a badge counts the errors while it is closed. Broken JSON keeps the last good chart on screen; compile errors are listed with their paths, and the tags that compiled are drawn.
+`pnpm dev` opens the playground on twenty-one cases from two domains, thirteen Italian subjects and eight inbox lines, each found with its own conf (`confs/it-pa.json`, `confs/common.json`). One case shows at a time: the text on a character grid with every row of the chart drawn as an underline in its tag's colour, stacked in lanes where rows overlap; a popover with tag, span and value on hover; the gist; the tags as chips that light their rows on hover, keep them lit on click, and fold with an eye; the tree; and the conf editor, a pane on the left from 1700 px wide and a drawer below that, recompiling as you type with errors listed by path.
 
 Or mount it in a page of your own:
 
@@ -492,7 +519,22 @@ mount(document.getElementById('app')!, {
 });
 ```
 
-`confs` are named confs, as data, with their resolvers; every case names the conf it is found with, and may carry the `fold` it opens with and the `gist` that fold should give. The playground injects its own scoped styles and needs no stylesheet. It names Inter, JetBrains Mono and Material Symbols Rounded first and falls back to system fonts and text glyphs; `playground/index.html` loads them from Google Fonts for development only. The design, its states and its colour tokens are in [docs/playground.md](docs/playground.md).
+`confs` are named confs, as data, with their resolvers; every case names the conf it is found with, and may carry the `fold` it opens with and the `gist` that fold should give. The playground injects its own scoped styles and needs no stylesheet. It names Inter, JetBrains Mono and Material Symbols Rounded first and falls back to system fonts and text glyphs; `playground/index.html` loads them from Google Fonts for development only.
+
+<details>
+<summary>Every control, in detail</summary>
+
+- **The bar** stays on screen while you scroll: ‹ and › step through the cases (so do the ← → keys, outside the editor and the menus), `n / 21` says where you are, a menu jumps to any case, grouped by conf, and a switch cycles the theme through auto, light and dark and remembers it.
+- **The grid** sets the text in a monospace font, one character to a cell, wrapped at spaces to the width of the page. Every row of the chart is an underline in its tag's colour with a tick at each end, and rows that overlap stack in lanes below the line. Rows the tree did not keep are drawn thinner.
+- **The popover.** Hover a band, or Tab to the bands and move along them with ↑ ↓, and a popover above the line gives its tag, its span, its value when it has one, and says when it is a twin or was not kept by the tree. The characters it covers light up, and so does its row in the tree.
+- **The gist** comes next: the folded text, the characters it saves, and, when the fold is the case's own, whether it matches the gist the case expects.
+- **The tag chips**, one per tag of the conf, the tags this tree holds first. Hovering a chip lights that tag's rows on the grid and in the tree; a click keeps it lit, several at once. The eye on the chip folds the tag out of the gist, and the hidden text is struck through on the grid. Tags that are not in this tree are listed after them as plain labels that do nothing. Reset returns to the case's own fold.
+- **The tree** is the `dom` of the case, one line per node with its tag, span, `also`, value and text; hovering a line lights its span on the grid.
+- **The conf editor** recompiles the conf as you type and finds the case again. From 1700 px wide it is a pane on the left; below that it is a drawer opened from the bar, where a badge counts the errors while it is closed. Broken JSON keeps the last good chart on screen; compile errors are listed with their paths, and the tags that compiled are drawn.
+
+The design, its states and its colour tokens are in [docs/playground.md](docs/playground.md).
+
+</details>
 
 ## fewrd-play
 
@@ -521,17 +563,13 @@ pnpm test        # node --test, TypeScript type-stripped: no build
 pnpm dev         # the playground, on http://localhost:5577
 ```
 
-That loop has no build step. `pnpm build`, run at publish and before running `fewrd-play` from a checkout, bundles the two public entries with vite into `dist/` and writes their types with `tsc`; `dist/` is never committed. The gate for any change is `pnpm typecheck` and `pnpm test`.
+That loop has no build step. `pnpm build`, run at publish and before running `fewrd-play` from a checkout, bundles the two public entries with vite into `dist/` and writes their types with `tsc`; `dist/` is never committed. The gate for any change is `pnpm typecheck` and `pnpm test`. It is developed on Node 25 and pnpm 10; the loop needs a Node that runs TypeScript files directly. There is no CI: the gate is run locally. One file runs on its own with `node --test test/fold.test.ts`.
 
-It is developed on Node 25 and pnpm 10; the loop needs a Node that runs TypeScript files directly. There is no CI: the gate is run locally. One file runs on its own with `node --test test/fold.test.ts`.
+**Tests.** The core rules are tested with small synthetic confs, one test per rule (`test/find.test.ts`, `test/dom.test.ts`, `test/fold.test.ts`). The two domain confs are tested through their cases: `test/it-pa.test.ts` and `test/common.test.ts` check the rows the cases must give, and `test/gist.test.ts` checks, for every case, that `gist(dom(text, find(text, conf), conf), fold)` is the gist it carries.
 
-The core rules are tested with small synthetic confs, one test per rule (`test/find.test.ts`, `test/dom.test.ts`, `test/fold.test.ts`). The two domain confs are tested through their cases: `test/it-pa.test.ts` and `test/common.test.ts` check the rows the cases must give, and `test/gist.test.ts` checks, for every case, that `gist(dom(text, find(text, conf), conf), fold)` is the gist it carries.
+**A domain** is a conf as data, `confs/<name>.json`; its resolvers, `confs/<name>.ts`, which compiles the conf and throws on any compile error; its cases, `cases/<name>.json`, each `{ name, conf, text, fold, gist }`; a test that reads them; and a line in `playground/main.ts`. Adding one never changes `src/`. A conf names its resolvers as strings, so a call-graph tool sees every resolver in `confs/*.ts` as never called; `compile` is what checks those names, and an unknown one is a compile error with a test of its own.
 
-A domain is a conf as data, `confs/<name>.json`; its resolvers, `confs/<name>.ts`, which compiles the conf and throws on any compile error; its cases, `cases/<name>.json`, each `{ name, conf, text, fold, gist }`; a test that reads them; and a line in `playground/main.ts`. Adding one never changes `src/`.
-
-A conf names its resolvers as strings, so a call-graph tool sees every resolver in `confs/*.ts` as never called. `compile` is what checks those names, and an unknown one is a compile error with a test of its own.
-
-The rules of finding, selection (under The tree) and the fold above are the single source of truth for `find`, `dom`, `hidden` and `gist`: a change to what those return changes these sections in the same branch. Work goes in rounds where the documents move first ([Docs move first](docs/principles.md#docs-move-first)); a round's spec, plan and tasks are written under `specs/` with the speckit skills in `.claude/skills/`. The badges are kept by hand: the test count from `pnpm test`, the size from `dist/index.js` gzipped after `pnpm build`. The design lives in `docs/`: the [vision](docs/vision.md), the [principles](docs/principles.md), the [architecture](docs/architecture.md), the [glossary](docs/glossary.md), the [decisions](docs/decisions/) and the [playground's design](docs/playground.md). The rounds that got here are recorded in `specs/`, starting from the [rewrite brief](specs/rewrite-brief.md).
+**Documents.** The rules of finding, selection (under The tree) and the fold above are the single source of truth for `find`, `dom`, `hidden` and `gist`: a change to what those return changes these sections in the same branch. Work goes in rounds where the documents move first ([Docs move first](docs/principles.md#docs-move-first)); a round's spec, plan and tasks are written under `specs/` with the speckit skills in `.claude/skills/`. The badges are kept by hand: the test count from `pnpm test`, the size from `dist/index.js` gzipped after `pnpm build`. The design lives in `docs/`: the [vision](docs/vision.md), the [principles](docs/principles.md), the [architecture](docs/architecture.md), the [glossary](docs/glossary.md), the [decisions](docs/decisions/) and the [playground's design](docs/playground.md). The rounds that got here are recorded in `specs/`, starting from the [rewrite brief](specs/rewrite-brief.md).
 
 ## License
 

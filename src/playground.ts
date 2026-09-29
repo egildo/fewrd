@@ -1,8 +1,9 @@
-// The playground: a conf editor and one case at a time, its text on a
-// character grid with every row of the chart drawn as an underline (stacked in
-// lanes where rows overlap), the row's tag and span shown on hover. Under the
-// chart, the tree as an indented list and a fold panel: one box per tag, the
-// gist under it, and the hidden leaves greyed out on the grid.
+// The playground: one case at a time, its text on a character grid with every
+// row of the chart drawn as an underline (stacked in lanes where rows overlap),
+// a popover with the row's tag, span and value on hover. Under the chart, the
+// gist, the tags as chips (hover lights a tag's rows, a click keeps them lit,
+// the eye folds the tag), the tree, and the conf editor as a left pane on wide
+// screens or a drawer below.
 
 import type { Span } from './chart.ts';
 import { compile, type CompileError, type Resolve } from './index.ts';
