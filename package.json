@@ -20,8 +20,7 @@
   "homepage": "https://github.com/egildo/fewrd#readme",
   "bugs": "https://github.com/egildo/fewrd/issues",
   "files": [
-    "dist",
-    "book.schema.json"
+    "dist"
   ],
   "exports": {
     ".": {
@@ -31,8 +30,7 @@
     "./playground": {
       "types": "./dist/types/playground.d.ts",
       "default": "./dist/playground.js"
-    },
-    "./book.schema.json": "./book.schema.json"
+    }
   },
   "scripts": {
     "test": "node --test \"test/*.test.ts\"",
