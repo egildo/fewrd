@@ -1,10 +1,11 @@
 {
-  "version": "common@1",
+  "version": "common@2",
   "patterns": {
     "CUR": "[$€£¥]|USD|EUR|GBP|CHF|JPY",
     "ISO_DATE": "\\d{4}-\\d{2}-\\d{2}",
     "TIME": "\\d{2}:\\d{2}(?::\\d{2})?(?:Z|[+-]\\d{2}:?\\d{2})?",
-    "OCTET": "\\d{1,3}"
+    "OCTET": "\\d{1,3}",
+    "SEP": "(?:\\s|[,;:](?=\\s|$)|(?<=^|\\s)-(?=\\s|$))+"
   },
   "tags": {
     "reply-chain": { "search": [
@@ -42,6 +43,8 @@
     "number": { "rx": "/(?<![\\p{L}\\p{N}.,])\\d+(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?/u" },
     "version-num": { "rx": "/\\d+\\.\\d+\\.\\d+(?:-[\\p{L}\\p{N}]+(?:\\.[\\p{L}\\p{N}]+)*)?/u" },
     "version-word": { "rx": "/version|release|ver\\.?/iu" },
-    "due-word": { "rx": "/due|until|by|eta/iu" }
+    "due-word": { "rx": "/due|until|by|eta/iu" },
+    "paren": { "rx": "/\\(.*?\\)/su", "fate": "bracket" },
+    "sep": { "rx": "/%{SEP}/u", "fate": "separator" }
   }
 }

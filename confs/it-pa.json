@@ -1,5 +1,5 @@
 {
-  "version": "it-pa@3",
+  "version": "it-pa@4",
   "patterns": {
     "DATE": "\\d{1,2}[\\/.\\-]\\d{1,2}[\\/.\\-]\\d{4}",
     "SEP": "(?:\\s|[,;:](?=\\s|$)|(?<=^|\\s)-(?=\\s|$))+",
@@ -64,6 +64,7 @@
     "euro": { "rx": "/€|euro/iu" },
     "quote-word": { "rx": "/con\\s+oggetto\\s*:?/iu" },
     "connector": { "rx": "/%{CONNECTOR}/iu", "fate": "connector" },
-    "sep": { "rx": "/%{SEP}/u", "fate": "separator" }
+    "sep": { "rx": "/%{SEP}/u", "fate": "separator" },
+    "paren": { "rx": "/\\(.*?\\)/su", "fate": "bracket" }
   }
 }

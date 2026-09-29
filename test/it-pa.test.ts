@@ -63,14 +63,17 @@ test('italian-conf-in-new-format: compiles with its four resolvers, no errors', 
   const { conf, errors } = compile(data, { resolvers: itPaResolvers });
   assert.deepEqual(errors, []);
   assert.equal(Object.keys(conf.tags).length, Object.keys(data.tags).length);
-  assert.equal(conf.version, 'it-pa@3');
+  assert.equal(conf.version, 'it-pa@4');
 });
 
 test('italian-conf-in-new-format: the spec shows the same conf as confs/it-pa.json', () => {
   const spec = readFileSync(new URL('../specs/005-chart/spec.md', import.meta.url), 'utf8');
   const start = spec.indexOf('  ```json\n  {\n    "version": "it-pa@3"');
   const block = spec.slice(start + '  ```json\n'.length, spec.indexOf('  ```\n', start + 10));
-  assert.deepEqual(JSON.parse(block), data);
+  // Phase 2 bumped the version and appended `paren`; the spec of phase 1 keeps the conf it was written with.
+  const { paren, ...tags } = data.tags;
+  assert.deepEqual(JSON.parse(block), { ...data, version: 'it-pa@3', tags });
+  assert.equal(paren.fate, 'bracket');
 });
 
 test('italian-cases-tagged: every case is in the table', () => {
