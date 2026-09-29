@@ -6,12 +6,13 @@ export type Conf<P = string, R = string> = {
   patterns?: Record<string, string>;
   tags: Record<string, Tag<P, R>>;
 };
+export type Fate = 'separator' | 'connector' | 'bracket';
 export type Tag<P = string, R = string> = {
   rx?: P;
   search?: Search<P>[];
   resolve?: R;
   weak?: boolean;
-  fate?: 'separator' | 'connector';
+  fate?: Fate;
 };
 export type Search<P = string> = { from: string; back?: Atom<P>[]; forward?: Atom<P>[] };
 export type Atom<P = string> =
@@ -26,6 +27,8 @@ export interface CompileError {
 
 /** Names usable in atoms, never declarable as tags. `as` may not take them either. */
 const RESERVED = ['^', '$', '*'];
+/** The tree's own tags: never declarable, and not in atoms either, since the chart never holds them. */
+const TREE = ['doc', 'text'];
 /** `as` names the role a resolver reads; `value` is the row's own text. */
 const ROLE_RESERVED = ['value', ...RESERVED];
 const KEYS = {
@@ -156,14 +159,14 @@ function tag(t: unknown, path: string, ctx: Ctx, errs: Errors): Tag<RegExp, Reso
     else resolve = ctx.resolvers[t.resolve];
   }
   if (t.weak !== undefined && typeof t.weak !== 'boolean') errs.push({ path: `${path}.weak`, message: 'must be a boolean' });
-  if (t.fate !== undefined && t.fate !== 'separator' && t.fate !== 'connector') errs.push({ path: `${path}.fate`, message: 'must be "separator" or "connector"' });
+  if (t.fate !== undefined && t.fate !== 'separator' && t.fate !== 'connector' && t.fate !== 'bracket') errs.push({ path: `${path}.fate`, message: 'must be "separator", "connector" or "bracket"' });
   if (errs.length > before) return;
   return {
     ...(rx && { rx }),
     ...(searches && { search: searches }),
     ...(resolve && { resolve }),
     ...(t.weak === true && { weak: true }),
-    ...(t.fate !== undefined && { fate: t.fate as 'separator' | 'connector' }),
+    ...(t.fate !== undefined && { fate: t.fate as Fate }),
   };
 }
 
@@ -203,7 +206,7 @@ export function compile(
   const tags: Record<string, Tag<RegExp, Resolve>> = {};
   for (const [name, t] of Object.entries(data.tags)) {
     const found: Errors = [];
-    if (RESERVED.includes(name)) found.push({ path: `tags.${name}`, message: `"${name}" is reserved and cannot be declared as a tag` });
+    if (RESERVED.includes(name) || TREE.includes(name)) found.push({ path: `tags.${name}`, message: `"${name}" is reserved and cannot be declared as a tag` });
     const compiled = tag(t, `tags.${name}`, ctx, found);
     for (const e of found) errors.push({ ...e, tag: name });
     if (!found.length && compiled) tags[name] = compiled;

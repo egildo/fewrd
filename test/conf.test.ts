@@ -69,7 +69,7 @@ test('compile-never-throws: wrong types', () => {
   assert.equal(compile({ tags: {} }).errors[0].path, 'version');
   assert.equal(compile({ version: 'a' }).errors[0].path, 'tags');
   oneError({ rx: '/a/u', weak: 'yes' }, 'tags.bad.weak', /boolean/);
-  oneError({ rx: '/a/u', fate: 'bracket' }, 'tags.bad.fate', /separator/);
+  oneError({ rx: '/a/u', fate: 'oops' }, 'tags.bad.fate', /"separator", "connector" or "bracket"/);
   oneError('nope', 'tags.bad', /object/);
   oneError(search('nope'), 'tags.bad.search[0]', /object/);
   oneError(search({ from: 'w', forward: ['nope'] }), 'tags.bad.search[0].forward[0]', /object/);
@@ -155,4 +155,27 @@ test('conf-is-plain-data: weak, fate and patterns pass through', () => {
 test('priority-is-key-order: compiled tags keep the data key order', () => {
   const { conf: c } = compile(conf({ z: W, a: W, m: W }));
   assert.deepEqual(Object.keys(c.tags), ['z', 'a', 'm']);
+});
+
+test('fate-bracket-accepted: bracket compiles', () => {
+  const { conf: c, errors } = compile(conf({ paren: { rx: '/\\(.*?\\)/su', fate: 'bracket' } }));
+  assert.deepEqual(errors, []);
+  assert.equal(c.tags.paren.fate, 'bracket');
+});
+test('fate-bracket-accepted: another value is an error', () => oneError({ rx: '/a/u', fate: 'brackets' }, 'tags.bad.fate', /"separator", "connector" or "bracket"/));
+
+test('reserved-doc-and-text: doc and text cannot be declared', () => {
+  for (const name of ['doc', 'text']) {
+    const { conf: c, errors } = compile(conf({ w: W, [name]: W }));
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].tag, name);
+    assert.match(errors[0].message, /is reserved and cannot be declared as a tag/);
+    assert.deepEqual(Object.keys(c.tags), ['w']);
+  }
+});
+test('reserved-doc-and-text: an atom naming doc is an unknown tag', () => {
+  for (const name of ['doc', 'text']) {
+    oneError(search({ from: 'w', forward: [{ tag: name }] }), 'tags.bad.search[0].forward[0].tag', /unknown tag/);
+    oneError(search({ from: name, forward: [{ tag: 'w' }] }), 'tags.bad.search[0].from', /unknown tag/);
+  }
 });
