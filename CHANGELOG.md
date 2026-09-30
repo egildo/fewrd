@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+Reading is about 2.6 times faster: on a corpus of 26,696 real subjects a read falls from 672 to 261 µs, `find` from 280 to 149 and `dom` from 392 to 112. The API is unchanged and every tree and chart is the same as before. The new `bench` script (`node bench.ts <conf-dir> [texts]`) times `find` and `dom` apart over a `fewrd-play` folder.
+
 ## 1.0.0
 
 The rewrite. fewrd keeps its name and its purpose, finding what recurs in a string and letting a reader fold it away, and replaces almost everything else. The old engine found, chose among overlaps and cut the text in one pass; the new one works in two halves with plain data between them. `find` makes a chart of every row the conf can build and chooses nothing; `dom` chooses one reading and returns a tree; `hidden` and `gist` fold the tree. `fewrd-play` moves to 0.2.0 and requires fewrd 1.0.0.

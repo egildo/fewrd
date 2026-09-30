@@ -36,7 +36,7 @@ The closed vocabulary of fewrd: one name per thing, the name the code uses. A te
 - **root scan**: Pass zero: every root tag's pattern over the whole normalised copy, under the word guard. `roots` in `src/find.ts`.
 - **cursor**: The edge a search has reached: the `from` row's start going back, its end going forward, moving outward as atoms are taken. `derive` in `src/derive.ts`.
 - **derivation**: One complete way a search's atoms can be taken from one row: its span, its roles and its steps. Every derivation is kept. `derive` in `src/derive.ts`.
-- **pass**: One round of `find`: every search run from every row of the chart as it stood after the round before. Pass zero is the root scan. The loop in `find`, `src/find.ts`.
+- **pass**: One round of `find`: every search that reads a tag the round before added to, run from every row of its `from` tag. Pass zero is the root scan. The loop in `find`, `src/find.ts`.
 - **fixpoint**: The first pass that adds no row, where `find` stops.
 - **packing**: Two derivations that give the same tag the same span make one row. It is why the passes end.
 - **twin**: A row of another tag on exactly the same span as a row.

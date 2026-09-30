@@ -8,7 +8,7 @@ Composed tags build on each other: `protocol` grows from `serial`, `dated` from 
 
 ## Decision
 
-Nothing is declared. `find` runs in passes: pass zero is the root scan, and every later pass runs every search from every row of its `from` tag in the chart of the pass before. A search therefore runs as soon as rows of its `from` tag exist, and again whenever new ones appear. The same tag on the same span is one row (packing), so the loop ends at the first pass that adds nothing. Within a pass, tags run in code-unit order of their names, so the key order of `tags` cannot change the chart.
+Nothing is declared. `find` runs in passes: pass zero is the root scan, and every later pass runs every search from every row of its `from` tag in the chart of the pass before. A search therefore runs as soon as rows of its `from` tag exist, and again whenever new ones appear. (The engine skips a search when the pass before added no row of a tag it reads, since it could add nothing; the chart is the same.) The same tag on the same span is one row (packing), so the loop ends at the first pass that adds nothing. Within a pass, tags run in code-unit order of their names, so the key order of `tags` cannot change the chart.
 
 ## Consequences
 

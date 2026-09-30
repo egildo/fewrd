@@ -558,6 +558,7 @@ pnpm install
 pnpm typecheck   # tsc --strict, no emit
 pnpm test        # node --test, TypeScript type-stripped: no build
 pnpm dev         # the playground, on http://localhost:5577
+pnpm bench <conf-dir> [texts]   # times find and dom apart over a fewrd-play conf folder
 ```
 
 That loop has no build step. `pnpm build`, run at publish and before running `fewrd-play` from a checkout, bundles the two public entries with vite into `dist/` and writes their types with `tsc`; `dist/` is never committed. The gate for any change is `pnpm typecheck` and `pnpm test`. It is developed on Node 25 and pnpm 10; the loop needs a Node that runs TypeScript files directly. There is no CI: the gate is run locally. One file runs on its own with `node --test test/fold.test.ts`.
