@@ -12,5 +12,5 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "include": ["src", "confs", "test", "playground", "play"]
+  "include": ["src", "confs", "test", "playground", "play", "bench.ts"]
 }
