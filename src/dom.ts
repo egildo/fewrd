@@ -33,12 +33,7 @@ type Compiled = Conf<RegExp, Resolve>;
 type Derivation = { steps: readonly Step[]; value?: string };
 type Candidate = { row: Row; weak: boolean; rank: number };
 
-const key = ([tag, [a, b]]: Row) => `${tag}\0${a}\0${b}`;
 const byPosition = (a: Row, b: Row) => a[1][0] - b[1][0] || a[1][1] - b[1][1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-const crossing = (a: Span, b: Span) => {
-  const r = rel(a, b);
-  return r === 'overlaps' || r === 'overlapped-by';
-};
 const inside = (a: Span, b: Span) => {
   const r = rel(a, b);
   return r === 'starts' || r === 'during' || r === 'finishes';
@@ -50,9 +45,9 @@ const isEdge = (row: Row) => row[0] === '^' || row[0] === '$';
  * row, water as `text` nodes. Throws when the chart holds a row of a tag the
  * conf does not declare, or when a resolver refuses a row it accepted in `find`.
  *
- * ponytail: the chosen set is scanned linearly for every test (O(rows²) over
- * the walk), and a composed row's derivations are all enumerated, as in `find`.
- * Index chosen rows by position if subjects grow.
+ * ponytail: the crossing test walks the boundaries inside the row (O(its length))
+ * and the same-tag test scans the chosen rows of that tag; a composed row's
+ * derivations are all enumerated, as in `find`. An interval tree if subjects grow.
  */
 export function dom(text: string, chart: Chart, conf: Compiled): Node {
   const { text: s, at } = normalise(text);
@@ -61,12 +56,12 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
   // The chart's spans are original; the matcher works on the copy. An original
   // start goes to the first copy boundary with that offset, an end to the last.
   // ponytail: a row edge that `find` placed inside an NFKC expansion is not recovered.
-  const first = new Map<number, number>();
-  const last = new Map<number, number>();
-  at.forEach((o, j) => {
-    if (!first.has(o)) first.set(o, j);
-    last.set(o, j);
-  });
+  const first = new Int32Array(text.length + 1).fill(-1);
+  const last = new Int32Array(text.length + 1).fill(-1);
+  for (let j = 0; j < at.length; j++) {
+    if (first[at[j]] < 0) first[at[j]] = j;
+    last[at[j]] = j;
+  }
   const rank = new Map(Object.keys(conf.tags).map((t, i) => [t, i]));
   const all: Row[] = [];
   const candidates: Candidate[] = [];
@@ -76,9 +71,9 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
     else {
       const r = rank.get(tag);
       if (r === undefined) throw new Error(`the chart has rows of "${tag}", which the conf does not declare`);
-      const lo = first.get(a);
-      const hi = last.get(b);
-      if (lo === undefined || hi === undefined) throw new Error(`${tag} (${a},${b}) is not on a boundary of the text: is this the chart of another text?`);
+      const lo = first[a] ?? -1;
+      const hi = last[b] ?? -1;
+      if (lo < 0 || hi < 0) throw new Error(`${tag} (${a},${b}) is not on a boundary of the text: is this the chart of another text?`);
       const row: Row = [tag, [lo, hi]];
       all.push(row);
       candidates.push({ row, weak: conf.tags[tag].weak === true, rank: r });
@@ -88,20 +83,20 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
   const span = (row: Row) => `${row[0]} (${at[row[1][0]]},${at[row[1][1]]})`;
 
   // Values and derivations, computed lazily and memoised, on the copy's text.
-  const derivations = new Map<string, Derivation[]>();
-  const values = new Map<string, string>();
-  const busy = new Set<string>();
-  const refused = new Set<string>();
+  // Every row is the one object `all` holds, so the maps go by identity.
+  const derivations = new Map<Row, Derivation[]>();
+  const values = new Map<Row, string>();
+  const busy = new Set<Row>();
+  const refused = new Set<Row>();
 
   function derivationsOf(row: Row): Derivation[] {
-    const k = key(row);
-    const known = derivations.get(k);
+    const known = derivations.get(row);
     if (known) return known;
-    if (busy.has(k)) return [];
-    busy.add(k);
+    if (busy.has(row)) return [];
+    busy.add(row);
     const [tag, [lo, hi]] = row;
     const def = conf.tags[tag];
-    const within = all.filter((r) => lo <= r[1][0] && r[1][1] <= hi && key(r) !== k);
+    const within = all.filter((r) => lo <= r[1][0] && r[1][1] <= hi && r !== row);
     const ix = edges(within);
     const out: Derivation[] = [];
     for (const search of def.search ?? []) {
@@ -111,16 +106,16 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
           if (a !== lo || b !== hi) return;
           if (!def.resolve) return void out.push({ steps });
           const value = def.resolve({ ...roles, value: s.slice(lo, hi) });
-          if (value === null) refused.add(k);
+          if (value === null) refused.add(row);
           else out.push({ steps, value });
         });
       }
     }
-    busy.delete(k);
+    busy.delete(row);
     if (!out.length) {
-      throw new Error(refused.has(k) ? `resolver of "${tag}" refused (${at[lo]},${at[hi]}) at dom time` : `no derivation of ${span(row)}: is this the chart of this conf?`);
+      throw new Error(refused.has(row) ? `resolver of "${tag}" refused (${at[lo]},${at[hi]}) at dom time` : `no derivation of ${span(row)}: is this the chart of this conf?`);
     }
-    derivations.set(k, out);
+    derivations.set(row, out);
     return out;
   }
 
@@ -128,8 +123,7 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
   function valueOf(row: Row): string {
     const def = conf.tags[row[0]];
     if (!def?.resolve) return s.slice(row[1][0], row[1][1]);
-    const k = key(row);
-    let v = values.get(k);
+    let v = values.get(row);
     if (v === undefined) {
       if (def.search) v = derivationsOf(row)[0].value!;
       else {
@@ -137,7 +131,7 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
         if (r === null) throw new Error(`resolver of "${row[0]}" refused (${at[row[1][0]]},${at[row[1][1]]}) at dom time`);
         v = r;
       }
-      values.set(k, v);
+      values.set(row, v);
     }
     return v;
   }
@@ -150,23 +144,61 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
       a.rank - b.rank ||
       a.row[1][0] - b.row[1][0],
   );
-  let chosen: Row[] = [];
-  let keys = new Set<string>();
-  let also = new Map<string, string[]>();
-  let used = new Map<string, Derivation>();
-  let twinOf = new Map<string, string>();
-  /** A snapshot of the selection; calling the result, once, puts it back. */
-  function save() {
-    const snap = { chosen: [...chosen], keys: new Set(keys), also: new Map([...also].map(([k, v]) => [k, [...v]])), used: new Map(used), twinOf: new Map(twinOf) };
-    return () => void ({ chosen, keys, also, used, twinOf } = snap);
-  }
+  // `chosen` never holds two rows that cross, nor two on one span (the second is a
+  // twin), so it is indexed by span, by tag, and by edge for the crossing test.
+  const chosen: Row[] = [];
+  const bySpan = new Map<number, Row>();
+  const byTag = new Map<string, Row[]>();
+  /** The furthest end of the chosen rows starting at each boundary, and the earliest start of those ending there. */
+  const reach = new Int32Array(m + 1).fill(-1);
+  const root = new Int32Array(m + 1).fill(m + 1);
+  const also = new Map<Row, string[]>();
+  const used = new Map<Row, Derivation>();
+  const twinOf = new Map<Row, Row>();
+  /** How to take back every change to the selection, latest last. */
+  const trail: (() => void)[] = [];
+  const undoTo = (mark: number) => {
+    while (trail.length > mark) trail.pop()!();
+  };
 
-  const twinOfChosen = (row: Row) => chosen.find((c) => c[0] !== row[0] && rel(row[1], c[1]) === 'equals');
+  const spanKey = ([, [a, b]]: Row) => a * (m + 1) + b;
+  /** A chosen row has one edge strictly inside the span and the other strictly outside it. */
+  const crosses = ([a, b]: Span) => {
+    for (let p = a + 1; p < b; p++) if (reach[p] > b || root[p] < a) return true;
+    return false;
+  };
+  function choose(row: Row) {
+    const [tag, [a, b]] = row;
+    let list = byTag.get(tag);
+    if (!list) byTag.set(tag, (list = []));
+    const [reached, rooted] = [reach[a], root[b]];
+    chosen.push(row);
+    list.push(row);
+    bySpan.set(spanKey(row), row);
+    if (b > reached) reach[a] = b;
+    if (a < rooted) root[b] = a;
+    trail.push(() => {
+      chosen.pop();
+      list.pop();
+      bySpan.delete(spanKey(row));
+      reach[a] = reached;
+      root[b] = rooted;
+    });
+  }
   function twin(row: Row, node: Row): true {
-    const list = also.get(key(node));
-    if (!list) also.set(key(node), [row[0]]);
-    else if (!list.includes(row[0])) list.push(row[0]);
-    twinOf.set(key(row), key(node));
+    const list = also.get(node);
+    if (!list) {
+      also.set(node, [row[0]]);
+      trail.push(() => also.delete(node));
+    } else if (!list.includes(row[0])) {
+      list.push(row[0]);
+      trail.push(() => list.pop());
+    }
+    const was = twinOf.get(row);
+    if (was !== node) {
+      twinOf.set(row, node);
+      trail.push(() => (was === undefined ? twinOf.delete(row) : twinOf.set(row, was)));
+    }
     return true;
   }
 
@@ -180,75 +212,69 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
    */
   function take(row: Row, own?: string): boolean {
     if (own !== undefined && row[0] === own) return force(row, own, false);
-    if (keys.has(key(row))) return true;
-    const twinned = twinOfChosen(row);
-    if (twinned) return twin(row, twinned);
-    if (chosen.some((c) => crossing(row[1], c[1]))) return false;
-    if (!conf.tags[row[0]].search) {
-      chosen.push(row);
-      keys.add(key(row));
-      return true;
-    }
-    const undo = save();
-    chosen.push(row);
-    keys.add(key(row));
-    if (force(row, row[0], true)) return true;
-    undo();
+    const there = bySpan.get(spanKey(row));
+    if (there) return there[0] === row[0] || twin(row, there);
+    if (crosses(row[1])) return false;
+    const mark = trail.length;
+    choose(row);
+    if (!conf.tags[row[0]].search || force(row, row[0], true)) return true;
+    undoTo(mark);
     return false;
   }
   function force(row: Row, own: string, node: boolean): boolean {
     for (const d of derivationsOf(row)) {
-      const undo = save();
+      const mark = trail.length;
       if (d.steps.every((st) => !('row' in st) || isEdge(st.row) || take(st.row, own))) {
-        if (node) used.set(key(row), d);
+        if (node) {
+          used.set(row, d);
+          trail.push(() => used.delete(row));
+        }
         return true;
       }
-      undo();
+      undoTo(mark);
     }
     return false;
   }
 
   for (const { row } of candidates) {
-    if (keys.has(key(row))) continue;
-    if (chosen.some((c) => crossing(row[1], c[1]))) continue;
-    if (chosen.some((c) => c[0] === row[0] && inside(row[1], c[1]))) continue;
+    if (bySpan.get(spanKey(row))?.[0] === row[0]) continue;
+    if (crosses(row[1])) continue;
+    if (byTag.get(row[0])?.some((c) => inside(row[1], c[1]))) continue;
     take(row);
   }
 
   // The tree: sorted by start, then end descending, nested with a stack.
   const doc: Node = { tag: 'doc', start: 0, end: text.length, attrs: {}, text, children: [] };
-  const nodeOf = new Map<string, Node>();
+  const nodeOf = new Map<Row, Node>();
   const stack: { node: Node; lo: number; hi: number }[] = [{ node: doc, lo: 0, hi: m }];
   for (const row of [...chosen].sort((a, b) => a[1][0] - b[1][0] || b[1][1] - a[1][1])) {
     const [tag, [lo, hi]] = row;
     while (stack[stack.length - 1].lo > lo || stack[stack.length - 1].hi < hi) stack.pop();
     const def = conf.tags[tag];
-    const value = def.resolve ? (def.search ? used.get(key(row))!.value : valueOf(row)) : undefined;
-    const node: Node = {
-      tag,
-      start: at[lo],
-      end: at[hi],
-      ...(value !== undefined && { value }),
-      attrs: {},
-      ...(also.has(key(row)) && { also: also.get(key(row))! }),
-      ...(def.fate !== undefined && { fate: def.fate }),
-      children: [],
-    };
+    const value = def.resolve ? (def.search ? used.get(row)!.value : valueOf(row)) : undefined;
+    // Built a key at a time, in the documented order, without the spreads a literal would need.
+    const node = { tag, start: at[lo], end: at[hi] } as Node;
+    if (value !== undefined) node.value = value;
+    node.attrs = {};
+    const twins = also.get(row);
+    if (twins) node.also = twins;
+    if (def.fate !== undefined) node.fate = def.fate;
+    node.children = [];
     stack[stack.length - 1].node.children.push(node);
     stack.push({ node, lo, hi });
-    nodeOf.set(key(row), node);
+    nodeOf.set(row, node);
   }
 
   // Roles, from each composed node's forced derivation.
   for (const row of chosen) {
-    const d = used.get(key(row));
+    const d = used.get(row);
     if (!d) continue;
-    const node = nodeOf.get(key(row))!;
+    const node = nodeOf.get(row)!;
     for (const st of d.steps) {
       if (st.as === undefined) continue;
       if ('row' in st) {
-        const k = key(st.row);
-        node.attrs[st.as] = nodeOf.get(k) ?? nodeOf.get(twinOf.get(k) ?? '') ?? s.slice(st.row[1][0], st.row[1][1]);
+        const twinned = twinOf.get(st.row);
+        node.attrs[st.as] = nodeOf.get(st.row) ?? (twinned && nodeOf.get(twinned)) ?? s.slice(st.row[1][0], st.row[1][1]);
       } else node.attrs[st.as] = st.text;
     }
   }

@@ -16,8 +16,25 @@ export function normalise(original: string): Normal {
   let text = '';
   const at: number[] = [];
   let inSpace = false;
-  let i = 0;
-  for (const cp of original) {
+  for (let i = 0; i < original.length; ) {
+    const c = original.charCodeAt(i);
+    // ASCII, most of any text: NFKC and the dash and quote rules leave it alone.
+    if (c < 0x80) {
+      if (c === 32 || (c >= 9 && c <= 13)) {
+        if (!inSpace) {
+          at.push(i);
+          text += ' ';
+        }
+        inSpace = true;
+      } else {
+        at.push(i);
+        text += original[i];
+        inSpace = false;
+      }
+      i++;
+      continue;
+    }
+    const cp = String.fromCodePoint(original.codePointAt(i)!);
     if (/\s/.test(cp)) {
       if (!inSpace) {
         at.push(i);
