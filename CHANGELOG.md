@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1
 
 Reading is about 2.6 times faster: on a corpus of 26,696 real subjects a read falls from 672 to 261 µs, `find` from 280 to 149 and `dom` from 392 to 112. The API is unchanged and every tree and chart is the same as before. The new `bench` script (`node bench.ts <conf-dir> [texts]`) times `find` and `dom` apart over a `fewrd-play` folder.
 
