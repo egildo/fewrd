@@ -79,11 +79,10 @@ export class Chart {
     let next: Map<string, readonly Span[]> | undefined;
     for (const [tag, incoming] of groups) {
       const old = this.#rows.get(tag) ?? NONE;
-      const seen = new Set(old.map((m) => `${m[0]},${m[1]}`));
-      const merged = [...old];
-      for (const s of incoming) if (!seen.has(`${s[0]},${s[1]}`) && seen.add(`${s[0]},${s[1]}`)) merged.push(s);
+      const sorted = [...old, ...incoming].sort(byPosition);
+      const merged = sorted.filter((s, i) => i === 0 || byPosition(s, sorted[i - 1]) !== 0);
       if (merged.length === old.length) continue;
-      (next ??= new Map(this.#rows)).set(tag, merged.sort(byPosition));
+      (next ??= new Map(this.#rows)).set(tag, merged);
     }
     return next ? new Chart(next, this.#n) : this;
   }
