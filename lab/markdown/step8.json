@@ -1,0 +1,261 @@
+{
+  "version": "md-step8",
+  "patterns": {
+    "OPENER": "#{1,6} |(?:··)*- "
+  },
+  "tags": {
+    "list": {
+      "search": [
+        {
+          "from": "item",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "list",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "item",
+                "entry"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "entry": {
+      "search": [
+        {
+          "from": "item",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "list"
+            }
+          ]
+        }
+      ]
+    },
+    "item": {
+      "search": [
+        {
+          "from": "lead",
+          "forward": [
+            {
+              "tag": "dash"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "tag": "dash"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "tag": "dash"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "lead": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        },
+        {
+          "from": "lead",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        }
+      ]
+    },
+    "heading": {
+      "search": [
+        {
+          "from": "hmark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "title"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "para": {
+      "search": [
+        {
+          "from": "line",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "para",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "line"
+            }
+          ]
+        }
+      ]
+    },
+    "line": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "hmark": {
+      "search": [
+        {
+          "from": "hash",
+          "back": [
+            {
+              "tag": [
+                "bol",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "hash": {
+      "rx": "/#{1,6} /u"
+    },
+    "dash": {
+      "rx": "/- /u"
+    },
+    "ind": {
+      "rx": "/··/u"
+    },
+    "nl": {
+      "rx": "/¶/u",
+      "effects": [
+        {
+          "flag": "eol",
+          "at": "start"
+        },
+        {
+          "flag": "bol",
+          "at": "end"
+        }
+      ]
+    },
+    "bol": {},
+    "eol": {}
+  }
+}

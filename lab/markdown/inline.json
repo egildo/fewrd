@@ -1,0 +1,94 @@
+{
+  "version": "md-inline2",
+  "patterns": {
+    "B": "\\*\\*",
+    "I": "(?<!\\*)\\*(?!\\*)"
+  },
+  "tags": {
+    "anchor": {
+      "search": [
+        {
+          "from": "lb",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "mid",
+                "nl"
+              ],
+              "as": "label"
+            },
+            {
+              "tag": "mid"
+            },
+            {
+              "rx": "/[^\\s()]*/u",
+              "as": "href"
+            },
+            {
+              "tag": "rp"
+            }
+          ]
+        }
+      ]
+    },
+    "bold": {
+      "search": [
+        {
+          "from": "bo",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "bc",
+              "as": "body"
+            },
+            {
+              "tag": "bc"
+            }
+          ]
+        }
+      ]
+    },
+    "italic": {
+      "search": [
+        {
+          "from": "io",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "ic",
+              "as": "body"
+            },
+            {
+              "tag": "ic"
+            }
+          ]
+        }
+      ]
+    },
+    "bo": {
+      "rx": "/%{B}(?=\\S)/u"
+    },
+    "bc": {
+      "rx": "/(?<=\\S)%{B}/u"
+    },
+    "io": {
+      "rx": "/%{I}(?=\\S)/u"
+    },
+    "ic": {
+      "rx": "/(?<=\\S)%{I}/u"
+    },
+    "lb": {
+      "rx": "/\\[/u"
+    },
+    "mid": {
+      "rx": "/\\]\\(/u"
+    },
+    "rp": {
+      "rx": "/\\)/u"
+    },
+    "nl": {
+      "rx": "/¶/u"
+    }
+  }
+}
