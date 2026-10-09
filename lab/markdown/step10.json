@@ -1,0 +1,597 @@
+{
+  "version": "md-step10",
+  "patterns": {
+    "OPENER": "#{1,6} |(?:··)*- |```",
+    "B": "\\*\\*",
+    "I": "(?<!\\*)\\*(?!\\*)"
+  },
+  "tags": {
+    "fenced": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "fence",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "skip": true,
+              "stop": "fence",
+              "as": "code"
+            },
+            {
+              "tag": "fence"
+            }
+          ]
+        }
+      ]
+    },
+    "l0": {
+      "search": [
+        {
+          "from": "i0",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "e0",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "i0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i0",
+                "e0"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "e0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i0",
+                "e0"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "l0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i0",
+                "e0"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "e0": {
+      "search": [
+        {
+          "from": "i0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "l1"
+            }
+          ]
+        }
+      ]
+    },
+    "i0": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "tag": "dash"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "tag": "dash"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "l1": {
+      "search": [
+        {
+          "from": "i1",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "e1",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "i1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i1",
+                "e1"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "e1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i1",
+                "e1"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "l1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i1",
+                "e1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "e1": {
+      "search": [
+        {
+          "from": "i1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "l2"
+            }
+          ]
+        }
+      ]
+    },
+    "i1": {
+      "search": [
+        {
+          "from": "L1",
+          "forward": [
+            {
+              "tag": "dash"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "l2": {
+      "search": [
+        {
+          "from": "i2",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "i2",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i2"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "l2",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "i2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "i2": {
+      "search": [
+        {
+          "from": "L2",
+          "forward": [
+            {
+              "tag": "dash"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "heading": {
+      "search": [
+        {
+          "from": "hmark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "title"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "para": {
+      "search": [
+        {
+          "from": "line",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "para",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "line"
+            }
+          ]
+        }
+      ]
+    },
+    "line": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "L1": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        }
+      ]
+    },
+    "L2": {
+      "search": [
+        {
+          "from": "L1",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        }
+      ]
+    },
+    "hmark": {
+      "search": [
+        {
+          "from": "hash",
+          "back": [
+            {
+              "tag": [
+                "bol",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "anchor": {
+      "search": [
+        {
+          "from": "lb",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "mid",
+                "nl"
+              ],
+              "as": "label"
+            },
+            {
+              "tag": "mid"
+            },
+            {
+              "tag": "dest",
+              "as": "href"
+            },
+            {
+              "tag": "rp"
+            }
+          ]
+        }
+      ]
+    },
+    "code": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "tick",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "tick",
+                "nl"
+              ],
+              "as": "code"
+            },
+            {
+              "tag": "tick"
+            }
+          ]
+        }
+      ]
+    },
+    "bold": {
+      "search": [
+        {
+          "from": "bo",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "bc",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "bc"
+            }
+          ]
+        }
+      ]
+    },
+    "italic": {
+      "search": [
+        {
+          "from": "io",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "ic",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "ic"
+            }
+          ]
+        }
+      ]
+    },
+    "hash": {
+      "rx": "/#{1,6} /u"
+    },
+    "dash": {
+      "rx": "/- /u"
+    },
+    "ind": {
+      "rx": "/··/u"
+    },
+    "fence": {
+      "rx": "/(?<=^|¶)```[^¶]*/u"
+    },
+    "dest": {
+      "rx": "/(?<=\\]\\()[^\\s()]+(?=\\))/u",
+      "opaque": true
+    },
+    "tick": {
+      "rx": "/`/u"
+    },
+    "bo": {
+      "rx": "/%{B}(?=\\S)/u"
+    },
+    "bc": {
+      "rx": "/(?<=\\S)%{B}/u"
+    },
+    "io": {
+      "rx": "/%{I}(?=\\S)/u"
+    },
+    "ic": {
+      "rx": "/(?<=\\S)%{I}/u"
+    },
+    "lb": {
+      "rx": "/\\[/u"
+    },
+    "mid": {
+      "rx": "/\\]\\(/u"
+    },
+    "rp": {
+      "rx": "/\\)/u"
+    },
+    "nl": {
+      "rx": "/¶/u",
+      "effects": [
+        {
+          "flag": "eol",
+          "at": "start"
+        },
+        {
+          "flag": "bol",
+          "at": "end"
+        }
+      ]
+    },
+    "bol": {},
+    "eol": {},
+    "blank": {
+      "rx": "/¶¶/u"
+    }
+  }
+}

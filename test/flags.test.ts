@@ -54,7 +54,7 @@ test('flags: * takes no flag', () => {
   assert.deepEqual(chartOf(tags, 'a b').any, [[1, 3]]);
 });
 test('flags: compile errors', () => {
-  assert.deepEqual(errorsOf({ f: { fate: 'separator' } }), ['tags.f.fate: a flag (a tag with neither rx nor search) takes none of resolve, weak, fate and effects']);
+  assert.deepEqual(errorsOf({ f: { fate: 'separator' } }), ['tags.f.fate: a flag (a tag with neither rx nor search) takes none of resolve, weak, fate, effects and opaque']);
   assert.deepEqual(errorsOf({ w: { rx: '/a/u', effects: [{ flag: 'w', at: 'end' }] } }), ['tags.w.effects[0].flag: "w" is not a flag: a flag has neither rx nor search']);
   assert.deepEqual(errorsOf({ w: { rx: '/a/u', effects: [{ flag: 'nope', at: 'middle' }] } }), [
     'tags.w.effects[0].flag: unknown tag "nope"',
@@ -118,4 +118,16 @@ test('skip: stop compile errors', () => {
   assert.deepEqual(errorsOf(run({ tag: 'sp', stop: 'sp' })), ['tags.run.search[0].forward[0].stop: only a skip atom takes stop']);
   assert.deepEqual(errorsOf(run({ skip: true, stop: 'p' })), ['tags.run.search[0].forward[0].stop: "p" is not a root tag: a skip stops only at rows found by rx']);
   assert.deepEqual(errorsOf(run({ skip: true, stop: ['sp', 'nope'] })), ['tags.run.search[0].forward[0].stop[1]: unknown tag "nope"']);
+});
+
+// ---- opaque
+
+test('opaque: chosen first, whatever its length, and nothing else gets inside', () => {
+  const tags = { long: { rx: "/c' dddd/u" }, q: { rx: "/'[^']*'/u", opaque: true }, w: { rx: '/[a-z]+/u' } };
+  assert.equal(
+    treeOf(tags, "a 'b c' dddd"),
+    lines('doc (0,12)', '  w (0,1) "a"', '  text (1,2) " "', `  q (2,7) "'b c'"`, '  text (7,8) " "', '  w (8,12) "dddd"'),
+  );
+  const plain = { ...tags, q: { rx: "/'[^']*'/u" } };
+  assert.match(treeOf(plain, "a 'b c' dddd"), /long \(5,12\)/);
 });

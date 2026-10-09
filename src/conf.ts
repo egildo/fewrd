@@ -14,6 +14,7 @@ export type Tag<P = string, R = string> = {
   weak?: boolean;
   fate?: Fate;
   effects?: Effect[];
+  opaque?: boolean;
 };
 /** What a row does besides being a row: places a flag, a zero-width row, at its start or its end. */
 export type Effect = { flag: string; at: 'start' | 'end' };
@@ -36,7 +37,7 @@ const TREE = ['doc', 'text'];
 const ROLE_RESERVED = ['value', ...RESERVED];
 const KEYS = {
   conf: ['version', 'patterns', 'tags'],
-  tag: ['rx', 'search', 'resolve', 'weak', 'fate', 'effects'],
+  tag: ['rx', 'search', 'resolve', 'weak', 'fate', 'effects', 'opaque'],
   search: ['from', 'back', 'forward'],
   atom: ['tag', 'rx', 'skip', 'stop', 'as', 'optional', 'times', 'min', 'max'],
   effect: ['flag', 'at'],
@@ -200,7 +201,8 @@ function tag(t: unknown, path: string, ctx: Ctx, errs: Errors): Tag<RegExp, Reso
   const before = errs.length;
   unknownKeys(t, KEYS.tag, path, errs);
   if ('rx' in t && 'search' in t) errs.push({ path, message: 'must have at most one of rx and search' });
-  if (isFlag(t)) for (const k of ['resolve', 'weak', 'fate', 'effects']) if (k in t) errs.push({ path: `${path}.${k}`, message: 'a flag (a tag with neither rx nor search) takes none of resolve, weak, fate and effects' });
+  if (isFlag(t)) for (const k of ['resolve', 'weak', 'fate', 'effects', 'opaque']) if (k in t) errs.push({ path: `${path}.${k}`, message: 'a flag (a tag with neither rx nor search) takes none of resolve, weak, fate, effects and opaque' });
+  if (t.opaque !== undefined && typeof t.opaque !== 'boolean') errs.push({ path: `${path}.opaque`, message: 'must be a boolean' });
   let effects: Effect[] | undefined;
   if ('effects' in t) {
     if (!Array.isArray(t.effects) || !t.effects.length) errs.push({ path: `${path}.effects`, message: 'must be a non-empty array of effects' });
@@ -228,6 +230,7 @@ function tag(t: unknown, path: string, ctx: Ctx, errs: Errors): Tag<RegExp, Reso
     ...(t.weak === true && { weak: true }),
     ...(t.fate !== undefined && { fate: t.fate as Fate }),
     ...(effects && { effects }),
+    ...(t.opaque === true && { opaque: true }),
   };
 }
 

@@ -31,7 +31,7 @@ export type Node = {
 
 type Compiled = Conf<RegExp, Resolve>;
 type Derivation = { steps: readonly Step[]; value?: string };
-type Candidate = { row: Row; weak: boolean; rank: number };
+type Candidate = { row: Row; weak: boolean; opaque: boolean; rank: number };
 
 const byPosition = (a: Row, b: Row) => a[1][0] - b[1][0] || a[1][1] - b[1][1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
 const inside = (a: Span, b: Span) => {
@@ -77,7 +77,7 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
       if (lo < 0 || hi < 0) throw new Error(`${tag} (${a},${b}) is not on a boundary of the text: is this the chart of another text?`);
       const row: Row = [tag, [lo, hi]];
       all.push(row);
-      if (!marks.has(tag)) candidates.push({ row, weak: conf.tags[tag].weak === true, rank: r });
+      if (!marks.has(tag)) candidates.push({ row, weak: conf.tags[tag].weak === true, opaque: conf.tags[tag].opaque === true, rank: r });
     }
   }
   all.sort(byPosition);
@@ -137,9 +137,10 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
     return v;
   }
 
-  // Selection. Order: non-weak first, then longer, then earlier key in `tags`, then earlier start.
+  // Selection. Order: opaque first, then non-weak, then longer, then earlier key in `tags`, then earlier start.
   candidates.sort(
     (a, b) =>
+      Number(b.opaque) - Number(a.opaque) ||
       Number(a.weak) - Number(b.weak) ||
       b.row[1][1] - b.row[1][0] - (a.row[1][1] - a.row[1][0]) ||
       a.rank - b.rank ||
@@ -237,10 +238,13 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
     return false;
   }
 
+  // An opaque row closes its inside: only what its own derivation took gets in, and that was forced already.
+  const opaque = Object.keys(conf.tags).filter((t) => conf.tags[t].opaque);
   for (const { row } of candidates) {
     if (bySpan.get(spanKey(row))?.[0] === row[0]) continue;
     if (crosses(row[1])) continue;
     if (byTag.get(row[0])?.some((c) => inside(row[1], c[1]))) continue;
+    if (opaque.some((t) => byTag.get(t)?.some((c) => inside(row[1], c[1])))) continue;
     take(row);
   }
 
