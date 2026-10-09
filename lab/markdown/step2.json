@@ -1,0 +1,24 @@
+{
+  "version": "md-step2",
+  "tags": {
+    "heading": { "search": [
+      { "from": "hash", "forward": [{ "tag": "body", "as": "title" }, { "tag": ["nl", "$"] }] }
+    ] },
+    "list": { "search": [
+      { "from": "item", "forward": [{ "tag": "item" }] },
+      { "from": "list", "forward": [{ "tag": "item" }] }
+    ] },
+    "item": { "search": [
+      { "from": "dash", "forward": [{ "tag": "body", "as": "body" }, { "tag": ["nl", "$"] }] }
+    ] },
+    "para": { "search": [
+      { "from": "line", "forward": [{ "tag": ["nl", "$"] }] },
+      { "from": "para", "forward": [{ "tag": "line" }, { "tag": ["nl", "$"] }] }
+    ] },
+    "hash": { "rx": "/(?<=^|¶)#{1,6} /u" },
+    "dash": { "rx": "/(?<=^|¶)- /u" },
+    "body": { "rx": "/(?<=(?:^|¶)(?:#{1,6} |- ))[^¶]+/u" },
+    "line": { "rx": "/(?<=^|¶)[^¶]+/u" },
+    "nl":   { "rx": "/¶/u" }
+  }
+}

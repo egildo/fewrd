@@ -1,0 +1,16 @@
+{
+  "version": "md-step1",
+  "tags": {
+    "heading": { "search": [
+      { "from": "hash", "forward": [{ "tag": "rest", "as": "title" }, { "tag": ["nl", "$"] }] }
+    ] },
+    "para": { "search": [
+      { "from": "line", "forward": [{ "tag": ["nl", "$"] }] },
+      { "from": "para", "forward": [{ "tag": "line" }, { "tag": ["nl", "$"] }] }
+    ] },
+    "hash": { "rx": "/(?<=^|¶)#{1,6} /u" },
+    "line": { "rx": "/(?<=^|¶)[^¶]+/u" },
+    "rest": { "rx": "/[^¶]+/u", "weak": true },
+    "nl":   { "rx": "/¶/u" }
+  }
+}

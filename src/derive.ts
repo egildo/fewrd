@@ -32,6 +32,7 @@ export function pinned(rx: RegExp, kind: Kind): RegExp {
 interface Pending {
   rx: RegExp;
   as?: string;
+  stop?: readonly string[];
 }
 
 /**
@@ -76,25 +77,29 @@ export function derive(
     const atom = atoms[i];
     if (atom.optional) go(i + 1, cursor, lo, hi, roles, steps, pending);
     if ('rx' in atom) {
-      if (!pending) go(i + 1, cursor, lo, hi, roles, steps, { rx: atom.rx, ...(atom.as !== undefined && { as: atom.as }) });
+      if (!pending) go(i + 1, cursor, lo, hi, roles, steps, { rx: atom.rx, ...(atom.as !== undefined && { as: atom.as }), ...(atom.stop && { stop: atom.stop }) });
       return; // compile rejects two regex atoms that could meet
     }
     const names = typeof atom.tag === 'string' ? [atom.tag] : atom.tag;
-    const wants = (tag: string) => names.includes('*') || names.includes(tag);
+    // `*` is any row with some text in it: never `^`, `$` or a flag, which only mark a place.
+    const wants = ([tag, [a, b]]: Row) => names.includes(tag) || (a < b && names.includes('*'));
     const take = (row: Row, roles: Roles, steps: readonly Step[]) => {
       const [s, e] = row[1];
       go(i + 1, forward ? e : s, forward ? lo : s, forward ? e : hi, bind(roles, atom.as, valueOf(row)), [...steps, { row, ...(atom.as !== undefined && { as: atom.as }) }]);
     };
     if (!pending) {
-      for (const row of (forward ? ix.starts : ix.ends).get(cursor) ?? []) if (wants(row[0])) take(row, roles, steps);
+      for (const row of (forward ? ix.starts : ix.ends).get(cursor) ?? []) if (wants(row)) take(row, roles, steps);
       return;
     }
     // The pending regex spans exactly the gap between the cursor and the row this atom takes.
     const whole = pinned(pending.rx, 'whole');
+    const { stop } = pending;
+    /** A skip's gap may not take any part of a row of its stop tags. ponytail: scans every row; fine at subject length. */
+    const clear = (a: number, b: number) => !stop || !ix.all.some(([t, [s, e]]) => s < b && e > a && stop.includes(t));
     for (const row of ix.all) {
-      if (!wants(row[0]) || (forward ? row[1][0] < cursor : row[1][1] > cursor)) continue;
+      if (!wants(row) || (forward ? row[1][0] < cursor : row[1][1] > cursor)) continue;
       const gap = forward ? text.slice(cursor, row[1][0]) : text.slice(row[1][1], cursor);
-      if (whole.test(gap)) take(row, bind(roles, pending.as, gap), grab(steps, pending.as, gap));
+      if (whole.test(gap) && (forward ? clear(cursor, row[1][0]) : clear(row[1][1], cursor))) take(row, bind(roles, pending.as, gap), grab(steps, pending.as, gap));
     }
   };
   go(0, forward ? from[1][1] : from[1][0], from[1][0], from[1][1], {}, [{ row: from }]);

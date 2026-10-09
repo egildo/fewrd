@@ -1,0 +1,183 @@
+{
+  "version": "md-step6",
+  "patterns": {
+    "OPENER": "#{1,6} |- "
+  },
+  "tags": {
+    "heading": {
+      "search": [
+        {
+          "from": "hmark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "title"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "list": {
+      "search": [
+        {
+          "from": "item",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "item"
+            }
+          ]
+        },
+        {
+          "from": "list",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "item"
+            }
+          ]
+        }
+      ]
+    },
+    "item": {
+      "search": [
+        {
+          "from": "imark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "para": {
+      "search": [
+        {
+          "from": "line",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "para",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "line"
+            }
+          ]
+        }
+      ]
+    },
+    "line": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "hmark": {
+      "search": [
+        {
+          "from": "hash",
+          "back": [
+            {
+              "tag": [
+                "bol",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "imark": {
+      "search": [
+        {
+          "from": "dash",
+          "back": [
+            {
+              "tag": [
+                "bol",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "hash": {
+      "rx": "/#{1,6} /u"
+    },
+    "dash": {
+      "rx": "/- /u"
+    },
+    "nl": {
+      "rx": "/¶/u",
+      "effects": [
+        {
+          "flag": "eol",
+          "at": "start"
+        },
+        {
+          "flag": "bol",
+          "at": "end"
+        }
+      ]
+    },
+    "bol": {},
+    "eol": {}
+  }
+}

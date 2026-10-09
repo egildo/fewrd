@@ -33,8 +33,8 @@ test('compile-never-throws: unknown tag in from', () => oneError(search({ from: 
 test('compile-never-throws: unknown tag in an atom', () => oneError(search({ from: 'w', forward: [{ tag: 'nope' }] }), 'tags.bad.search[0].forward[0].tag', /unknown tag/));
 test('compile-never-throws: unknown tag inside an atom list', () =>
   oneError(search({ from: 'w', back: [{ tag: ['w', 'nope'] }] }), 'tags.bad.search[0].back[0].tag[1]', /unknown tag "nope"/));
-test('compile-never-throws: both rx and search', () => oneError({ rx: '/a/u', search: [{ from: 'w', forward: [{ tag: 'w' }] }] }, 'tags.bad', /exactly one of rx and search/));
-test('compile-never-throws: neither rx nor search', () => oneError({}, 'tags.bad', /exactly one of rx and search/));
+test('compile-never-throws: both rx and search', () => oneError({ rx: '/a/u', search: [{ from: 'w', forward: [{ tag: 'w' }] }] }, 'tags.bad', /at most one of rx and search/));
+test('compile-never-throws: a flag takes no resolve, weak, fate or effects', () => oneError({ weak: true }, 'tags.bad.weak', /a flag/));
 test('compile-never-throws: both back and forward', () =>
   oneError(search({ from: 'w', back: [{ tag: 'w' }], forward: [{ tag: 'w' }] }), 'tags.bad.search[0]', /exactly one of back and forward/));
 test('compile-never-throws: neither back nor forward', () => oneError(search({ from: 'w' }), 'tags.bad.search[0]', /exactly one of back and forward/));
@@ -57,8 +57,8 @@ test('compile-never-throws: a reserved name declared as a tag', () => {
     assert.deepEqual(Object.keys(c.tags), ['w']);
   }
 });
-test('compile-never-throws: a reserved name in from is an unknown tag', () => {
-  for (const name of ['^', '$', '*']) oneError(search({ from: name, forward: [{ tag: 'w' }] }), 'tags.bad.search[0].from', /unknown tag/);
+test('compile-never-throws: * in from is an unknown tag', () => {
+  oneError(search({ from: '*', forward: [{ tag: 'w' }] }), 'tags.bad.search[0].from', /unknown tag/);
 });
 test('compile-never-throws: reserved names are fine in atoms', () => {
   assert.deepEqual(errorsOf(conf({ w: W, a: search({ from: 'w', back: [{ tag: '^' }] }), b: search({ from: 'w', forward: [{ tag: ['$', '*'] }] }) })), []);
@@ -76,8 +76,8 @@ test('compile-never-throws: wrong types', () => {
   oneError(search({ from: 'w', forward: [{ tag: 'w', optional: 'yes' }, { tag: 'w' }] }), 'tags.bad.search[0].forward[0].optional', /boolean/);
   oneError(search({ from: 'w', forward: [] }), 'tags.bad.search[0].forward', /non-empty/);
   oneError({ search: [] }, 'tags.bad.search', /non-empty/);
-  oneError(search({ from: 'w', forward: [{ tag: 'w', rx: '/a/u' }] }), 'tags.bad.search[0].forward[0]', /exactly one of tag and rx/);
-  oneError(search({ from: 'w', forward: [{}] }), 'tags.bad.search[0].forward[0]', /exactly one of tag and rx/);
+  oneError(search({ from: 'w', forward: [{ tag: 'w', rx: '/a/u' }] }), 'tags.bad.search[0].forward[0]', /exactly one of tag, rx and skip/);
+  oneError(search({ from: 'w', forward: [{}] }), 'tags.bad.search[0].forward[0]', /exactly one of tag, rx and skip/);
 });
 
 test('compile-never-throws: unknown keys are errors naming the path', () => {

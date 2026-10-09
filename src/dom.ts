@@ -5,7 +5,7 @@
 // coordinates. The fold lives in fold.ts and reads the tree alone.
 
 import { edges, rel, type Chart, type Row, type Span } from './chart.ts';
-import type { Conf, Fate, Resolve } from './conf.ts';
+import { isFlag, type Conf, type Fate, type Resolve } from './conf.ts';
 import { derive, type Step } from './derive.ts';
 import { normalise } from './normalise.ts';
 
@@ -38,7 +38,6 @@ const inside = (a: Span, b: Span) => {
   const r = rel(a, b);
   return r === 'starts' || r === 'during' || r === 'finishes';
 };
-const isEdge = (row: Row) => row[0] === '^' || row[0] === '$';
 
 /**
  * The tree of `text`: a `doc` node over the whole text, one node per chosen
@@ -63,6 +62,8 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
     last[at[j]] = j;
   }
   const rank = new Map(Object.keys(conf.tags).map((t, i) => [t, i]));
+  /** Rows that mark a place and are never nodes: the text's edges and the conf's flags. */
+  const marks = new Set(['^', '$', ...Object.keys(conf.tags).filter((t) => isFlag(conf.tags[t]))]);
   const all: Row[] = [];
   const candidates: Candidate[] = [];
   for (const [tag, [a, b]] of chart.all()) {
@@ -72,11 +73,11 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
       const r = rank.get(tag);
       if (r === undefined) throw new Error(`the chart has rows of "${tag}", which the conf does not declare`);
       const lo = first[a] ?? -1;
-      const hi = last[b] ?? -1;
+      const hi = a === b ? lo : (last[b] ?? -1);
       if (lo < 0 || hi < 0) throw new Error(`${tag} (${a},${b}) is not on a boundary of the text: is this the chart of another text?`);
       const row: Row = [tag, [lo, hi]];
       all.push(row);
-      candidates.push({ row, weak: conf.tags[tag].weak === true, rank: r });
+      if (!marks.has(tag)) candidates.push({ row, weak: conf.tags[tag].weak === true, rank: r });
     }
   }
   all.sort(byPosition);
@@ -224,7 +225,7 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
   function force(row: Row, own: string, node: boolean): boolean {
     for (const d of derivationsOf(row)) {
       const mark = trail.length;
-      if (d.steps.every((st) => !('row' in st) || isEdge(st.row) || take(st.row, own))) {
+      if (d.steps.every((st) => !('row' in st) || marks.has(st.row[0]) || take(st.row, own))) {
         if (node) {
           used.set(row, d);
           trail.push(() => used.delete(row));

@@ -116,9 +116,19 @@ export function find(text: string, conf: Compiled): Chart {
     return true;
   };
 
+  /** Add a row and place the flags its tag's effects call for; the tags that gained a row go into `grew`. */
+  const place = (row: Row, grew: Set<string>) => {
+    if (!add(row)) return;
+    grew.add(row[0]);
+    for (const { flag, at: edge } of conf.tags[row[0]]?.effects ?? []) {
+      const p = row[1][edge === 'start' ? 0 : 1];
+      if (add([flag, [p, p]])) grew.add(flag);
+    }
+  };
+
   const first: Row[] = [['^', [0, 0]], ['$', [m, m]], ...roots(s, conf, key, values)];
-  for (const row of first.sort(byRow)) add(row);
-  let grew = new Set(spans.keys());
+  let grew = new Set<string>();
+  for (const row of first.sort(byRow)) place(row, grew);
   while (grew.size) {
     const found: Row[] = [];
     for (const tag of names) {
@@ -140,7 +150,7 @@ export function find(text: string, conf: Compiled): Chart {
       }
     }
     grew = new Set();
-    for (const row of found.sort(byRow)) if (add(row)) grew.add(row[0]);
+    for (const row of found.sort(byRow)) place(row, grew);
   }
   return Chart.empty(text.length).with(ix.all.map(([tag, [a, b]]): Row => [tag, [at[a], at[b]]]));
 }
