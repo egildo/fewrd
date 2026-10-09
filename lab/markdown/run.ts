@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { compile, find, dom, type Node } from '../../src/index.ts';
 
 const [confPath, mdPath] = process.argv.slice(2);
-const text = readFileSync(mdPath, 'utf8').replace(/\n/g, '¶'); // one code unit for one: spans stay true
+// One code unit for one, so spans stay true: newlines become ¶, leading spaces ·.
+const text = readFileSync(mdPath, 'utf8').replace(/^ +/gm, (sp) => '·'.repeat(sp.length)).replace(/\n/g, '¶');
 const { conf, errors } = compile(JSON.parse(readFileSync(confPath, 'utf8')));
 if (errors.length) console.log(errors);
 const chart = find(text, conf);
