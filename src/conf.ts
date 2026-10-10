@@ -109,7 +109,7 @@ function atom(a: unknown, path: string, ctx: Ctx, errs: Errors): Atom<RegExp> | 
   // A stop tag must be complete before any search runs, or a later pass could undo a skip already taken.
   const stop = typeof a.stop === 'string' ? [a.stop] : a.stop;
   if ('stop' in a) {
-    if (!('skip' in a)) errs.push({ path: `${path}.stop`, message: 'only a skip atom takes stop' });
+    if (!('skip' in a) && !('rx' in a)) errs.push({ path: `${path}.stop`, message: 'only a skip or regex atom takes stop' });
     else if (!Array.isArray(stop) || !stop.length) errs.push({ path: `${path}.stop`, message: 'must be a tag name or a non-empty list of them' });
     else stop.forEach((t: unknown, i) => {
       const p = Array.isArray(a.stop) ? `${path}.stop[${i}]` : `${path}.stop`;
@@ -142,7 +142,7 @@ function atom(a: unknown, path: string, ctx: Ctx, errs: Errors): Atom<RegExp> | 
   }
   if (errs.length > before) return;
   const extra = { ...(a.as !== undefined && { as: a.as as string }), ...(a.optional === true && { optional: true }) };
-  if (rx === SKIP && stop) return { rx, ...extra, stop: stop as string[] };
+  if (rx && stop) return { rx, ...extra, stop: stop as string[] };
   return rx ? { rx, ...extra } : { tag: a.tag as string | string[], ...extra };
 }
 

@@ -115,7 +115,7 @@ test('skip: stop keeps the gap off rows of those tags', () => {
 });
 test('skip: stop compile errors', () => {
   const run = (atom: object) => ({ run: { search: [{ from: 'w', forward: [atom, { tag: 'w' }] }] }, p: { search: [{ from: 'w', forward: [{ tag: 'sp' }] }] }, ...WS });
-  assert.deepEqual(errorsOf(run({ tag: 'sp', stop: 'sp' })), ['tags.run.search[0].forward[0].stop: only a skip atom takes stop']);
+  assert.deepEqual(errorsOf(run({ tag: 'sp', stop: 'sp' })), ['tags.run.search[0].forward[0].stop: only a skip or regex atom takes stop']);
   assert.deepEqual(errorsOf(run({ skip: true, stop: 'p' })), ['tags.run.search[0].forward[0].stop: "p" is not a root tag: a skip stops only at rows found by rx']);
   assert.deepEqual(errorsOf(run({ skip: true, stop: ['sp', 'nope'] })), ['tags.run.search[0].forward[0].stop[1]: unknown tag "nope"']);
 });
@@ -137,4 +137,13 @@ test('skip: with no stop row ahead, it runs to the end of the text', () => {
   const back = { rest: { search: [{ from: 'said', back: [{ skip: true, stop: 'nl' }, { tag: '^' }] }] }, said: { rx: '/said:/u' }, nl: { rx: '/¶/u' } };
   assert.deepEqual(chartOf(back, 'hi said:¶x').rest, [[0, 8]]);
   assert.equal(chartOf(back, 'h¶i said:').rest, undefined);
+});
+test('stop: a regex atom takes it too, and must still match the gap', () => {
+  const tags = {
+    rest: { search: [{ from: 'said', forward: [{ rx: '/ [a-z ]+/u', stop: 'nl' }, { tag: ['nl', '$'] }] }] },
+    said: { rx: '/said:/u' },
+    nl: { rx: '/¶/u' },
+  };
+  assert.deepEqual(chartOf(tags, 'said: hi¶there¶').rest, [[0, 9]]);
+  assert.equal(chartOf(tags, 'said: hi 2¶').rest, undefined);
 });

@@ -374,7 +374,8 @@
           "from": "bol",
           "forward": [
             {
-              "rx": "/(?!%{OPENER})[^¶]+/u"
+              "rx": "/(?!%{OPENER})[^¶]+/u",
+              "stop": "nl"
             },
             {
               "tag": [
@@ -388,7 +389,8 @@
           "from": "^",
           "forward": [
             {
-              "rx": "/(?!%{OPENER})[^¶]+/u"
+              "rx": "/(?!%{OPENER})[^¶]+/u",
+              "stop": "nl"
             },
             {
               "tag": [
