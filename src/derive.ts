@@ -2,7 +2,7 @@
 // `dom` (which re-runs it inside a chosen row's span to bind its roles).
 // Matching runs on the normalised copy.
 
-import type { Edges, Row } from './chart.ts';
+import type { Edges, Row, Span } from './chart.ts';
 import type { Atom, Search } from './conf.ts';
 
 export type { Row };
@@ -27,6 +27,53 @@ export function pinned(rx: RegExp, kind: Kind): RegExp {
     : kind === 'back' ? new RegExp(`(?:${rx.source})$`, bare(rx.flags))
     : kind === 'forward' ? new RegExp(rx.source, `${bare(rx.flags)}y`)
     : new RegExp(`^(?:${rx.source})$`, bare(rx.flags)));
+}
+
+/** The rows of a skip's stop tags, by start with the furthest end so far, and by end with the nearest start from there on. */
+type Stops = { byStart: Span[]; maxEnd: number[]; byEnd: Span[]; minStart: number[] };
+const stopCache = new WeakMap<Edges, Map<string, Stops>>();
+/**
+ * Stop tags are root tags, complete before any search runs, so the index is built
+ * once per chart (and per row's inside, in dom).
+ */
+function stops(ix: Edges, tags: readonly string[]): Stops {
+  let byTags = stopCache.get(ix);
+  if (!byTags) stopCache.set(ix, (byTags = new Map()));
+  const key = tags.join('\0');
+  let st = byTags.get(key);
+  if (!st) {
+    const spans = ix.all.filter((r) => tags.includes(r[0])).map((r) => r[1]);
+    const byStart = [...spans].sort((x, y) => x[0] - y[0]);
+    const byEnd = [...spans].sort((x, y) => x[1] - y[1]);
+    const maxEnd = [-Infinity];
+    for (const [, e] of byStart) maxEnd.push(Math.max(maxEnd[maxEnd.length - 1], e));
+    const minStart = new Array<number>(byEnd.length + 1).fill(Infinity);
+    for (let i = byEnd.length - 1; i >= 0; i--) minStart[i] = Math.min(minStart[i + 1], byEnd[i][0]);
+    byTags.set(key, (st = { byStart, maxEnd, byEnd, minStart }));
+  }
+  return st;
+}
+/** The first index whose value is at least `v` (`gt`: more than `v`). */
+function bound(list: Span[], side: 0 | 1, v: number, gt = false): number {
+  let lo = 0;
+  let hi = list.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (gt ? list[mid][side] <= v : list[mid][side] < v) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+/** Where the row after a skip may start (forward) or end (back): from the cursor to the nearest stop row; empty when one crosses the cursor. */
+function reach(st: Stops, cursor: number, forward: boolean): [number, number] {
+  if (forward) {
+    const i = bound(st.byStart, 0, cursor);
+    if (st.maxEnd[i] > cursor) return [cursor, cursor - 1];
+    return [cursor, i < st.byStart.length ? st.byStart[i][0] : Number.MAX_SAFE_INTEGER];
+  }
+  const i = bound(st.byEnd, 1, cursor, true);
+  if (st.minStart[i] < cursor) return [cursor + 1, cursor];
+  return [i > 0 ? st.byEnd[i - 1][1] : 0, cursor];
 }
 
 interface Pending {
@@ -93,14 +140,20 @@ export function derive(
     }
     // The pending regex spans exactly the gap between the cursor and the row this atom takes.
     const whole = pinned(pending.rx, 'whole');
-    const { stop } = pending;
-    /** A skip's gap may not take any part of a row of its stop tags. ponytail: scans every row; fine at subject length. */
-    const clear = (a: number, b: number) => !stop || !ix.all.some(([t, [s, e]]) => s < b && e > a && stop.includes(t));
-    for (const row of ix.all) {
-      if (!wants(row) || (forward ? row[1][0] < cursor : row[1][1] > cursor)) continue;
+    const fits = (row: Row) => {
       const gap = forward ? text.slice(cursor, row[1][0]) : text.slice(row[1][1], cursor);
-      if (whole.test(gap) && (forward ? clear(cursor, row[1][0]) : clear(row[1][1], cursor))) take(row, bind(roles, pending.as, gap), grab(steps, pending.as, gap));
+      if (whole.test(gap)) take(row, bind(roles, pending.as, gap), grab(steps, pending.as, gap));
+    };
+    if (pending.stop) {
+      // A skip's gap may not take any part of a stop row, so only the rows up to the nearest one can end it.
+      // Never past the rows there are: in dom, `ix` holds only the rows inside one row. `ix.all` is sorted by start.
+      const [a, b] = reach(stops(ix, pending.stop), cursor, forward);
+      if (!ix.all.length) return;
+      const [lo, hi] = forward ? [a, Math.min(b, ix.all[ix.all.length - 1][1][0])] : [Math.max(a, ix.all[0][1][0]), b];
+      for (let p = lo; p <= hi; p++) for (const row of (forward ? ix.starts : ix.ends).get(p) ?? []) if (wants(row)) fits(row);
+      return;
     }
+    for (const row of ix.all) if (wants(row) && (forward ? row[1][0] >= cursor : row[1][1] <= cursor)) fits(row);
   };
   go(0, forward ? from[1][1] : from[1][0], from[1][0], from[1][1], {}, [{ row: from }]);
 }

@@ -131,3 +131,10 @@ test('opaque: chosen first, whatever its length, and nothing else gets inside', 
   const plain = { ...tags, q: { rx: "/'[^']*'/u" } };
   assert.match(treeOf(plain, "a 'b c' dddd"), /long \(5,12\)/);
 });
+test('skip: with no stop row ahead, it runs to the end of the text', () => {
+  const tags = { rest: { search: [{ from: 'said', forward: [{ skip: true, stop: 'nl' }, { tag: '$' }] }] }, said: { rx: '/said:/u' }, nl: { rx: '/¶/u' } };
+  assert.deepEqual(chartOf(tags, 'x¶said: hi there').rest, [[2, 16]]);
+  const back = { rest: { search: [{ from: 'said', back: [{ skip: true, stop: 'nl' }, { tag: '^' }] }] }, said: { rx: '/said:/u' }, nl: { rx: '/¶/u' } };
+  assert.deepEqual(chartOf(back, 'hi said:¶x').rest, [[0, 8]]);
+  assert.equal(chartOf(back, 'h¶i said:').rest, undefined);
+});

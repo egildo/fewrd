@@ -1,0 +1,12 @@
+{
+  "name": "fewrd-lab-markdown",
+  "private": true,
+  "type": "module",
+  "description": "The markdown lab: confs, samples, a runner, and a race against commonmark.",
+  "scripts": {
+    "race": "node race.ts"
+  },
+  "devDependencies": {
+    "commonmark": "0.31.2"
+  }
+}
