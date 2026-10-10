@@ -97,7 +97,15 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
     busy.add(row);
     const [tag, [lo, hi]] = row;
     const def = conf.tags[tag];
-    const within = all.filter((r) => lo <= r[1][0] && r[1][1] <= hi && r !== row);
+    // `all` is sorted by start: the rows inside start in [lo, hi], a stretch found by bisection.
+    let i = 0;
+    for (let j = all.length; i < j; ) {
+      const mid = (i + j) >> 1;
+      if (all[mid][1][0] < lo) i = mid + 1;
+      else j = mid;
+    }
+    const within: Row[] = [];
+    for (; i < all.length && all[i][1][0] <= hi; i++) if (all[i][1][1] <= hi && all[i] !== row) within.push(all[i]);
     const ix = edges(within);
     const out: Derivation[] = [];
     for (const search of def.search ?? []) {
