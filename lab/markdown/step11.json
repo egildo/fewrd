@@ -1,0 +1,1132 @@
+{
+  "version": "md-step11",
+  "patterns": {
+    "RULE": "(?:\\* *){3,}|(?:- *){3,}|(?:_ *){3,}",
+    "OPENER": "#{1,6}(?: |¶|$)|(?:··)*(?:[-*+]|\\d{1,9}[.)]) |```|>|(?:%{RULE})(?:¶|$)",
+    "I": "(?<!\\*)\\*(?!\\*)",
+    "U": "(?<!_)_(?!_)"
+  },
+  "tags": {
+    "fenced": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "fopen",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "skip": true,
+              "stop": "fclose",
+              "as": "code"
+            },
+            {
+              "tag": "fclose"
+            }
+          ]
+        }
+      ]
+    },
+    "setext": {
+      "search": [
+        {
+          "from": "para",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "sxu",
+              "as": "underline"
+            }
+          ]
+        }
+      ]
+    },
+    "hr": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "rx": "/%{RULE}/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "rx": "/%{RULE}/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "sxu": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "rx": "/=+|-+/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bl0": {
+      "search": [
+        {
+          "from": "bi0",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "be0",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "bi0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi0",
+                "be0"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "be0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi0",
+                "be0"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "bl0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi0",
+                "be0"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "be0": {
+      "search": [
+        {
+          "from": "bi0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bl1",
+                "ol1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bi0": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "tag": "bmark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "tag": "bmark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "ol0": {
+      "search": [
+        {
+          "from": "oi0",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "oe0",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "oi0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi0",
+                "oe0"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "oe0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi0",
+                "oe0"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "ol0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi0",
+                "oe0"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "oe0": {
+      "search": [
+        {
+          "from": "oi0",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bl1",
+                "ol1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "oi0": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "tag": "omark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "tag": "omark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bl1": {
+      "search": [
+        {
+          "from": "bi1",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "be1",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "bi1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi1",
+                "be1"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "be1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi1",
+                "be1"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "bl1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi1",
+                "be1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "be1": {
+      "search": [
+        {
+          "from": "bi1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bl2",
+                "ol2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bi1": {
+      "search": [
+        {
+          "from": "L1",
+          "forward": [
+            {
+              "tag": "bmark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "ol1": {
+      "search": [
+        {
+          "from": "oi1",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "oe1",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "oi1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi1",
+                "oe1"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "oe1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi1",
+                "oe1"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "ol1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi1",
+                "oe1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "oe1": {
+      "search": [
+        {
+          "from": "oi1",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bl2",
+                "ol2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "oi1": {
+      "search": [
+        {
+          "from": "L1",
+          "forward": [
+            {
+              "tag": "omark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bl2": {
+      "search": [
+        {
+          "from": "bi2",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "bi2",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi2"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "bl2",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "bi2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bi2": {
+      "search": [
+        {
+          "from": "L2",
+          "forward": [
+            {
+              "tag": "bmark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "ol2": {
+      "search": [
+        {
+          "from": "oi2",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "oi2",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi2"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "ol2",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": [
+                "oi2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "oi2": {
+      "search": [
+        {
+          "from": "L2",
+          "forward": [
+            {
+              "tag": "omark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "heading": {
+      "search": [
+        {
+          "from": "hmark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "title"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "quote": {
+      "search": [
+        {
+          "from": "qline",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "quote",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "qline"
+            }
+          ]
+        }
+      ]
+    },
+    "qline": {
+      "search": [
+        {
+          "from": "qmark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "para": {
+      "search": [
+        {
+          "from": "line",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "para",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "line"
+            }
+          ]
+        }
+      ]
+    },
+    "line": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "rx": "/(?!%{OPENER})[^¶]+/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "L1": {
+      "search": [
+        {
+          "from": "bol",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        }
+      ]
+    },
+    "L2": {
+      "search": [
+        {
+          "from": "L1",
+          "forward": [
+            {
+              "tag": "ind"
+            }
+          ]
+        }
+      ]
+    },
+    "hmark": {
+      "search": [
+        {
+          "from": "hash",
+          "back": [
+            {
+              "tag": [
+                "bol",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "qmark": {
+      "search": [
+        {
+          "from": "gt",
+          "back": [
+            {
+              "tag": [
+                "bol",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "esc": {
+      "rx": "/\\\\[!-\\/:-@\\[-`{-~]/u",
+      "opaque": true
+    },
+    "autolink": {
+      "rx": "/<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\\s<>]*>/u",
+      "opaque": true
+    },
+    "code": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "tick",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "tick",
+                "nl"
+              ],
+              "as": "code"
+            },
+            {
+              "tag": "tick"
+            }
+          ]
+        }
+      ]
+    },
+    "image": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "bang",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "mid",
+                "nl"
+              ],
+              "as": "alt"
+            },
+            {
+              "tag": "mid"
+            },
+            {
+              "tag": "dest",
+              "as": "src"
+            },
+            {
+              "tag": "rp"
+            }
+          ]
+        }
+      ]
+    },
+    "anchor": {
+      "search": [
+        {
+          "from": "lb",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "mid",
+                "nl"
+              ],
+              "as": "label"
+            },
+            {
+              "tag": "mid"
+            },
+            {
+              "tag": "dest",
+              "as": "href"
+            },
+            {
+              "tag": "rp"
+            }
+          ]
+        }
+      ]
+    },
+    "bold": {
+      "search": [
+        {
+          "from": "bo",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "bc",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "bc"
+            }
+          ]
+        },
+        {
+          "from": "ubo",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "ubc",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "ubc"
+            }
+          ]
+        }
+      ]
+    },
+    "italic": {
+      "search": [
+        {
+          "from": "io",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "ic",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "ic"
+            }
+          ]
+        },
+        {
+          "from": "uio",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "uic",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "uic"
+            }
+          ]
+        }
+      ]
+    },
+    "br": {
+      "rx": "/\\\\(?=¶)/u"
+    },
+    "hash": {
+      "rx": "/#{1,6}(?: |(?=¶|$))/u"
+    },
+    "bmark": {
+      "rx": "/[-*+] /u"
+    },
+    "omark": {
+      "rx": "/\\d{1,9}[.)] /u"
+    },
+    "gt": {
+      "rx": "/> ?/u"
+    },
+    "ind": {
+      "rx": "/··/u"
+    },
+    "fopen": {
+      "rx": "/(?<=^|¶)```\\w+/u"
+    },
+    "fclose": {
+      "rx": "/(?<=^|¶)```(?=¶|$)/u"
+    },
+    "dest": {
+      "rx": "/(?<=\\]\\()[^\\s()]+(?=\\))/u",
+      "opaque": true
+    },
+    "tick": {
+      "rx": "/`/u"
+    },
+    "bang": {
+      "rx": "/!\\[/u"
+    },
+    "lb": {
+      "rx": "/\\[/u"
+    },
+    "mid": {
+      "rx": "/\\]\\(/u"
+    },
+    "rp": {
+      "rx": "/\\)/u"
+    },
+    "bo": {
+      "rx": "/\\*\\*(?=\\S)/u"
+    },
+    "bc": {
+      "rx": "/(?<=\\S)\\*\\*/u"
+    },
+    "io": {
+      "rx": "/%{I}(?=\\S)/u"
+    },
+    "ic": {
+      "rx": "/(?<=\\S)%{I}/u"
+    },
+    "ubo": {
+      "rx": "/(?<![\\p{L}\\p{N}])__(?=\\S)/u"
+    },
+    "ubc": {
+      "rx": "/(?<=\\S)__(?![\\p{L}\\p{N}])/u"
+    },
+    "uio": {
+      "rx": "/(?<![\\p{L}\\p{N}_])%{U}(?=\\S)/u"
+    },
+    "uic": {
+      "rx": "/(?<=\\S)%{U}(?![\\p{L}\\p{N}_])/u"
+    },
+    "nl": {
+      "rx": "/¶/u",
+      "effects": [
+        {
+          "flag": "eol",
+          "at": "start"
+        },
+        {
+          "flag": "bol",
+          "at": "end"
+        }
+      ]
+    },
+    "blank": {
+      "rx": "/¶¶/u"
+    },
+    "bol": {},
+    "eol": {}
+  }
+}
