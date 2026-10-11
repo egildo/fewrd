@@ -13,8 +13,8 @@ const text = md.replace(/^ +/gm, (sp) => '·'.repeat(sp.length)).replace(/\n/g, 
 /** fewrd tag → commonmark node type. A node counts by its own tag; a twin counts only inside list structure (a one-item list is also its item). */
 const KIND: [RegExp, string][] = [
   [/^(heading|setext)$/, 'heading'],
-  [/^[bo]l\d$/, 'list'],
-  [/^[bo]i\d$/, 'item'],
+  [/^([bo]l\d|list_.*)$/, 'list'],
+  [/^([bo]i\d|line_.*)$/, 'item'],
   [/^(anchor|autolink)$/, 'link'],
   [/^image$/, 'image'],
   [/^bold$/, 'strong'],
@@ -28,7 +28,7 @@ const KIND: [RegExp, string][] = [
 const ours: Record<string, number> = {};
 const walk = (n: Node) => {
   const seen = new Set<string>();
-  const twins = /^[bo][lei]\d$/.test(n.tag) ? (n.also ?? []) : [];
+  const twins = /^([bo][lei]\d|(list|line|entry)_.*)$/.test(n.tag) ? (n.also ?? []) : [];
   for (const t of [n.tag, ...twins]) for (const [rx, kind] of KIND) if (rx.test(t)) seen.add(kind);
   for (const k of seen) ours[k] = (ours[k] ?? 0) + 1;
   n.children.forEach(walk);

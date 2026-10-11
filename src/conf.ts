@@ -21,7 +21,8 @@ export type Effect = { flag: string; at: 'start' | 'end' };
 export type Search<P = string> = { from: string; back?: Atom<P>[]; forward?: Atom<P>[] };
 export type Atom<P = string> =
   | { tag: string | string[]; as?: string; optional?: boolean; times?: number; min?: number; max?: number }
-  | { rx: P; as?: string; optional?: boolean; stop?: string[] };
+  | { rx: P; as?: string; optional?: boolean; stop?: string[] }
+  | { same: string; as?: string };
 export type Resolve = (row: Readonly<Record<string, string>>) => string | null;
 export interface CompileError {
   path: string;
@@ -39,7 +40,7 @@ const KEYS = {
   conf: ['version', 'patterns', 'tags'],
   tag: ['rx', 'search', 'resolve', 'weak', 'fate', 'effects', 'opaque'],
   search: ['from', 'back', 'forward'],
-  atom: ['tag', 'rx', 'skip', 'stop', 'as', 'optional', 'times', 'min', 'max'],
+  atom: ['tag', 'rx', 'skip', 'same', 'stop', 'as', 'optional', 'times', 'min', 'max'],
   effect: ['flag', 'at'],
 };
 /** A tag with neither `rx` nor `search`: its rows come only from other tags' effects. */
@@ -101,7 +102,13 @@ function atom(a: unknown, path: string, ctx: Ctx, errs: Errors): Atom<RegExp> | 
   if (!isObj(a)) return void errs.push({ path, message: 'must be an object (an atom)' });
   const before = errs.length;
   unknownKeys(a, KEYS.atom, path, errs);
-  if (Number('tag' in a) + Number('rx' in a) + Number('skip' in a) !== 1) errs.push({ path, message: 'must have exactly one of tag, rx and skip' });
+  if (Number('tag' in a) + Number('rx' in a) + Number('skip' in a) + Number('same' in a) !== 1) errs.push({ path, message: 'must have exactly one of tag, rx, skip and same' });
+  if ('same' in a) {
+    // What it repeats must be complete before any search runs, as a stop is.
+    if (!isText(a.same) || !ctx.declared.has(a.same)) errs.push({ path: `${path}.same`, message: `unknown tag "${String(a.same)}"` });
+    else if (!ctx.roots.has(a.same)) errs.push({ path: `${path}.same`, message: `"${a.same}" is not a root tag: same repeats only rows found by rx` });
+    for (const k of ['optional', 'times', 'min', 'max', 'stop']) if (k in a) errs.push({ path: `${path}.${k}`, message: 'a same atom takes only as' });
+  }
   if ('skip' in a) {
     if (a.skip !== true) errs.push({ path: `${path}.skip`, message: 'must be true' });
     for (const k of ['optional', 'times', 'min', 'max']) if (k in a) errs.push({ path: `${path}.${k}`, message: 'a skip atom takes only as and stop' });
@@ -141,6 +148,7 @@ function atom(a: unknown, path: string, ctx: Ctx, errs: Errors): Atom<RegExp> | 
     } else tagName(a.tag, `${path}.tag`, ctx, errs);
   }
   if (errs.length > before) return;
+  if ('same' in a) return { same: a.same as string, ...(a.as !== undefined && { as: a.as as string }) };
   const extra = { ...(a.as !== undefined && { as: a.as as string }), ...(a.optional === true && { optional: true }) };
   if (rx && stop) return { rx, ...extra, stop: stop as string[] };
   return rx ? { rx, ...extra } : { tag: a.tag as string | string[], ...extra };
@@ -172,6 +180,8 @@ function atoms(v: unknown, path: string, ctx: Ctx, errs: Errors): Atom<RegExp>[]
     const compiled = atom(a, p, ctx, errs);
     const isRx = isObj(a) && ('rx' in a || 'skip' in a);
     if (isRx && rxOpen) errs.push({ path: p, message: 'two regex or skip atoms in a row (optional atoms between do not separate them): merge them into one pattern' });
+    // A regex's gap ends at the row the next atom takes, and a same atom takes no row.
+    if (isObj(a) && 'same' in a && rxOpen) errs.push({ path: p, message: 'a same atom cannot follow a regex or skip atom' });
     rxOpen = isRx || (rxOpen && skippable(a));
     return compiled && unroll(a as Obj, compiled);
   });

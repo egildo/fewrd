@@ -76,8 +76,8 @@ test('compile-never-throws: wrong types', () => {
   oneError(search({ from: 'w', forward: [{ tag: 'w', optional: 'yes' }, { tag: 'w' }] }), 'tags.bad.search[0].forward[0].optional', /boolean/);
   oneError(search({ from: 'w', forward: [] }), 'tags.bad.search[0].forward', /non-empty/);
   oneError({ search: [] }, 'tags.bad.search', /non-empty/);
-  oneError(search({ from: 'w', forward: [{ tag: 'w', rx: '/a/u' }] }), 'tags.bad.search[0].forward[0]', /exactly one of tag, rx and skip/);
-  oneError(search({ from: 'w', forward: [{}] }), 'tags.bad.search[0].forward[0]', /exactly one of tag, rx and skip/);
+  oneError(search({ from: 'w', forward: [{ tag: 'w', rx: '/a/u' }] }), 'tags.bad.search[0].forward[0]', /exactly one of tag, rx, skip and same/);
+  oneError(search({ from: 'w', forward: [{}] }), 'tags.bad.search[0].forward[0]', /exactly one of tag, rx, skip and same/);
 });
 
 test('compile-never-throws: unknown keys are errors naming the path', () => {

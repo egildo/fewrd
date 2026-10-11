@@ -147,3 +147,30 @@ test('stop: a regex atom takes it too, and must still match the gap', () => {
   assert.deepEqual(chartOf(tags, 'said: hi¶there¶').rest, [[0, 9]]);
   assert.equal(chartOf(tags, 'said: hi 2¶').rest, undefined);
 });
+
+// ---- same
+
+const LEAD = {
+  run: {
+    search: [
+      { from: 'w', forward: [{ tag: 'nl' }, { same: 'lead', as: 'lead' }, { tag: 'w' }] },
+      { from: 'run', forward: [{ tag: 'nl' }, { same: 'lead' }, { tag: 'w' }] },
+    ],
+  },
+  w: { rx: '/[a-z]+/u' },
+  lead: { rx: '/(?<=^|¶)·+/u' },
+  nl: { rx: '/¶/u' },
+};
+test('same: repeats the row of that tag ending where the search started', () => {
+  assert.deepEqual(chartOf(LEAD, '··a¶··b¶····c¶··d').run, [[2, 7]]); // the deeper line ends the run
+  assert.deepEqual(chartOf(LEAD, 'a¶b¶··c').run, [[0, 3]]);
+});
+test('same: dom takes the same derivation, the repeated row lying outside', () => {
+  assert.match(treeOf(LEAD, "··a¶··b"), /run \(2,7\) "a¶··b" attrs={ lead: "··" }/);
+});
+test('same: compile errors', () => {
+  const run = (...atoms: object[]) => ({ run: { search: [{ from: 'w', forward: atoms }] }, p: { search: [{ from: 'w', forward: [{ tag: 'sp' }] }] }, ...WS });
+  assert.deepEqual(errorsOf(run({ same: 'p' }, { tag: 'w' })), ['tags.run.search[0].forward[0].same: "p" is not a root tag: same repeats only rows found by rx']);
+  assert.deepEqual(errorsOf(run({ same: 'sp', optional: true }, { tag: 'w' })), ['tags.run.search[0].forward[0].optional: a same atom takes only as']);
+  assert.deepEqual(errorsOf(run({ skip: true }, { same: 'sp' }, { tag: 'w' })), ['tags.run.search[0].forward[1]: a same atom cannot follow a regex or skip atom']);
+});

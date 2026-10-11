@@ -81,6 +81,8 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
     }
   }
   all.sort(byPosition);
+  /** The whole chart by edge, for what a same atom repeats from just outside the row being derived. */
+  const outer = edges(all);
   const span = (row: Row) => `${row[0]} (${at[row[1][0]]},${at[row[1][1]]})`;
 
   // Values and derivations, computed lazily and memoised, on the copy's text.
@@ -117,7 +119,7 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
           const value = def.resolve({ ...roles, value: s.slice(lo, hi) });
           if (value === null) refused.add(row);
           else out.push({ steps, value });
-        });
+        }, outer);
       }
     }
     busy.delete(row);
@@ -223,7 +225,16 @@ export function dom(text: string, chart: Chart, conf: Compiled): Node {
   function take(row: Row, own?: string): boolean {
     if (own !== undefined && row[0] === own) return force(row, own, false);
     const there = bySpan.get(spanKey(row));
-    if (there) return there[0] === row[0] || twin(row, there);
+    if (there) {
+      if (there[0] === row[0]) return true;
+      twin(row, there);
+      // A forced twin still brings in what its derivation took (a one-item list's item, with its sublist), when it can.
+      if (own !== undefined && conf.tags[row[0]].search) {
+        const mark = trail.length;
+        if (!force(row, row[0], false)) undoTo(mark);
+      }
+      return true;
+    }
     if (crosses(row[1])) return false;
     const mark = trail.length;
     choose(row);

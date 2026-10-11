@@ -99,7 +99,13 @@ export function derive(
   search: Search<RegExp>,
   from: Row,
   emit: (lo: number, hi: number, roles: Roles, steps: readonly Step[]) => void,
+  outer: Edges = ix,
 ): void {
+  /** What a same atom repeats: the text of the row of that tag ending where `from` starts, or nothing. `outer` holds it in dom, where `ix` is one row's inside. */
+  const repeat = (tag: string) => {
+    const row = outer.ends.get(from[1][0])?.find((r) => r[0] === tag);
+    return row ? text.slice(row[1][0], row[1][1]) : '';
+  };
   const forward = search.forward !== undefined;
   const atoms: Atom<RegExp>[] = search.forward ?? search.back ?? [];
   const bind = (roles: Roles, as: string | undefined, value: string): Roles => (as === undefined ? roles : { ...roles, [as]: value });
@@ -122,6 +128,13 @@ export function derive(
       return;
     }
     const atom = atoms[i];
+    if ('same' in atom) {
+      // A stretch of exactly that text at the cursor, taken like a regex atom's match.
+      const want = repeat(atom.same);
+      const [a, b] = forward ? [cursor, cursor + want.length] : [cursor - want.length, cursor];
+      if (a < 0 || text.slice(a, b) !== want) return;
+      return go(i + 1, forward ? b : a, forward ? lo : a, forward ? b : hi, bind(roles, atom.as, want), grab(steps, atom.as, want));
+    }
     if (atom.optional) go(i + 1, cursor, lo, hi, roles, steps, pending);
     if ('rx' in atom) {
       if (!pending) go(i + 1, cursor, lo, hi, roles, steps, { rx: atom.rx, ...(atom.as !== undefined && { as: atom.as }), ...(atom.stop && { stop: atom.stop }) });
