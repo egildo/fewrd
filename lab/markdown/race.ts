@@ -24,7 +24,7 @@ const x = 1 * 2;
 Closing paragraph ${n}.
 
 `;
-const { conf, errors } = compile(JSON.parse(readFileSync(new URL('./race.json', import.meta.url), 'utf8')));
+const { conf, errors } = compile(JSON.parse(readFileSync(new URL(process.argv[3] ?? './race.json', import.meta.url), 'utf8')));
 if (errors.length) throw new Error(JSON.stringify(errors));
 const prep = (md: string) => md.replace(/^ +/gm, (sp) => '·'.repeat(sp.length)).replace(/\n/g, '¶');
 
@@ -40,7 +40,7 @@ function median(f: () => void, budgetMs = 3000): number {
 }
 
 const count = (n: Node, out: Record<string, number> = {}) => {
-  const k = /^i[0-9]$/.test(n.tag) || n.also?.some((a) => /^i[0-9]$/.test(a)) ? 'item' : /^[le][0-9]$/.test(n.tag) ? '' : n.tag;
+  const k = /^(i[0-9]|line_.*)$/.test(n.tag) || n.also?.some((a) => /^(i[0-9]|line_.*)$/.test(a)) ? "item" : /^([le][0-9]|(list|entry)_.*)$/.test(n.tag) ? "" : n.tag;
   if (k) out[k] = (out[k] ?? 0) + 1;
   n.children.forEach((c) => count(c, out));
   return out;

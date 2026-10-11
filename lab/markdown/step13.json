@@ -1,0 +1,1433 @@
+{
+  "version": "md-step13",
+  "patterns": {
+    "RULE": "(?:\\* *){3,}|(?:- *){3,}|(?:_ *){3,}",
+    "OPENER": "#{1,6}(?: |¶|$)|(?:[-*+]|\\d{1,9}[.)]) |```|>|(?:%{RULE})(?:¶|$)",
+    "I": "(?<!\\*)\\*(?!\\*)",
+    "U": "(?<!_)_(?!_)"
+  },
+  "tags": {
+    "fenced": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "fopen",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "skip": true,
+              "stop": "fclose",
+              "as": "code"
+            },
+            {
+              "tag": "fclose"
+            }
+          ]
+        }
+      ]
+    },
+    "setext": {
+      "search": [
+        {
+          "from": "para",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "sxu",
+              "as": "underline"
+            }
+          ]
+        }
+      ]
+    },
+    "hr": {
+      "search": [
+        {
+          "from": "cs",
+          "forward": [
+            {
+              "rx": "/%{RULE}/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "rx": "/%{RULE}/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "sxu": {
+      "search": [
+        {
+          "from": "cs",
+          "forward": [
+            {
+              "rx": "/=+|-+/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "list_dash": {
+      "search": [
+        {
+          "from": "line_dash",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_dash",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "line_dash",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_dash",
+                "entry_dash"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_dash",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_dash",
+                "entry_dash"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "list_dash",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_dash",
+                "entry_dash"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "entry_dash": {
+      "search": [
+        {
+          "from": "line_dash",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind2"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_dash",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind2"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "line_dash": {
+      "search": [
+        {
+          "from": "at_dash",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "at_dash": {
+      "search": [
+        {
+          "from": "mark_dash",
+          "back": [
+            {
+              "tag": [
+                "cs",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "list_star": {
+      "search": [
+        {
+          "from": "line_star",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_star",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "line_star",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_star",
+                "entry_star"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_star",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_star",
+                "entry_star"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "list_star",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_star",
+                "entry_star"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "entry_star": {
+      "search": [
+        {
+          "from": "line_star",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind2"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_star",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind2"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "line_star": {
+      "search": [
+        {
+          "from": "at_star",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "at_star": {
+      "search": [
+        {
+          "from": "mark_star",
+          "back": [
+            {
+              "tag": [
+                "cs",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "list_plus": {
+      "search": [
+        {
+          "from": "line_plus",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_plus",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "line_plus",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_plus",
+                "entry_plus"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_plus",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_plus",
+                "entry_plus"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "list_plus",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_plus",
+                "entry_plus"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "entry_plus": {
+      "search": [
+        {
+          "from": "line_plus",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind2"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_plus",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind2"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "line_plus": {
+      "search": [
+        {
+          "from": "at_plus",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "at_plus": {
+      "search": [
+        {
+          "from": "mark_plus",
+          "back": [
+            {
+              "tag": [
+                "cs",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "list_dot": {
+      "search": [
+        {
+          "from": "line_dot",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_dot",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "line_dot",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_dot",
+                "entry_dot"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_dot",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_dot",
+                "entry_dot"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "list_dot",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_dot",
+                "entry_dot"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "entry_dot": {
+      "search": [
+        {
+          "from": "line_dot",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind3"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_dot",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind3"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "line_dot": {
+      "search": [
+        {
+          "from": "at_dot",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "at_dot": {
+      "search": [
+        {
+          "from": "mark_dot",
+          "back": [
+            {
+              "tag": [
+                "cs",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "list_paren": {
+      "search": [
+        {
+          "from": "line_paren",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_paren",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "line_paren",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_paren",
+                "entry_paren"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_paren",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_paren",
+                "entry_paren"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "list_paren",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": [
+                "line_paren",
+                "entry_paren"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "entry_paren": {
+      "search": [
+        {
+          "from": "line_paren",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind3"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "entry_paren",
+          "forward": [
+            {
+              "tag": [
+                "nl",
+                "blank"
+              ]
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "ind3"
+            },
+            {
+              "tag": [
+                "list_dash",
+                "list_star",
+                "list_plus",
+                "list_dot",
+                "list_paren",
+                "para",
+                "quote",
+                "heading",
+                "hr"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "line_paren": {
+      "search": [
+        {
+          "from": "at_paren",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "at_paren": {
+      "search": [
+        {
+          "from": "mark_paren",
+          "back": [
+            {
+              "tag": [
+                "cs",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "heading": {
+      "search": [
+        {
+          "from": "hmark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "title"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "quote": {
+      "search": [
+        {
+          "from": "qmark",
+          "forward": [
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "quote",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "tag": "qmark"
+            },
+            {
+              "skip": true,
+              "stop": "nl",
+              "as": "body"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "para": {
+      "search": [
+        {
+          "from": "line",
+          "forward": [
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "para",
+          "forward": [
+            {
+              "tag": "nl"
+            },
+            {
+              "same": "lead"
+            },
+            {
+              "tag": "line"
+            }
+          ]
+        }
+      ]
+    },
+    "line": {
+      "search": [
+        {
+          "from": "cs",
+          "forward": [
+            {
+              "rx": "/(?![·>])(?!%{OPENER})[^¶]+/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        },
+        {
+          "from": "^",
+          "forward": [
+            {
+              "rx": "/(?![·>])(?!%{OPENER})[^¶]+/u",
+              "stop": "nl"
+            },
+            {
+              "tag": [
+                "eol",
+                "$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "hmark": {
+      "search": [
+        {
+          "from": "hash",
+          "back": [
+            {
+              "tag": [
+                "cs",
+                "^"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "esc": {
+      "rx": "/\\\\[!-\\/:-@\\[-`{-~]/u",
+      "opaque": true
+    },
+    "autolink": {
+      "rx": "/<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\\s<>]*>/u",
+      "opaque": true
+    },
+    "code": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "tick",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "tick",
+                "nl"
+              ],
+              "as": "code"
+            },
+            {
+              "tag": "tick"
+            }
+          ]
+        }
+      ]
+    },
+    "image": {
+      "opaque": true,
+      "search": [
+        {
+          "from": "bang",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "mid",
+                "nl"
+              ],
+              "as": "alt"
+            },
+            {
+              "tag": "mid"
+            },
+            {
+              "tag": "dest",
+              "as": "src"
+            },
+            {
+              "tag": "rp"
+            }
+          ]
+        }
+      ]
+    },
+    "anchor": {
+      "search": [
+        {
+          "from": "lb",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "mid",
+                "nl"
+              ],
+              "as": "label"
+            },
+            {
+              "tag": "mid"
+            },
+            {
+              "tag": "dest",
+              "as": "href"
+            },
+            {
+              "tag": "rp"
+            }
+          ]
+        }
+      ]
+    },
+    "bold": {
+      "search": [
+        {
+          "from": "bo",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "bc",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "bc"
+            }
+          ]
+        },
+        {
+          "from": "ubo",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "ubc",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "ubc"
+            }
+          ]
+        }
+      ]
+    },
+    "italic": {
+      "search": [
+        {
+          "from": "io",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "ic",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "ic"
+            }
+          ]
+        },
+        {
+          "from": "uio",
+          "forward": [
+            {
+              "skip": true,
+              "stop": [
+                "uic",
+                "blank"
+              ],
+              "as": "body"
+            },
+            {
+              "tag": "uic"
+            }
+          ]
+        }
+      ]
+    },
+    "br": {
+      "rx": "/\\\\(?=¶)/u"
+    },
+    "hash": {
+      "rx": "/#{1,6}(?: |(?=¶|$))/u"
+    },
+    "mark_dash": {
+      "rx": "/- /u"
+    },
+    "mark_star": {
+      "rx": "/\\* /u"
+    },
+    "mark_plus": {
+      "rx": "/\\+ /u"
+    },
+    "mark_dot": {
+      "rx": "/\\d{1,9}\\. /u"
+    },
+    "mark_paren": {
+      "rx": "/\\d{1,9}\\) /u"
+    },
+    "lead": {
+      "rx": "/(?<=^|¶)(?:·|> ?)+/u",
+      "effects": [
+        {
+          "flag": "cs",
+          "at": "end"
+        }
+      ]
+    },
+    "qmark": {
+      "rx": "/(?<=(?:^|¶)·*)> ?/u"
+    },
+    "ind2": {
+      "rx": "/··/u"
+    },
+    "ind3": {
+      "rx": "/···/u"
+    },
+    "fopen": {
+      "rx": "/(?<=^|¶)```\\w+/u"
+    },
+    "fclose": {
+      "rx": "/(?<=^|¶)```(?=¶|$)/u"
+    },
+    "dest": {
+      "rx": "/(?<=\\]\\()[^\\s()]+(?=\\))/u",
+      "opaque": true
+    },
+    "tick": {
+      "rx": "/`/u"
+    },
+    "bang": {
+      "rx": "/!\\[/u"
+    },
+    "lb": {
+      "rx": "/\\[/u"
+    },
+    "mid": {
+      "rx": "/\\]\\(/u"
+    },
+    "rp": {
+      "rx": "/\\)/u"
+    },
+    "bo": {
+      "rx": "/\\*\\*(?=\\S)/u"
+    },
+    "bc": {
+      "rx": "/(?<=\\S)\\*\\*/u"
+    },
+    "io": {
+      "rx": "/%{I}(?=\\S)/u"
+    },
+    "ic": {
+      "rx": "/(?<=\\S)%{I}/u"
+    },
+    "ubo": {
+      "rx": "/(?<![\\p{L}\\p{N}])__(?=\\S)/u"
+    },
+    "ubc": {
+      "rx": "/(?<=\\S)__(?![\\p{L}\\p{N}])/u"
+    },
+    "uio": {
+      "rx": "/(?<![\\p{L}\\p{N}_])%{U}(?=\\S)/u"
+    },
+    "uic": {
+      "rx": "/(?<=\\S)%{U}(?![\\p{L}\\p{N}_])/u"
+    },
+    "nl": {
+      "rx": "/¶/u",
+      "effects": [
+        {
+          "flag": "eol",
+          "at": "start"
+        },
+        {
+          "flag": "bol",
+          "at": "end"
+        },
+        {
+          "flag": "cs",
+          "at": "end"
+        }
+      ]
+    },
+    "blank": {
+      "rx": "/¶¶/u"
+    },
+    "bol": {},
+    "cs": {},
+    "eol": {}
+  }
+}

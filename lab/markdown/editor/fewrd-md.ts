@@ -8,13 +8,29 @@
 // line shown in full and the source can always be read back.
 
 import { compile, dom, find, type Node } from '../../../src/index.ts';
-import data from '../race.json' with { type: 'json' };
+import data from '../step13.json' with { type: 'json' };
 
 const { conf, errors } = compile(data);
 if (errors.length) console.error('fewrd-md conf errors', errors);
 
-/** Tags whose text is markup: hidden away from the caret's line. */
-const MARK = new Set(['hmark', 'hash', 'dash', 'bo', 'bc', 'io', 'ic', 'tick', 'lb', 'mid', 'rp', 'dest']);
+/**
+ * Markup, hidden away from the caret's line: each marker tag with the constructs it is
+ * markup of. A `)` or a backtick is a token wherever it stands; only inside a link or
+ * a code span is it markup. `*` stands for anywhere (the token is anchored already),
+ * and everything inside a marker is markup too.
+ */
+const MARK: Record<string, string[]> = {
+  hmark: ['*'], qmark: ['*'], br: ['*'], sxu: ['*'],
+  at_dash: ['*'], at_star: ['*'], at_plus: ['*'], mark_dash: ['*'], mark_star: ['*'], mark_plus: ['*'],
+  bo: ['bold'], bc: ['bold'], ubo: ['bold'], ubc: ['bold'],
+  io: ['italic'], ic: ['italic'], uio: ['italic'], uic: ['italic'],
+  tick: ['code'],
+  bang: ['image'], lb: ['anchor'], mid: ['anchor', 'image'], rp: ['anchor', 'image'], dest: ['anchor', 'image'],
+};
+/** `tags` from the outermost down to the leaf: markup when one of them is a marker inside its construct. */
+const isMark = (tags: string[]) => tags.some((t, i) => MARK[t]?.some((c) => c === '*' || tags.slice(0, i).includes(c)));
+/** Bullet markers, drawn as a dot when hidden. */
+const BULLET = /^(at|mark)_(dash|star|plus)$/;
 /** Leading spaces become `·`, newlines `¶`, one for one, so spans stay true (the lab's stand-in for a lines switch). */
 const prep = (src: string) => src.replace(/^ +/gm, (sp) => '·'.repeat(sp.length)).replace(/\n/g, '¶');
 
@@ -28,22 +44,31 @@ function lines(src: string): Line[] {
   const leaf = (n: Node, chain: string[]) => {
     const tags = [...chain, n.tag, ...(n.also ?? [])];
     const classes = tags.filter((t) => t !== 'text');
-    if (tags.some((t) => MARK.has(t))) classes.push('mk');
+    if (isMark(tags)) classes.push('mk');
+    if (tags.some((t) => BULLET.test(t))) classes.push('bullet');
     const parts = src.slice(n.start, n.end).split('\n');
     parts.forEach((part, i) => {
       if (i > 0) out.push({ start: n.start + parts.slice(0, i).join('\n').length + 1, classes: new Set(), pieces: [] });
       const line = out[out.length - 1];
-      if (part) line.pieces.push({ text: part, classes });
+      if (!part) return;
+      line.pieces.push({ text: part, classes });
       // A line takes its block's look from what its pieces sit in.
-      if (part && tags.includes('heading')) line.classes.add('heading');
-      if (part && tags.includes('fenced')) line.classes.add('pre');
-      if (part && tags.some((t) => /^i[0-9]$/.test(t))) line.classes.add('li');
+      const add = (c: string, when: boolean) => when && line.classes.add(c);
+      add('heading', tags.includes('heading') || (tags.includes('setext') && !tags.includes('sxu')));
+      add('underline', tags.includes('sxu'));
+      add('pre', tags.includes('fenced'));
+      add('li', tags.some((t) => t.startsWith('line_')));
+      add('quote', tags.includes('quote'));
+      add('rule', tags.includes('hr') && !tags.includes('setext'));
+      for (const t of tags) if (/^h[1-6]$/.test(t) && !tags.includes('sxu')) line.classes.add(t);
       if (tags.includes('hmark')) line.classes.add(`h${part.trim().length}`);
     });
   };
   const walk = (n: Node, chain: string[]) => {
     if (!n.children.length) return leaf(n, chain);
     const next = n.tag === 'doc' ? chain : [...chain, n.tag, ...(n.also ?? [])];
+    // A setext heading's level is in its underline: = is a first level, - a second.
+    if (n.tag === 'setext' && typeof n.attrs.underline === 'object') next.push(src[n.attrs.underline.start] === '=' ? 'h1' : 'h2');
     for (const c of n.children) walk(c, next);
   };
   walk(tree, []);
@@ -55,18 +80,26 @@ const STYLE = `
 .fmd .ln { min-height: 1.6em; }
 .fmd .ln:not(.active) .mk { display: none; }
 .fmd .mk { color: #a8a29e; }
+.fmd .lead { font-family: ui-monospace, monospace; }
 .fmd .ln.heading { font-weight: 700; }
 .fmd .ln.h1 { font-size: 1.75em; line-height: 1.3; }
 .fmd .ln.h2 { font-size: 1.4em; line-height: 1.35; }
 .fmd .ln.h3 { font-size: 1.2em; }
+.fmd .ln.underline:not(.active) { min-height: 0; height: 0; overflow: hidden; }
 .fmd .bold { font-weight: 700; }
 .fmd .italic { font-style: italic; }
 .fmd .code:not(.mk) { font-family: ui-monospace, monospace; font-size: 0.9em; background: #f1f0ee; border-radius: 3px; padding: 0 2px; }
-.fmd .anchor:not(.mk) { color: #1d4ed8; text-decoration: underline; text-underline-offset: 2px; }
+.fmd .anchor:not(.mk), .fmd .autolink { color: #1d4ed8; text-decoration: underline; text-underline-offset: 2px; }
+.fmd .image:not(.mk) { color: #7c3aed; }
+.fmd .ln:not(.active) .image:not(.mk)::before { content: '🖼 '; }
+.fmd .esc { color: #78716c; }
 .fmd .ln.pre { font-family: ui-monospace, monospace; font-size: 0.9em; background: #f6f5f3; padding: 0 8px; }
 .fmd .fopen, .fmd .fclose { color: #a8a29e; }
-.fmd .ln.li:not(.active) .dash { display: inline; font-size: 0; }
-.fmd .ln.li:not(.active) .dash::before { content: '•'; font-size: 16px; margin-right: 0.5em; color: #78716c; }
+.fmd .ln.quote { border-left: 3px solid #d6d3d1; padding-left: 12px; color: #57534e; }
+.fmd .ln.rule:not(.active) { min-height: 0; height: 0; margin: 0.8em 0; border-top: 1px solid #d6d3d1; overflow: hidden; }
+.fmd .ln.li:not(.active) .bullet { display: inline; font-size: 0; }
+.fmd .ln.li:not(.active) .bullet::before { content: '•'; font-size: 16px; margin-right: 0.5em; color: #78716c; }
+.fmd .ln.li:not(.active) .bullet + .bullet::before { content: none; }
 `;
 
 class FewrdMd extends HTMLElement {

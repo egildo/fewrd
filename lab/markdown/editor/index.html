@@ -18,26 +18,65 @@
       <h1>fewrd live markdown, lab</h1>
       <fewrd-md>
         <textarea name="body">
-# Shopping
+# fewrd reads markdown
 
-Things to buy this **week**, for the *party*.
-See [the list](https://example.com/list) and use `make it` fast.
+A lab editor: the markup shows only on the line with the caret. This
+paragraph runs over two lines, with **bold** and __bold__, *italic* and
+_italic_, but not inside snake_case_words, plus `inline code` and a
+[link](https://example.com/fewrd), an autolink <https://commonmark.org>
+and an ![image](cover.png). An escaped \*star\* stays a star.\
+A backslash at a line's end breaks it.
 
-- fruit
-  - apple
-  - pear
-- bread
-  - white
-    - sliced
-- milk
+Second level, setext style
+--------------------------
+
+## Lists
+
+- dashes, bullets of the first kind
+- a second item
+  - nested once
+    - nested twice
+      - as deep as you like
+- back at the top
+
+* stars start a new list
++ and so do pluses
+
+1. ordered, with dots
+2. a second step
+   - a bullet under a number, three spaces in
+3. a third step
+
+1) ordered, with parentheses
+2) a second one
+
+- a loose item
+
+  with a paragraph of its own
+- and a quote inside an item:
+  > quoted, indented under the item
+
+## Quotes
+
+> # A heading in a quote
+> A quoted paragraph
+> over two lines.
+>
+> - a list in a quote
+> - with **bold** in it
+
+## Code and rules
 
 ```js
-const x = 1 * 2;
+// fenced code is opaque: *not italic*, - not a list
+const twice = (n) => n * 2;
 ```
 
-Thanks.</textarea>
+* * *
+
+That rule above was three stars. The end.</textarea>
       </fewrd-md>
-      <p class="note">The markup shows only on the line with the caret. Headings, paragraphs, <code>-</code> lists three deep, bold, italic, code, links, fenced blocks with a language.</p>
+      <p class="note">The markup shows only on the line with the caret. Not yet: a fence with no language, lazy continuation lines, <code>***both***</code>.</p>
     </main>
   </body>
 </html>
