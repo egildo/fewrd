@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>fewrd live markdown</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 32px 16px; background: #fbfbfa; color: #1d1d1b; }
+      main { max-width: 720px; margin: 0 auto; }
+      h1 { font-size: 14px; font-weight: 600; color: #777; margin: 0 0 12px; }
+      fewrd-md { display: block; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+      p.note { font-size: 13px; color: #777; }
+    </style>
+    <script type="module" src="./fewrd-md.ts"></script>
+  </head>
+  <body>
+    <main>
+      <h1>fewrd live markdown, lab</h1>
+      <fewrd-md>
+        <textarea name="body">
+# Shopping
+
+Things to buy this **week**, for the *party*.
+See [the list](https://example.com/list) and use `make it` fast.
+
+- fruit
+  - apple
+  - pear
+- bread
+  - white
+    - sliced
+- milk
+
+```js
+const x = 1 * 2;
+```
+
+Thanks.</textarea>
+      </fewrd-md>
+      <p class="note">The markup shows only on the line with the caret. Headings, paragraphs, <code>-</code> lists three deep, bold, italic, code, links, fenced blocks with a language.</p>
+    </main>
+  </body>
+</html>
