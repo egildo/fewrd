@@ -67,6 +67,7 @@ The closed vocabulary of fewrd: one name per thing, the name the code uses. A te
 
 ## Around the library
 
+- **domain**: A conf for one kind of text, kept in this repository with everything around it: the conf as data, `confs/<name>.json`; its resolvers, `confs/<name>.ts`; its cases, `cases/<name>.json`; and a test that reads them. Adding one never changes `src/`.
 - **case**: A named text with the conf it is found with, and optionally the `fold` it opens with and the `gist` that fold should give. `cases/*.json`; `PlaygroundCase` in `src/playground.ts`.
 - **playground**: The page that shows one case at a time: the chart on a character grid, the tree, the gist, the tags, a live conf editor. `mount` in `src/playground.ts`; its design in [playground.md](playground.md).
 - **band**: A row drawn on the playground's grid, an underline under the characters it covers.

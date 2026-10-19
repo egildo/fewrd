@@ -50,9 +50,9 @@ Either kind may carry `"as": "name"`, which binds what the atom took to a **role
 
 **Key order is priority.** When two rows tie in `dom`, the tag whose key comes earlier in `tags` wins. `find` never reads the order: reorder the keys and the chart is the same.
 
-**Alternatives go longest-first.** The scan offers one match per start position, and a match the word guard rejects (one that would start or end inside a word, see the rules of finding) is not retried shorter, so write `protocollo|prot`, never `prot|protocollo`.
+**Alternatives go longest-first.** The scan offers one match per start position, and a match the word guard rejects (one that would start or end inside a word, see [the rules of finding](finding.md)) is not retried shorter, so write `protocollo|prot`, never `prot|protocollo`.
 
-**Compile errors** come back as a list of `{ path, tag, message }`, and `compile` never throws. A tag with any error is left out, every other tag keeps working, and a reference to a left-out tag simply finds nothing.
+**Compile errors** come back as a list of `{ path, tag, message }`, and `compile` never throws. A tag with any error is left out, every other tag keeps working, and a reference to a left-out tag finds nothing.
 
 <details>
 <summary>What the errors look like</summary>

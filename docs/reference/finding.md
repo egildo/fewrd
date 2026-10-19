@@ -72,7 +72,7 @@ Because it depends on the text and the conf only, you can cache a chart by the t
 <details>
 <summary>On the chart of the quick start</summary>
 
-The quick start's conf and text, found:
+The [quick start](../../README.md#quick-start)'s conf and text, found:
 
 ```json
 {

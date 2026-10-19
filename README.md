@@ -9,7 +9,7 @@
 
 [![npm](https://img.shields.io/npm/v/fewrd?style=flat-square&color=78C4B6)](https://www.npmjs.com/package/fewrd)
 ![dependencies: 0](https://img.shields.io/badge/dependencies-0-78C4B6?style=flat-square)
-![core: 6.5 kB gzip](https://img.shields.io/badge/core-6.5%20kB%20gzip-78C4B6?style=flat-square)
+![core: 7.0 kB gzip](https://img.shields.io/badge/core-7.0%20kB%20gzip-78C4B6?style=flat-square)
 ![types: strict](https://img.shields.io/badge/types-strict-78C4B6?style=flat-square)
 ![tests: 265 passing](https://img.shields.io/badge/tests-265%20passing-78C4B6?style=flat-square)
 [![license: MIT](https://img.shields.io/badge/license-MIT-78C4B6?style=flat-square)](LICENSE)

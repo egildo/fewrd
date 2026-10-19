@@ -15,7 +15,7 @@ type Node = {
 };
 ```
 
-The tree of the quick start, printed one node per line:
+The tree of the [quick start](../../README.md#quick-start), printed one node per line:
 
 ```output
 doc (0,51) "Refund approved - SKU: abc-1234 - customer notified"

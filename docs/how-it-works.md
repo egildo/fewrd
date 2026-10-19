@@ -6,4 +6,4 @@
 
 **The fold is a policy plus three fates.** A fold is a function from a node to a boolean. What it hides, the fates tidy up: a connector goes with what it introduced, a bracket empties out, and of the separators left side by side only the strongest survives.
 
-The parts and the boundaries are drawn in [docs/architecture.md](architecture.md); what fewrd is for, and what it deliberately is not, is in [docs/vision.md](vision.md); every christened name is in the [glossary](glossary.md).
+The parts and the boundaries are drawn in the [architecture](architecture.md); what fewrd is for, and what it deliberately is not, is in the [vision](vision.md); every christened name is in the [glossary](glossary.md).

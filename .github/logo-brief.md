@@ -48,7 +48,7 @@ These are fewrd's own concepts, glossed plainly. None of them is the logo; each 
 
   Together they are why the result looks tidy, not chopped.
 - **Character grid.** The playground sets text on a monospace grid, one character to a cell, so a position is a distance you can see.
-- **Small and honest.** No dependencies, about 6.5 kB gzipped, rules short enough to read in one sitting. No statistics, no AI: every piece is there because a pattern put it there, and the same line always gives the same result.
+- **Small and honest.** No dependencies, about 7 kB gzipped, rules short enough to read in one sitting. No statistics, no AI: every piece is there because a pattern put it there, and the same line always gives the same result.
 - **Two halves.** *Find* gathers everything and chooses nothing; *fold* chooses what to hide. Abundance, then restraint.
 
 ## Tone

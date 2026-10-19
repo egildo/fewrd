@@ -2,7 +2,7 @@
 
 fewrd stops at the tree. To show a text both whole and condensed, render the tree once, marking the nodes the fold hides, and let CSS switch between the two views.
 
-The steps render the quick start's tree; replace `doc` with your own.
+The steps render the [quick start](../../README.md#quick-start)'s tree; replace `doc` with your own.
 
 <details>
 <summary>The quick start's tree, which the example renders</summary>
