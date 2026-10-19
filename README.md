@@ -11,7 +11,7 @@
 ![dependencies: 0](https://img.shields.io/badge/dependencies-0-78C4B6?style=flat-square)
 ![core: 6.5 kB gzip](https://img.shields.io/badge/core-6.5%20kB%20gzip-78C4B6?style=flat-square)
 ![types: strict](https://img.shields.io/badge/types-strict-78C4B6?style=flat-square)
-![tests: 262 passing](https://img.shields.io/badge/tests-262%20passing-78C4B6?style=flat-square)
+![tests: 265 passing](https://img.shields.io/badge/tests-265%20passing-78C4B6?style=flat-square)
 [![license: MIT](https://img.shields.io/badge/license-MIT-78C4B6?style=flat-square)](LICENSE)
 
 </div>
@@ -121,8 +121,9 @@ Refund approved - SKU: abc-1234 - customer notified
 
 ## Documentation
 
-- **How-to guides:** [render the tree as HTML](docs/how-to/render-html.md); [try a conf live](docs/how-to/try-a-conf-live.md), in the playground or with `fewrd-play`.
-- **Reference:** [the conf](docs/reference/conf.md), [the rules of finding](docs/reference/finding.md), [the tree](docs/reference/tree.md), [the rules of the fold](docs/reference/fold.md) and the [glossary](docs/glossary.md).
+- **Tutorial:** [your first conf](docs/tutorial.md), one tag at a time.
+- **How-to guides:** [write a conf](docs/how-to/write-a-conf.md); [render the tree as HTML](docs/how-to/render-html.md); [try a conf live](docs/how-to/try-a-conf-live.md), in the playground or with `fewrd-play`.
+- **Reference:** [the conf](docs/reference/conf.md), [the rules of finding](docs/reference/finding.md), [the tree](docs/reference/tree.md), [the rules of the fold](docs/reference/fold.md), [`mount`](docs/reference/mount.md) and the [glossary](docs/glossary.md).
 - **Explanation:** [how fewrd works](docs/how-it-works.md), the [vision](docs/vision.md) and the [architecture](docs/architecture.md).
 
 Every page is listed in the [map](docs/README.md). To work on fewrd itself, read [CONTRIBUTING.md](CONTRIBUTING.md).

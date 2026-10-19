@@ -1,11 +1,18 @@
 # Documentation
 
-fewrd's documents, sorted by what you need from them. The kinds are those of [Diátaxis](https://diataxis.fr/): every page is a tutorial, a how-to guide, reference or explanation, never two at once. There is no tutorial yet; the README's [quick start](../README.md#quick-start) is the nearest thing.
+fewrd's documents, sorted by what you need from them. The kinds are those of [Diátaxis](https://diataxis.fr/): every page is a tutorial, a how-to guide, reference or explanation, never two at once.
+
+## Tutorial
+
+A lesson: follow it from start to end.
+
+- [Your first conf](tutorial.md): write a conf for help-desk subjects, one tag at a time, and fold one down to its gist
 
 ## How-to guides
 
 For a task you already have in mind.
 
+- [Write a conf](how-to/write-a-conf.md): find codes, take their labels, tidy the cuts, give rows values
 - [Render the tree as HTML](how-to/render-html.md)
 - [Try a conf live](how-to/try-a-conf-live.md), in the playground or with `fewrd-play`
 
@@ -17,6 +24,7 @@ What each part does, exactly.
 - [The rules of finding](reference/finding.md): what `find` does, and the chart it returns
 - [The tree](reference/tree.md): the `Node` type, and how selection makes one reading of the chart
 - [The rules of the fold](reference/fold.md): what `hidden` and `gist` drop, and how the fates tidy the cuts
+- [`mount`](reference/mount.md): the playground in a page of your own, and what it draws
 - [Glossary](glossary.md): every name fewrd uses, one name per thing
 - [Writing style](style.md): how these documents are written
 

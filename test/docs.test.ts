@@ -9,10 +9,10 @@ import * as fewrd from '../src/index.ts';
 /**
  * Every example in the documents runs, and prints what the page shows.
  *
- * On a page, the ```ts blocks run in order and share one scope, so a later
- * block uses what an earlier one made. The ```output blocks, in order, are what
- * those blocks print, in order. Imports of `fewrd` are provided; an import of a
- * `.json` file binds the last ```json block above it. A ```ts block right under
+ * On a page, the ```ts and ```js blocks run in order and share one scope, so a
+ * later block uses what an earlier one made. The ```output blocks, in order, are
+ * what those blocks print, in order. A block may be indented, in a list step. Imports of `fewrd` are provided; an import of a
+ * `.json` file binds the last ```json block above it. A block right under
  * a `<!-- not run -->` comment is skipped (one that needs a browser, say).
  */
 
@@ -30,17 +30,20 @@ const blocks = (md: string): Block[] => {
   const lines = md.split('\n');
   const found: Block[] = [];
   for (let i = 0; i < lines.length; i++) {
-    const lang = /^```(\S*)/.exec(lines[i]!)?.[1];
+    const [, pad = '', lang] = /^( *)```(\S*)/.exec(lines[i]!) ?? [];
     if (lang === undefined) continue;
     const start = i;
-    while (++i < lines.length && !lines[i]!.startsWith('```'));
-    const skip = lines[start - 1]?.startsWith('<!-- not run') ?? false;
-    found.push({ lang, line: start + 1, body: lines.slice(start + 1, i).join('\n').trimEnd(), skip });
+    while (++i < lines.length && !lines[i]!.trimStart().startsWith('```'));
+    const skip = lines[start - 1]?.trimStart().startsWith('<!-- not run') ?? false;
+    const body = lines.slice(start + 1, i).map((l) => (l.startsWith(pad) ? l.slice(pad.length) : l));
+    found.push({ lang, line: start + 1, body: body.join('\n').trimEnd(), skip });
   }
   return found;
 };
 
-/** What each printing ```ts block of the page printed, in order. */
+const runs = (b: Block) => (b.lang === 'ts' || b.lang === 'js') && !b.skip;
+
+/** What each printing block of the page printed, in order. */
 const run = (page: string, md: string): string[] => {
   const printed: string[] = [];
   let out: string[] = [];
@@ -48,7 +51,7 @@ const run = (page: string, md: string): string[] => {
   let json = '';
   for (const b of blocks(md)) {
     if (b.lang === 'json') json = b.body;
-    if (b.lang !== 'ts' || b.skip) continue;
+    if (!runs(b)) continue;
     const code = b.body
       .replace(/^import .* from 'fewrd';$/gm, '')
       .replace(/^import (\w+) from '.*\.json'.*;$/gm, (_, name: string) => `var ${name} = ${json};`)
@@ -62,7 +65,7 @@ const run = (page: string, md: string): string[] => {
 
 for (const page of pages) {
   const md = readFileSync(new URL(page, root), 'utf8');
-  if (!blocks(md).some((b) => b.lang === 'ts' && !b.skip)) continue;
+  if (!blocks(md).some(runs)) continue;
   test(`docs: ${page} prints what it shows`, () => {
     const shown = blocks(md).filter((b) => b.lang === 'output').map((b) => b.body);
     assert.deepEqual(run(page, md), shown);
