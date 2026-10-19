@@ -92,7 +92,7 @@ console.log(chart.spans('sku'));
 console.log(JSON.stringify(chart));
 ```
 
-```
+```output
 []
 [ [ 18, 31 ] ]
 {"$":[[51,51]],"^":[[0,0]],"sep":[[6,7],[15,18],[16,18],[17,18],[21,23],[22,23],[31,34],[32,34],[33,34],[42,43]],"sku":[[18,31]],"sku-code":[[23,31]],"sku-word":[[18,21]]}
@@ -110,7 +110,7 @@ console.log(gist(doc, (n) => n.tag === 'sku'));
 console.log(gist(doc, () => false));
 ```
 
-```
+```output
 SKU: ABC-1234
 { tag: 'sku-word', start: 18, end: 21, attrs: {}, children: [] }
 Refund approved - customer notified
@@ -203,7 +203,7 @@ for (const e of errors) console.log(`${e.path} (${e.tag}): ${e.message}`);
 console.log(Object.keys(conf.tags));
 ```
 
-```
+```output
 tags.sku.rx (sku): unknown pattern %{SKU}
 tags.sku.resolve (sku): unknown resolver "uper"
 tags.price.search[0].from (price): unknown tag "amount"
@@ -304,7 +304,7 @@ console.log(JSON.stringify(Chart.from(JSON.parse(json))) === json);
 console.log(rel([18, 31], [23, 31]), rel([15, 18], [18, 31]), rel([0, 0], [0, 6]));
 ```
 
-```
+```output
 true
 [ 22, 23 ]
 [ 17, 18 ]
@@ -342,7 +342,7 @@ type Node = {
 
 The tree of the quick start, printed one node per line:
 
-```
+```output
 doc (0,51) "Refund approved - SKU: abc-1234 - customer notified"
   text (0,6) "Refund"
   sep (6,7) " "
@@ -494,7 +494,7 @@ With the class `condensed` on the container the reader sees `Refund approved - c
 <details>
 <summary>What it prints on the quick start's tree</summary>
 
-```
+```output
 Refund<span data-tag="sep"> </span>approved<span data-tag="sep"> - </span><span data-tag="sku" data-fold><span data-tag="sku-word" data-fold>SKU</span><span data-tag="sep" data-fold>: </span><span data-tag="sku-code" data-fold>abc-1234</span></span><span data-tag="sep" data-fold> - </span>customer<span data-tag="sep"> </span>notified
 ```
 
@@ -506,6 +506,7 @@ Refund<span data-tag="sep"> </span>approved<span data-tag="sep"> - </span><span 
 
 Or mount it in a page of your own:
 
+<!-- not run: needs a browser -->
 ```ts
 import { mount } from 'fewrd/playground';
 import data from './shop.json' with { type: 'json' };
