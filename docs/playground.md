@@ -1,6 +1,6 @@
 # The playground's design
 
-The playground is where a conf author sees what a conf does to real text: every row of the chart on the characters it covers, the tree `dom` chose, and the gist under a fold. This is its design as it stands after three rounds of review in September 2026; how to open and use it is in the [README](../README.md#playground), and the code is `src/playground.ts` with its geometry in `src/grid.ts`.
+The playground is where a conf author sees what a conf does to real text: every row of the chart on the characters it covers, the tree `dom` chose, and the gist under a fold. This is its design as it stands after three rounds of review in September 2026; how to open and use it is in [Try a conf live](how-to/try-a-conf-live.md#playground), and the code is `src/playground.ts` with its geometry in `src/grid.ts`.
 
 ## Core choices
 

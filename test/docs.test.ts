@@ -62,7 +62,7 @@ const run = (page: string, md: string): string[] => {
 
 for (const page of pages) {
   const md = readFileSync(new URL(page, root), 'utf8');
-  if (!md.includes('```ts')) continue;
+  if (!blocks(md).some((b) => b.lang === 'ts' && !b.skip)) continue;
   test(`docs: ${page} prints what it shows`, () => {
     const shown = blocks(md).filter((b) => b.lang === 'output').map((b) => b.body);
     assert.deepEqual(run(page, md), shown);
