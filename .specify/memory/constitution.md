@@ -1,13 +1,12 @@
 <!--
 Sync Impact Report
-- Version change: 3.1.1 → 3.2.0 (MINOR: three principles added, and the principles moved out of this file).
-- Where things went: each principle is now stated once, in docs/principles.md, with what it forbids and the problem it came from; this file keeps one line per principle and the governance. The data contracts (the chart's and the tree's invariants) moved to the README's "The chart" and "The tree" sections, and the development workflow to its "Develop" section and to docs/architecture.md.
-- Kept, renamed to their names in docs/principles.md: I. Zero Runtime Dependencies → Zero dependencies; II. Deterministic, Documented Finding and Fold Rules → Documented, deterministic rules; III. Cases Are the Single Source of Test Truth → Cases are the test truth; IV. Strict Types, No Escape Hatches → Strict types, no build in the loop; V. Simplicity and a Closed Vocabulary → A closed vocabulary (the vocabulary itself now lives in docs/glossary.md). No rule in them was loosened.
-- Added: A complete, neutral chart; One anchor per search; Docs move first. Each was already decided in the rewrite brief (specs/rewrite-brief.md) and followed by the code; they are now principles.
-- Removed sections: Data Contracts and Development Workflow, moved as above. None of their content was dropped.
-- Templates: .specify/templates need no change; the plan template's "Constitution Check" derives its gates from this file, which now points to docs/principles.md.
-- Follow-up TODOs: none.
-- Trigger: the documentation rewrite after the DOM round. Maintainer sign-off for the MINOR bump was given in the design round of 2026-09-29.
+- Version change: 3.2.0 → 3.2.1 (PATCH: where the rules live, and the links to them; no rule changed).
+- Where things went: the rules of finding, selection and the fold leave the README for the reference, docs/reference/finding.md, docs/reference/tree.md and docs/reference/fold.md, and stay the single source of truth for find, dom, hidden and gist. The data contracts go with them: the chart's invariants to finding.md, the tree's to tree.md. The README becomes a landing page that links to them.
+- Principles touched, in docs/principles.md: Documented, deterministic rules (names the reference instead of the README) and Docs move first (lists the reference's rules among the documents a round amends). Neither was loosened or widened.
+- Not touched: "the design has to fit in one README" (A closed vocabulary) and "the rules fit in a README" (the vision) speak of size, not of place, and stay.
+- Templates: .specify/templates need no change; none names the README.
+- Follow-up TODOs: the move itself, in the documentation round, which creates the three reference files these lines point to.
+- Trigger: the documentation refactor of October 2026, planned against Diátaxis, Google's and Microsoft's style guides and Write the Docs. Maintainer sign-off given on 2026-10-19.
 -->
 
 # fewrd Constitution
@@ -17,7 +16,7 @@ Sync Impact Report
 Each principle is stated once, in [docs/principles.md](../../docs/principles.md), with what it forbids and the problem it came from. Here they are only named.
 
 - **Zero dependencies**: no runtime dependencies in the library or in `fewrd-play`.
-- **Documented, deterministic rules**: the README's rules of finding, selection and the fold are the single source of truth for `find`, `dom`, `hidden` and `gist`.
+- **Documented, deterministic rules**: the rules of finding, selection and the fold in [docs/reference/](../../docs/reference/) are the single source of truth for `find`, `dom`, `hidden` and `gist`.
 - **Cases are the test truth**: domain behaviour is tested through `cases/<conf>.json` and nowhere else.
 - **Strict types, no build in the loop**: `tsc --strict`, no escape hatches, and TypeScript run as written.
 - **A closed vocabulary**: one name per thing, held by [docs/glossary.md](../../docs/glossary.md).
@@ -31,6 +30,6 @@ When a principle and [docs/vision.md](../../docs/vision.md) collide, the vision 
 
 This constitution and the documents it points to supersede ad hoc conventions. An amendment is a change of its own, proposed in a pull request that edits `docs/principles.md` (or the vision) and this file together, bumps the version below and adds a Sync Impact Report saying what moved and why. A PATCH bump (wording, links) needs no discussion; a MINOR bump (a principle added or materially expanded) or a MAJOR one (a principle removed or redefined) needs the maintainer's explicit sign-off before merge.
 
-Review checks new work against the README's rules of finding, selection and the fold, against these principles, and against the decisions in `docs/decisions/`. A settled decision is never rewritten; a reversal is a new decision file saying what it supersedes. An open decision's status line changes when the maintainer settles it, and its text does not.
+Review checks new work against the rules of finding, selection and the fold in `docs/reference/`, against these principles, and against the decisions in `docs/decisions/`. A settled decision is never rewritten; a reversal is a new decision file saying what it supersedes. An open decision's status line changes when the maintainer settles it, and its text does not.
 
-**Version**: 3.2.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29
+**Version**: 3.2.1 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-19

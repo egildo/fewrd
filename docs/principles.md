@@ -12,7 +12,7 @@ When a principle and the [vision](vision.md) collide, the vision decides what fe
 
 ## Documented, deterministic rules
 
-**Forbids** a change to what `find`, `dom`, `hidden` or `gist` return that does not change the matching rules in the README (the rules of finding, selection, the rules of the fold) in the same change. Forbids nondeterminism: no locale, no clock, no dependence on object key order in `find`. The chart depends on the text and the conf only; the tree on the text, the chart and the conf, and within the library the key order of `tags` is read in one place, selection's tiebreak (the playground also uses it to order chips and colours).
+**Forbids** a change to what `find`, `dom`, `hidden` or `gist` return that does not change the rules in the reference (the rules of finding in `docs/reference/finding.md`, selection in `docs/reference/tree.md`, the rules of the fold in `docs/reference/fold.md`) in the same change. Forbids nondeterminism: no locale, no clock, no dependence on object key order in `find`. The chart depends on the text and the conf only; the tree on the text, the chart and the conf, and within the library the key order of `tags` is read in one place, selection's tiebreak (the playground also uses it to order chips and colours).
 
 **From** callers who cache a chart by text and conf version and fold one tree many ways. An undocumented or nondeterministic change breaks that silently.
 
@@ -48,6 +48,6 @@ When a principle and the [vision](vision.md) collide, the vision decides what fe
 
 ## Docs move first
 
-**Forbids** code that the documents do not yet describe. A round states its purpose, amends the documents (README rules, architecture, glossary, a decision file) to describe the intended state, checks them against these principles, and only then makes the code agree, with the changelog entry in the same branch. Before it lands, the documents are read against each other and against the code.
+**Forbids** code that the documents do not yet describe. A round states its purpose, amends the documents (the reference's rules, architecture, glossary, a decision file) to describe the intended state, checks them against these principles, and only then makes the code agree, with the changelog entry in the same branch. Before it lands, the documents are read against each other and against the code.
 
 **From** the rewrite itself, which was designed in a brief and specified before any code was written, and from rounds where a README claim outlived the code it described.
