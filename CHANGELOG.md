@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.0.2
+
+The package now names Codeberg as its repository, and is published by a workflow that runs when a release tag reaches the GitHub mirror, with npm trusted publishing. The code is unchanged.
 
 Documentation only: the API is unchanged, and so is every chart and tree. The README is now a landing page, and the documents are sorted by kind, as a tutorial, how-to guides, reference and explanation, in a map at [docs/README.md](docs/README.md). The rules of finding, selection and the fold move from the README to [docs/reference/](docs/reference/) and stay the single source of truth for `find`, `dom`, `hidden` and `gist`. "Rendering it yourself", which the 1.0.0 entry points to, is now [Render the tree as HTML](docs/how-to/render-html.md). New are a [tutorial](docs/tutorial.md), a guide to [writing a conf](docs/how-to/write-a-conf.md), the [writing style](docs/style.md) and [CONTRIBUTING.md](CONTRIBUTING.md). Every example in the documents now runs in the tests and must print what its page shows. The size badge now reads 7.0 kB, the gzipped size `pnpm build` reports for the core; it read 6.5.
 
